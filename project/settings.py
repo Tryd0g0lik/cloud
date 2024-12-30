@@ -17,7 +17,10 @@ from dotenv_ import (
     POSTGRES_USER,
     POSTGRES_DB,
     POSTGRES_HOST,
-    POSTGRES_PORT
+    POSTGRES_PORT,
+    EMAIL_PORT_,
+    EMAIL_HOST_USER_,
+    EMAIL_HOST_PASSWORD_
                      )
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -210,17 +213,15 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_HOST = 'localhost'
 # EMAIL_HOST = 'mail.privateemail.com'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_PORT
-EMAIL_PORT = 1025 # APP_SERVER_PORT
+EMAIL_PORT = f'{EMAIL_PORT_}' # APP_SERVER_PORT
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-host-user
-EMAIL_HOST_USER = 'root'
+EMAIL_HOST_USER = f'{EMAIL_HOST_USER_}'
 # EMAIL_HOST_USER = 'noreply@custom-tools.online'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-host-password
-EMAIL_HOST_PASSWORD = '123'
-# EMAIL_HOST_PASSWORD = 'jLn9Pgcb82'
+EMAIL_HOST_PASSWORD = f'{EMAIL_HOST_PASSWORD_}'
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-use-ssl
-# EMAIL_USE_SSL = True
 # EMAIL_USE_SSL = True  # если порт 465
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-use-tls
@@ -233,6 +234,8 @@ EMAIL_TIMEOUT = 60
 EMAIL_USE_LOCALTIME = True
 # Настройки мыла, с которого идёт рассылка
 
+# https://docs.djangoproject.com/en/4.2/ref/settings/#email-subject-prefix
+EMAIL_SUBJECT_PREFIX = "activation_from_cloud"
 
 
 
