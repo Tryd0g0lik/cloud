@@ -151,7 +151,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 STATICFILES_DIRS = [
     # os.path.join(BASE_DIR, 'cloud\\static'),
-    os.path.join(BASE_DIR, 'cloud_user\\static'),
+    ("cloud_user_static", os.path.join(BASE_DIR, 'cloud_user\\static')),
     # os.path.join(BASE_DIR, 'cloud_file\\static'),
 ]
 
