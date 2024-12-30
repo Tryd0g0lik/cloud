@@ -23,7 +23,7 @@ def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> N
         // [2024-12-12 16:23:56,991: INFO/MainProcess] run_consumer start '
     ````
     """
-    file_handler = logging.FileHandler(log_file,  encoding='utf-8')
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.setLevel(level)
 
     # Создание обработчика для вывода логов в консоль
