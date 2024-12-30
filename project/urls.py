@@ -24,6 +24,7 @@ from cloud_user.routers import router_account
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # path("/", ),
     # Note !!!: Here a name 'accounts/' is by accord of django
     path('accounts/', include((router_account.urlpatterns, 'accounts'),
                               namespace='accounts')),
