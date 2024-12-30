@@ -14,7 +14,7 @@ class CloudUserConfig(AppConfig):
     verbose_name = "Профиль пользователя"
     
 # send message from the registration part
-user_registerred = Signal(use_caching=False)
+user_registered = Signal(use_caching=False)
 log.info(f"{__name__} Signal WAS STARTED")
 def user_registered_dispatcher(sender, **kwargs)-> bool:
     """
@@ -44,7 +44,7 @@ def user_registered_dispatcher(sender, **kwargs)-> bool:
         log.info(__text)
         return __resp_bool
         
-log.info(f"{__name__} the {user_registerred.__name__} is before the beginning")
-user_registerred.connect(weak=False,
+log.info(f"{__name__} the {user_registered.__name__} is before the beginning")
+user_registered.connect(weak=False,
                          receiver=user_registered_dispatcher)
 log.info(f"{__name__} END")
