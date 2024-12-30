@@ -6,7 +6,7 @@ from cloud_user.contribute.utilites import send_activation_notificcation
 from logs import configure_logging
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
-log.info(f"{__name__} START")
+log.info("START")
 
 class CloudUserConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
@@ -16,6 +16,7 @@ class CloudUserConfig(AppConfig):
 # send message from the registration part
 user_registered = Signal(use_caching=False)
 log.info(f"{__name__} Signal WAS STARTED")
+
 def user_registered_dispatcher(sender, **kwargs)-> bool:
     """
     TODO: Send an activation message by the user email.\
@@ -44,7 +45,7 @@ def user_registered_dispatcher(sender, **kwargs)-> bool:
         log.info(__text)
         return __resp_bool
         
-log.info(f"{__name__} the {user_registered.__name__} is before the beginning")
+log.info(f" The 'user_registered' is before the beginning")
 user_registered.connect(weak=False,
                          receiver=user_registered_dispatcher)
-log.info(f"{__name__} END")
+

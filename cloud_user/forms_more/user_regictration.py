@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator, \
     MinLengthValidator, EmailValidator
-from cloud.models import UserRegister
+from cloud_user.models import UserRegister
 from django.utils.translation import gettext_lazy as _
 
 

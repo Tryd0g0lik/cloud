@@ -8,10 +8,11 @@ from logs import configure_logging
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 
-log.info(f"{__name__} START")
+
+log.info("START")
 # Integer signature
 signer = Signer()
-log.info(f"{__name__} Received a signature")
+log.info("Received a signature")
 
 def send_activation_notificcation(user) -> bool:
     """

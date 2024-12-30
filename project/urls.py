@@ -16,8 +16,19 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+
+from cloud_user.routers import router_account
+
+
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path('admin/', admin.site.urls),
+    # Note !!!: Here a name 'accounts/' is by accord of django
+    path('accounts/', include((router_account.urlpatterns, 'accounts'),
+                              namespace='accounts')),
+    # path('api/v1/', include(router.urls)),
+    # path('', get_index_page, name='index'),
+    # path('<str:page>/', other_page, name='other'),
+    # path('about/', get_about_page,  name="about"),
 ]
