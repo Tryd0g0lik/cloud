@@ -1,5 +1,5 @@
 from django import forms
-from cloud.models import UserRegister
+from cloud_user.models import UserRegister
 # from django.utils.translation import gettext_lazy as _
 
 class CustomRegistrationForm(forms.ModelForm):
