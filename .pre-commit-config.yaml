@@ -1,0 +1,40 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0  # Укажите последнюю версию
+    hooks:
+      - id: trailing-whitespace
+        files: \.py$
+      - id: end-of-file-fixer
+        language_version: "3.10"
+      - id: check-yaml
+        exclude: ^venv/, */frontend
+  - repo: https://github.com/PyCQA/flake8
+    # https://flake8.pycqa.org/en/latest/user/error-codes.html
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        exclude: ^venv/, */frontend
+  - repo: https://github.com/psf/black
+    # https://black.readthedocs.io/en/stable/
+    rev: 24.8.0  # Укажите последнюю версию
+    hooks:
+      - id: black
+        files: \.py$
+        exclude: ^venv/, */frontend
+        language_version: "3.10"
+  - repo: https://github.com/PyCQA/pylint
+    # https://pylint.readthedocs.io/en/latest/user_guide/messages/warning/f-string-without-interpolation.html
+    rev: v3.2.7
+    # plus .pylintrc
+    hooks:
+      - id: pylint
+        language: system
+        types: [python]
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.34.0
+    hooks:
+      - id: markdownlint

@@ -1,0 +1,55 @@
+services:
+#  db:
+#    container_name: app_db
+#    image: postgres:alpine
+#    environment:
+#      - APP_POSTGRES_HOST=localhost
+#      - APP_POSTGRES_PORT=5432
+#      - POSTGRES_PASSWORD=123
+#      - POSTGRES_USER=postgres
+#      - APP_POSTGRES_PASS=123
+#      - APP_POSTGRES_LOGIN=postgres
+#      - APP_POSTGRES_DBNAME=library
+#    restart: unless-stopped
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+#    deploy:
+#      # ограничиваем процессор место занимаемо на сервере для db
+#      resources:
+#        limits:
+#          cpus: '0.5'
+#          memory: 1G
+  flask_app:
+    container_name: app_lybrary
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    command: >
+      /bin/sh -c "source venv/bin/activate && ./venv/bin/python main.py"
+    ports:
+      - "5000:5000"
+#    environment:
+#      - DATABASE_URL=postgresql://postgres:123@db:5432/lybrary # Замените на ваши данные
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+#    depends_on:
+#      - db
+#
+#  nginx:
+#    container_name: app_nginx
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.nginx
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - flask_app
+#    restart: on-failure
+
+volumes:
+  # 'pgdata:' просто оставляем место по умолчанию
+  pgdata:
+  # использовать внешний том volume, не создаем новый, рассчитываем на существующий
+  postgres_data:
+    external: true
