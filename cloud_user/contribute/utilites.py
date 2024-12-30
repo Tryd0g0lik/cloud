@@ -61,6 +61,10 @@ def send_activation_notificcation(user) -> bool:
     except Exception as e:
         __text = f"{__text} Mistake => {e.__str__()}"
     finally:
-        log.info(__text)
+        if "Mistake" in f"{__text}":
+            log.error(__text)
+        else:
+            log.info(__text)
         __text = f"{__text} END"
+        log.info(__text)
         return __resp_bool

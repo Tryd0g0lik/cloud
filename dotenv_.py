@@ -1,7 +1,5 @@
 import os
-
 import dotenv
-
 dotenv.load_dotenv()
 
 SECRET_KEY_ = os.getenv("SECRET_KEY", "")
