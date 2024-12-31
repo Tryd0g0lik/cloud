@@ -1,0 +1,88 @@
+{% load bootstrap4 %}
+{% load render_bundle from webpack_loader %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+  <meta charset = "UTF-8">
+  <meta name="viewpost" content="width-device-width, initial-scale=1,
+   shrink-to-fit-no">
+  <title>{% block title %}Главная{% endblock title %} - Account</title>
+  {% bootstrap_css %}
+  <link rel="stylesheet" type="text/css"
+        href="{% static 'account/css/style.css' %}">
+  {% bootstrap_javascript jquery='slim' %}
+  {% block contribute %}{% endblock contribute %}
+</head>
+<body class="container_fluid">
+<header>
+  {% block header %}
+    <h1 classe="display-1 text-center">It's your the Account </h1>
+  {% endblock header %}
+  {% block content %}
+   <h2>O caйте</h2>
+  {% endblock content %}
+  {% block headerContribute %}{% endblock headerContribute %}
+
+</header>
+<main>
+  <div class="row">
+    <div class="nav-item">
+      <ul class="col nav justify-content-end border">
+        <li clacc="nav-item">
+          <a href="{% url 'index' %}" class="nav-link" >
+            Главная
+          </a>
+        </li>
+        <li clacc="nav-item">
+          <a href="{% url 'accounts:register:register' %}" class="nav-link" >Регистрация</a>
+        </li>
+        {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <li clacc="nav-item">
+              <a href="{% url 'accounts:profile' %}" class="nav-link
+              dropdown-toggle" tada-togle="dropdown" role="button"
+                 aria-haspopup="true" aria-expanded="false">
+                Профиль
+              </a>
+              <div class="dropdown-memu">
+                <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                  Мои объявления
+                </a>
+                <a class="dropdown-item" href="{% url 'accounts:profile_change' %}">
+                  Изменить личные данные
+                </a>
+                <a href="{% url 'accounts:password_change' %}" class="dropdown-item">
+                  Изменить пароль
+                </a>
+                <a href="{% url 'accounts:profile_delete' %}" class="dropdown-item">
+                  Удалить
+                </a>
+                <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                  Выход
+                </a>
+              </div>
+            </li>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a href="{% url 'accounts:login' %}">Вход</a>
+          </li>
+        {% endif %}
+
+        <li clacc="nav-item">
+          <a href="{% url 'about' %}" class="nav-link root" tada-togle="dropdown-item">
+            О сайте
+          </a>
+        </li>
+      </ul>
+      {% block mainRowContribute %}{% endblock mainRowContribute %}
+    </div>
+     <section class="body">
+       {% block sectionBody %}{% endblock sectionBody %}
+     </section>
+  </div>
+</main>
+</body>
+</html>

@@ -23,7 +23,7 @@ def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> N
         // [2024-12-12 16:23:56,991: INFO/MainProcess] run_consumer start '
     ````
     """
-    file_handler = logging.FileHandler(log_file,  encoding='utf-8')
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.setLevel(level)
 
     # Создание обработчика для вывода логов в консоль
@@ -37,3 +37,8 @@ def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> N
     console_handler.setFormatter(formatter)
     # Настройка корневого логгера
     logging.basicConfig(level=level, handlers=[file_handler, console_handler])
+
+class Logger:
+    def print_class_name(self):
+        """Return class-name"""
+        return Logger.__class__.__name__

@@ -9,7 +9,7 @@ services:
 #      - POSTGRES_USER=postgres
 #      - APP_POSTGRES_PASS=123
 #      - APP_POSTGRES_LOGIN=postgres
-#      - APP_POSTGRES_DBNAME=library
+#      - APP_POSTGRES_DBNAME=cloud
 #    restart: unless-stopped
 #    volumes:
 #      - postgres_data:/var/lib/postgresql/data
