@@ -15,7 +15,8 @@ class MinValueValidato:
     pass
 
 
-class UsersRegistrationForm(forms.ModelForm, Logger):
+# class UsersRegistrationForm(forms.ModelForm, Logger):
+class UsersRegistrationForm(forms.Form, Logger):
     '''
     TODO: A form for creating new users (registration a new user)
     `https://docs.djangoproject.com/en/5.0/topics/auth/customizing/#a-full-example`
@@ -23,7 +24,8 @@ class UsersRegistrationForm(forms.ModelForm, Logger):
     
     log.info(f" START")
     try:
-        password1 = forms.CharField(label='Password', widget=forms.PasswordInput,
+        password1 = forms.CharField(label='Password',
+                                    widget=forms.PasswordInput,
                                     validators=[
                                         EmailValidator()
                                     ]
@@ -43,10 +45,10 @@ class UsersRegistrationForm(forms.ModelForm, Logger):
     except Exception as e:
         log.error(f"Mistake => {e.__str__()}")
         
-    class Meta:
-        model = UserRegister
-        fields = ["email", "username"]
-        log.info("Was the Metta")
+    # class Meta:
+    #     model = UserRegister
+    #     fields = ["email", "username"]
+    #     log.info("Was the Metta")
 
     def clean_password2(self):
         '''
@@ -60,41 +62,41 @@ class UsersRegistrationForm(forms.ModelForm, Logger):
             password2 = self.cleaned_data.get('password2')
             
             if password1 and password2 and password1 != password2:
-                raise ValidationError('Пароль не сходится')
-            __text = f"{__text} checked password. It is equal values"
+                raise ValidationError(_('Your password is not true'))
+            __text = f"{__text} Your password is true. It is equal values"
             return password2[0:]
         except Exception as e:
             __text = f"{__text} Mistake => {e.__str__()}. \
-Maybe need to check the passwords values"
+Maybe need to check the passwords values from 'password1' and 'password2'."
         finally:
             if "Mistake" in __text:
                 log.error(__text)
             else:
                 log.info(__text)
             
-    def save(self, commit=True):
-        '''
-        TODO: Save the provided password  in hashed format
-        :param commit:
-        :return:
-        '''
-        __text = f"[{self.print_class_name()}.\
-{self.print_class_name.__name__}]:"
-        log.info(f"{__text} START")
-        try:
-            user = super().save(commit=False)
-            user.set_password(self.cleaned_data['password1'])
-            if commit:
-                user.save()
-            __text = f"{__text} New user's object from \
-the user_cloud was preserved"
-            return user
-        except Exception as e:
-            __text = f"{__text} Mistake => {e.__str__()}. \
-New user's object from the user_cloud was not preserved"
-        finally:
-            if "Mistake" in __text:
-                log.error(__text)
-            else:
-                log.info(__text)
+#     def save(self, commit=True):
+#         '''
+#         TODO: Save the provided password  in hashed format
+#         :param commit:
+#         :return:
+#         '''
+#         __text = f"[{self.print_class_name()}.\
+# {self.print_class_name.__name__}]:"
+#         log.info(f"{__text} START")
+#         try:
+#             user = super().save(commit=False)
+#             user.set_password(self.cleaned_data['password1'])
+#             if commit:
+#                 user.save()
+#             __text = f"{__text} New user's object from \
+# the user_cloud was preserved"
+#             return user
+#         except Exception as e:
+#             __text = f"{__text} Mistake => {e.__str__()}. \
+# New user's object from the user_cloud was not preserved"
+#         finally:
+#             if "Mistake" in __text:
+#                 log.error(__text)
+#             else:
+#                 log.info(__text)
     

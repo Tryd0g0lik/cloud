@@ -1,28 +1,67 @@
-# from django import forms
-# from django.contrib.auth import password_validation
-# from django.core.exceptions import ValidationError
-#
+import logging
+from django import forms
+from django.contrib.auth import password_validation
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxLengthValidator, \
+    MinLengthValidator, EmailValidator
+from django.utils.translation import gettext_lazy as _
 # from cloud_user.apps import user_registered
 # from cloud_user.models import UserRegister
-#
-#
+from logs import configure_logging, Logger
+
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
+
 # class RegisterUserForm(forms.ModelForm):
-#     email = forms.EmailField(
-#         required=True,
-#         label='Адрес электронной почты'
-#         )
-#     password1 = forms.CharField(
-#         label='Пароль',
-#         widget=forms.PasswordInput,
-#         help_text='Пароль'
-#         )
-#     password2 = forms.CharField(
-#         label='Пароль (повторно)',
-#         widget=forms.PasswordInput,
-#         help_text='Введение тот же самый пароль ещё \
-# раз для проверки'
-#         )
-#
+class RegisterUserForm(forms.Form, Logger):
+    '''
+   TODO: A form for creating new users (registration a new user)
+   `https://docs.djangoproject.com/en/5.0/topics/auth/customizing/#a-full-example`
+   '''
+
+    log.info(f" START")
+    try:
+        email = forms.CharField(
+            required=True,
+            widget=forms.EmailInput,
+            label=_("Email"),
+            help_text=_("Email of user is unique. Max length is 320\
+ characters"),
+            validators=[
+                EmailValidator(
+                    massage=_("Check the your email. Email of user is \
+unique. Max length is 320 characters")
+                )
+            ]
+            )
+        password1 = forms.CharField(
+            label=_('Password configuration'),
+            widget=forms.PasswordInput,
+            error_messages={
+                "min_length":
+                    _("Your password is a very short. Min length is \
+10 characters."),
+                "max_length":
+                    _("Your password is a very long. Max length is \
+128 character.")
+            },
+            validators=[
+                MaxLengthValidator(30),
+                MinLengthValidator(128)
+            ],
+            help_text='Пароль'
+            )
+        password2 = forms.CharField(
+            label='Пароль (повторно)',
+            widget=forms.PasswordInput,
+            help_text='Введение тот же самый пароль ещё \
+раз для проверки'
+            )
+    except Exception as e:
+        __text = f"Mistake => {e.__str__()}"
+        log.error(__text)
+        raise ValidationError(__text)
+
 #     def clean_password(self):
 #         password1 = self.cleaned_data['password1']
 #         if password1:
@@ -51,8 +90,8 @@
 #     быть данные переданные '''
 #         user_registered.send(RegisterUserForm, instance=user)
 #         return user
-#
-#     class Meta:
-#         model = UserRegister
-#         fields = ('username', 'email', 'password1', 'password2', 'first_name',
-#                   'last_name', 'send_messages')
+
+    # class Meta:
+    #     model = UserRegister
+    #     fields = ('username', 'email', 'password1', 'password2', 'first_name',
+    #               'last_name', 'send_messages')
