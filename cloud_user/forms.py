@@ -3,7 +3,10 @@ from cloud_user.models import UserRegister
 # from django.utils.translation import gettext_lazy as _
 
 class CustomRegistrationForm(forms.ModelForm):
-
+  """
+  TODO: Here is registration a new user for site.
+  
+  """
   class Meta:
     model = UserRegister
     fields = ['username', 'email', 'password']

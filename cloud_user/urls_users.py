@@ -1,6 +1,5 @@
 """
-URL configuration for project project.
-
+URL router for the 'cloud_user', it is project modul .
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
 Examples:
@@ -14,22 +13,10 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.urls import path
 
-from django.contrib import admin
-from django.urls import path, include
-from cloud_user import urls_users
-
-
-
+from cloud_user.views import RegisterUserView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("register/", include((urls_users.urlpatterns, "user_register"),
-                              namespace="register")),
-    # path("/", ),
-    # Note !!!: Here a name 'accounts/' is by accord of django
-    # path('api/v1/', include(router.urls)),
-    # path('', get_index_page, name='index'),
-    # path('<str:page>/', other_page, name='other'),
-    # path('about/', get_about_page,  name="about"),
+    path("", RegisterUserView.as_view(), name="register")
 ]
