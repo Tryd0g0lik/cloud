@@ -1,6 +1,6 @@
 import logging
 from django import forms
-from django.contrib.auth import password_validation
+# from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxLengthValidator, \
     MinLengthValidator, EmailValidator
@@ -52,10 +52,9 @@ unique. Max length is 320 characters")
             help_text='Пароль'
             )
         password2 = forms.CharField(
-            label='Пароль (повторно)',
+            label=_('Password (repeat)'),
             widget=forms.PasswordInput,
-            help_text='Введение тот же самый пароль ещё \
-раз для проверки'
+            help_text=_('Enter the your password again.')
             )
     except Exception as e:
         __text = f"Mistake => {e.__str__()}"
