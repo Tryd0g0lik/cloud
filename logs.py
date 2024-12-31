@@ -37,3 +37,8 @@ def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> N
     console_handler.setFormatter(formatter)
     # Настройка корневого логгера
     logging.basicConfig(level=level, handlers=[file_handler, console_handler])
+
+class Logger:
+    def print_class_name(self):
+        """Return class-name"""
+        return Logger.__class__.__name__

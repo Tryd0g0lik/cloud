@@ -4,6 +4,7 @@ from django.dispatch import Signal
 
 from cloud_user.contribute.utilites import send_activation_notificcation
 from logs import configure_logging
+
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
@@ -12,6 +13,8 @@ class CloudUserConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "cloud_user"
     verbose_name = "Профиль пользователя"
+    
+    
     
 # send message from the registration part
 user_registered = Signal(use_caching=False)
