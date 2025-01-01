@@ -50,13 +50,13 @@ class UserRegister(AbstractUser):
         verbose_name='user permissions'
     )
     is_activated = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_('After activation'),
         help_text=_("Part of the user registration. Message \
 is sending to the email. В сообщении ссылка для подтверждения пользователя."),
     )
     send_messages = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name='Слать оповещение',
         help_text=_("Part is registration of new user.It is message sending \
 to user's email. User indicates his email at the registrations moment.")

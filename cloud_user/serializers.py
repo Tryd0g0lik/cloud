@@ -1,13 +1,49 @@
+"""Here is a serializer fot user registration"""
+import logging
 from rest_framework import serializers
 from django.utils.translation import gettext_lazy as _
-from datetime import datetime
+# from datetime import datetime
 from cloud_user.models import UserRegister
+from logs import configure_logging, Logger
+
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
 
 class RegisterUserSerializer(serializers.ModelSerializer):
+    log.info("START")
     class Meta:
         model = UserRegister
-        fields = ["id", ""]
-
+        fields = ["id", "email", "send_messages",
+                  "is_activated", "is_active",
+                  "is_superuser"]
+        # log.info("Meta was!")
+    
+    def create(self, **validated_data):
+        """
+        TODO: This is a serializer method for a creating of new user in db
+        :param validated_data, is confirmed data
+        :return UserRegister(validated_data)
+        """
+        # __text = f"[{self.print_class_name()}.{self.create.__name__}]:"
+        __text = f"[{self.create.__name__}]:"
+        log.info(f"{__text} START.")
+        try:
+            new_user = UserRegister(validated_data)
+            __text = f"{__text} was crated."
+            return new_user.save()
+        except Exception as e:
+            __text = f"{__text} Mistake => \
+{e.__str__()}."
+            raise ValueError(__text)
+        finally:
+            if "Mistake" in __text:
+                log.error(__text)
+            else:
+                log.info(__text)
+            log.info("END")
+            
+    
+    
 # class Users_serializers(serializers.ModelSerializer):
 #     date_joined = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.855512",
 #                                             required=False)
