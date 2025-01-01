@@ -17,7 +17,4 @@ from rest_framework import routers
 from cloud_user.views import RegisterUserView
 router = routers.DefaultRouter()
 router.register('register', RegisterUserView,  basename='user')
-# urlpatterns = [
-#     path("", RegisterUserView.as_view(), name="register")
-# ]
 urlpatterns = router.urls
