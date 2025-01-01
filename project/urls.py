@@ -25,11 +25,5 @@ from cloud_user.urls_users import urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path("register/", include((urls_users.urlpatterns, "user_register"),
     path("api/v1/users/", include(urlpatterns)),
-    # path("/", ),
-    # Note !!!: Here a name 'accounts/' is by accord of django    # path('api/v1/', include(router.urls)),
-    # path('', get_index_page, name='index'),
-    # path('<str:page>/', other_page, name='other'),
-    # path('about/', get_about_page,  name="about"),
 ]
