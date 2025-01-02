@@ -18,3 +18,6 @@ DSN = f"postgresql://{POSTGRES_USER}:\
 {POSTGRES_HOST}:\
 {POSTGRES_PORT}/\
 {POSTGRES_DB}"
+# authentication for 'cloud_user/contribute/controler_activate.py
+URL_REDIRECT_IF_NOTGET_AUTHENTICATION = "/"
+URL_REDIRECT_IF_GET_AUTHENTICATION = "/"

@@ -69,3 +69,4 @@ def send_activation_notificcation(user) -> bool:
         __text = f"{__text} END"
         log.info(__text)
         return __resp_bool
+
