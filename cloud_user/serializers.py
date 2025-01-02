@@ -1,6 +1,8 @@
 """Here is a serializer fot user registration"""
 import logging
 from rest_framework import serializers
+
+from cloud_user.apps import signal_user_registered
 from cloud_user.models import UserRegister
 from logs import configure_logging, Logger
 
@@ -14,3 +16,37 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
         fields = ["id", "first_name","last_name",
                   "last_login", "email", "password"]
         log.info("Meta was!")
+
+    def create(self, validated_data):
+        _text = f"[{RegisterUserSerializer.__class__().__name__()}.\
+{self.create.__name__()}]:"
+        user = None
+        try:
+            _user = UserRegister.objects.create(**validated_data)
+            if _user:
+                _text = f"{_text} Something what wrong! User was found in db."
+                raise ValueError()
+            
+            log.info(_text)
+            # Create the new user
+            _user.send_messages = True
+            _user.is_active = False
+            _user.activated = False
+            _user.save()
+            _text = f"{_text} Create the new user."
+            log.info(_text)
+            # get the text from the basis value
+            _text = (_text.split(":"))[0] + ":"
+            # Send a signal
+            signal_user_registered.send(RegisterUserSerializer,
+                                        isinstance=_user)
+            _text = f"{_text} Signal was sent."
+            return _user
+        except Exception as e:
+            _text = f"{_text} Mistake => {e.__str__()}"
+        finally:
+            if "Mistake" in _text:
+                log.error(_text)
+            else:
+                log.info(_text)
+            
