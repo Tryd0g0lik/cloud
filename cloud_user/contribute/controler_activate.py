@@ -31,15 +31,16 @@ def user_activate(request, sign):
     _username = None
     try:
         log.info(f"{_text} START")
-        _username = signer.unsigna(sign)
+        _username = signer.unsign(sign)
         log.info(f"{_text} Get '_username': {_username.__dict__.__srtr__()} ")
     except BadSignature as e:
         _text = f"{_text} Mistake => 'BadSignature': {e.__str__()}"
         # return redirect("/", permanent=True,)
         # https://docs.djangoproject.com/en/5.1/ref/request-response/#httpresponse-objects
-        return HttpResponseRedirect.__init__(
-            status=404,
-        )
+        # HttpResponseRedirect.__init__(
+        #     status=404,
+        # )
+        return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
     # https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/#get-object-or-404
     try:
         user = get_object_or_404(UserRegister, username=_username)
@@ -55,9 +56,9 @@ def user_activate(request, sign):
         if user.is_activated:
             _text = f"{_text} the object 'user' has 'True' value \
 from 'is_activated'."
-            _http = HttpResponseRedirect(
-                redirect_to=URL_REDIRECT_IF_NOTGET_AUTHENTICATION)
-            return _http
+            # _http = HttpResponseRedirect.__init__(
+            #     redirect_to='admin/')
+            return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
         _text = f"{_text} the object 'user' can not have 'True' value \
 from 'is_activated'."
         log.info(_text)

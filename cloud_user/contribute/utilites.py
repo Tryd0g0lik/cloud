@@ -16,11 +16,12 @@ log.info("Received a signature")
 
 def send_activation_notificcation(user) -> bool:
     """
-    Send a message by email of the user. This is the part
+    TODO: This function send a message by email from user. This is the part \
+        authentication of the user.
     :param user: object
     """
-    __host: [str, None] = None
-    __resp_bool = False
+    _host: [str, None] = None
+    _resp_bool = False
     __text = f"[{send_activation_notificcation.__name__}]: "
     try:
         __text = f"{__text} Before getting the 'ALLOWED_HOSTS'"
@@ -31,7 +32,7 @@ def send_activation_notificcation(user) -> bool:
                 f"{ALLOWED_HOSTS[0]}:{APP_PROTOKOL}")
                          if APP_PROTOKOL else view_url
                          for view_url in [url]]
-            __host = url_list[0]
+            _host = url_list[0]
         else:
             __text = f"{__text} The 'ALLOWED_HOSTS' not have."
             url = f"{APP_PROTOKOL}://{APP_SERVER_HOST}"
@@ -41,24 +42,24 @@ def send_activation_notificcation(user) -> bool:
                 f"{APP_SERVER_HOST}:{APP_PROTOKOL}")
                         if APP_PROTOKOL else view_url
                         for view_url in [url]]
-            __host = url_list[0]
+            _host = url_list[0]
             
-        __context: dict = {
+        _context: dict = {
             "user": user,
-            "host": __host,
+            "host": _host,
             "sign": signer.sign(user.username)}
         subject = render_to_string(template_name= \
                                        'email/activation_letter_subject.txt',
-                                   context=__context
+                                   context=_context
                                    )
         __text = f"{__text} Before render to string."
         body_text = render_to_string(
             'email/activation_letter_body.txt',
-            context=__context
+            context=_context
         )
         __text = f"{__text} Message send by email of the user."
         user.email_user(subject, body_text)
-        __resp_bool = True
+        _resp_bool = True
     except Exception as e:
         __text = f"{__text} Mistake => {e.__str__()}"
     finally:
@@ -68,5 +69,5 @@ def send_activation_notificcation(user) -> bool:
             log.info(__text)
         __text = f"{__text} END"
         log.info(__text)
-        return __resp_bool
+        return _resp_bool
 
