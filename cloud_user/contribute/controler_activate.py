@@ -22,13 +22,19 @@ from logs import configure_logging
 
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
-log.info("START")
+
 
 """Срабатывает по запросы урла который содержит подпись"""
 def user_activate(request, sign):
+    
+    _text = f"[{user_activate.__name__}]:"
+    _username = None
     try:
-        __username = signer.unsigna(sign)
-    except BadSignature:
+        log.info(f"{_text} START")
+        _username = signer.unsigna(sign)
+        log.info(f"{_text} Get '_username': {_username.__dict__.__srtr__()} ")
+    except BadSignature as e:
+        _text = f"{_text} Mistake => 'BadSignature': {e.__str__()}"
         # return redirect("/", permanent=True,)
         # https://docs.djangoproject.com/en/5.1/ref/request-response/#httpresponse-objects
         return HttpResponseRedirect.__init__(
@@ -36,16 +42,37 @@ def user_activate(request, sign):
         )
     # https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/#get-object-or-404
     try:
-        user = get_object_or_404(UserRegister, username=__username)
+        user = get_object_or_404(UserRegister, username=_username)
+        try:
+            _text = f"{_text} Get 'user': {user.__dict__.__str__()}"
+            # logging, it if return error
+        except Exception as e:
+            _text = f"{_text} Get 'user': {user.__str__()}"
+        log.info(_text)
+        # get the text from the basis value
+        _text = (_text.split(":"))[0] + ":"
+        # check of activated
         if user.is_activated:
+            _text = f"{_text} the object 'user' has 'True' value \
+from 'is_activated'."
             _http = HttpResponseRedirect(
                 redirect_to=URL_REDIRECT_IF_NOTGET_AUTHENTICATION)
-            # _http["Location"] = "/"
+            return _http
+        _text = f"{_text} the object 'user' can not have 'True' value \
+from 'is_activated'."
+        log.info(_text)
+        # get the text from the basis value
+        _text = (_text.split(":"))[0] + ":"
         user.is_active = True
         user.is_activated = True
         user.save()
+        _text = f"{_text} the object 'user' can not have 'True' value \
+from 'is_activated'."
         return redirect(URL_REDIRECT_IF_GET_AUTHENTICATION)
     except Exception as e:
-        pass
+        _text = f"{_text} Mistake => {e.__str__()}"
     finally:
-        pass
+        if "Mistake" in _text:
+            log.error(_text)
+        else:
+            log.info(_text)

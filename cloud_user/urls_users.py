@@ -13,8 +13,15 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.urls import re_path
 from rest_framework import routers
 from cloud_user.views import RegisterUserView
+
+from cloud_user.contribute.controler_activate import user_activate
+
 router = routers.DefaultRouter()
 router.register('register', RegisterUserView,  basename='user')
-urlpatterns = router.urls
+urlpatterns = [
+    re_path('activate/<str:sign>', user_activate, name="user_activate")
+]
+urlpatterns += router.urls
