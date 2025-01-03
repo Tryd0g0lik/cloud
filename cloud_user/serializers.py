@@ -1,73 +1,53 @@
+"""Here is a serializer fot user registration"""
+import logging
 from rest_framework import serializers
-from account.models import UserRegister
-from django.utils.translation import gettext_lazy as _
-from datetime import datetime
 
+from cloud_user.apps import signal_user_registered
+from cloud_user.models import UserRegister
+from logs import configure_logging, Logger
 
-class Users_serializers(serializers.ModelSerializer):
-    date_joined = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S.855512",
-                                            required=False)
-    username = serializers.CharField(min_length=3,
-                                     max_length=30,
-                                     help_text=_(f"Длина логина не меньше 3 и \
-                                     не больше 30 символов."))
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
 
+class RegisterUserSerializer(serializers.ModelSerializer, Logger):
+    log.info("START")
     class Meta:
-        pass
         model = UserRegister
-        fields = ['id', 'email', 'username', 'password', 'date_joined']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ["id", "first_name","last_name",
+                  "last_login", "email", "password"]
+        log.info("Meta was!")
 
-    def validate_username(self, value):
-        username_list = \
-            UserRegister.objects.filter(username__startswith=value)
-        
-        if self.context['request'].method == 'POST' and \
-          len(list(username_list)) > 0:
-            raise ValueError(_(f'Пользователь с таким \
-именем {value} уже существует в базе данных!'))
-        if self.context['request'].method == 'PUT':
-            pass
-        return value
-
-    def validated_email(self, value):
-        email_list = \
-            UserRegister.objects.filter(username__startswith=value)
-        if len(list(email_list)) > 0:
-            raise ValueError(_(f'Пользователь с таким email: \
-{value} уже существует в базе данных!'))
-        return value
-        
-    def validate_date_joined(self, value):
-        if not value:
-            import datetime
-            value = datetime.datetime.now()
-        return value
-    
-    # `self.context['request'].data.get('email')` можно получить данные. Вставить имя формы
-    # ведь post с обоих форм идет на один урл.
-    # авторизация
     def create(self, validated_data):
-        validated_data['date_joined'] = datetime.now()
-        validated_data['is_active'] = False
-        return super().create(validated_data)
-    
-    # https://www.django-rest-framework.org/api-guide/serializers/#saving-instances
-    def update(self, instance, validated_data):
-        email = validated_data.get('email')
-        username = validated_data.get('username')
+        _text = f"[{self.print_class_name()}.\
+{self.create.__name__}]:"
+        user = None
         try:
-            if bool(email) and email != instance.email:
-                raise ValueError(_(f"[{str(datetime.now().time())[:-4]} >> \
-                update >> email]: A email of user \
-can't changing. Write to support"))
-            if bool(username) and username != instance.username:
-                raise ValueError(_(f"[{str(datetime.now().time())[:-4]} >> \
-                update >> username]:A username can't changing. \
-Write to support"))
-        except Exception as er:
-            print(er)
-        instance.password = validated_data.get('password')
-        instance.save()
-
-        return instance
+            _user = UserRegister.objects.create(**validated_data)
+            if not _user:
+                _text = f"{_text} Something what wrong!"
+                raise ValueError()
+            
+            log.info(_text)
+            # Create the new user
+            _user.send_messages = True
+            _user.is_active = False
+            _user.activated = False
+            _user.save()
+            _text = f"{_text} Saved the new user."
+            log.info(_text)
+            # get the text from the basis value
+            _text = (_text.split(":"))[0] + ":"
+            # Send of Signal
+            # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
+            signal_user_registered.send_robust(RegisterUserSerializer,
+                                        isinstance=_user)
+            _text = f"{_text} Signal was sent."
+            return _user
+        except Exception as e:
+            _text = f"{_text} Mistake => {e.__str__()}"
+        finally:
+            if "Mistake" in _text:
+                log.error(_text)
+            else:
+                log.info(_text)
+            

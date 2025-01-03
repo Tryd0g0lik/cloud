@@ -70,7 +70,14 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'corsheaders.middleware.CorsMiddleware'
 ]
-
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    # ],
+    'PAGE_SIZE': 10,
+}
 ROOT_URLCONF = "project.urls"
 
 TEMPLATES = [
@@ -201,16 +208,17 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 # EMAIL_BACKEND in down for a product
 # https://docs.djangoproject.com/en/4.2/topics/email/#smtp-backend
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND in down for a development
+
 # https://docs.djangoproject.com/en/4.2/topics/email/#console-backend
-# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-from-email
-# DEFAULT_FROM_EMAIL
+DEFAULT_FROM_EMAIL = f"smtp.{EMAIL_HOST_USER_}"
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_HOST
-# EMAIL_HOST = 'localhost'
+# EMAIL_HOST = 'smtp.example.com' # Замените на адрес вашего SMTP-сервера
 # EMAIL_HOST = 'mail.privateemail.com'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_PORT
 EMAIL_PORT = f'{EMAIL_PORT_}' # APP_SERVER_PORT
@@ -225,7 +233,7 @@ EMAIL_HOST_PASSWORD = f'{EMAIL_HOST_PASSWORD_}'
 # EMAIL_USE_SSL = True  # если порт 465
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-use-tls
-EMAIL_USE_TLS = True
+EMAIL_USE_TLS = False
 # EMAIL_USE_TLS = True  # если порт 587
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 60
