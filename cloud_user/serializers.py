@@ -18,13 +18,13 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
         log.info("Meta was!")
 
     def create(self, validated_data):
-        _text = f"[{RegisterUserSerializer.__class__().__name__()}.\
-{self.create.__name__()}]:"
+        _text = f"[{self.print_class_name()}.\
+{self.create.__name__}]:"
         user = None
         try:
             _user = UserRegister.objects.create(**validated_data)
-            if _user:
-                _text = f"{_text} Something what wrong! User was found in db."
+            if not _user:
+                _text = f"{_text} Something what wrong!"
                 raise ValueError()
             
             log.info(_text)
@@ -33,12 +33,13 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
             _user.is_active = False
             _user.activated = False
             _user.save()
-            _text = f"{_text} Create the new user."
+            _text = f"{_text} Saved the new user."
             log.info(_text)
             # get the text from the basis value
             _text = (_text.split(":"))[0] + ":"
-            # Send a signal
-            signal_user_registered.send(RegisterUserSerializer,
+            # Send of Signal
+            # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
+            signal_user_registered.send_robust(RegisterUserSerializer,
                                         isinstance=_user)
             _text = f"{_text} Signal was sent."
             return _user

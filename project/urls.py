@@ -21,14 +21,14 @@ from django.urls import include, path, re_path
 
 from cloud_user.contribute.controler_activate import user_activate
 # from cloud_user.urls_users import (urlpatterns, router)
-from cloud_user.urls_users import ( router)
+from cloud_user.urls_users import ( urlpatterns, router)
 
 
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path("api/v1/users/", include(urlpatterns)),
-    path('api/v1/users/activate/<str:sign>', user_activate, name="user_activate"),
+    path("api/v1/users/", include((urlpatterns, "user"), namespace="user")),
+    # path('api/v1/users/activate/<str:sign>', user_activate, name="user_activate"),
     path("api/v1/users/", include(router.urls)),
 ]

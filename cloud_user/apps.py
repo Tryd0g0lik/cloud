@@ -29,7 +29,8 @@ log.info(f"{__name__} Signal WAS STARTED")
 
 def user_registered_dispatcher(sender, **kwargs)-> bool:
     """
-    TODO: Send an activation message by the user email.\
+    TODO: This is a handler of signal. Send an activation message by \
+        the user email.\
         This is interface from part of registration the new user.\
         Message, it contains the signature of link for authentication
         /
@@ -45,12 +46,16 @@ def user_registered_dispatcher(sender, **kwargs)-> bool:
     log.info(f"{__text} START")
     _resp_bool = False
     try:
-        send_activation_notificcation(kwargs["instance"])
+        res_boll = send_activation_notificcation(kwargs["isinstance"])
         _resp_bool = True
+        if not res_boll:
+            raise ValueError(f"{__text} Mistake => \
+'send_activation_notificcation' - something what wrong.")
+            
         __text = f"{__text} The activation message was added"
     except Exception as e:
         __text = f"{__text} Mistake => {e.__str__()}"
-        _resp_bool = True
+        _resp_bool = False
     finally:
         if "Mistake" in f"{__text}":
             log.error(__text)
