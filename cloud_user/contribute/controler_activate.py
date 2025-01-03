@@ -7,10 +7,9 @@ Email contains the tokken-link. When user presses by the token-link, this run \
 the function (below).
 """
 import logging
-from django.urls import reverse
 from django.core.signing import BadSignature
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import (redirect, get_object_or_404)
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 
 from cloud_user.contribute.utilites import signer
 from cloud_user.models import UserRegister
@@ -26,7 +25,16 @@ log = logging.getLogger(__name__)
 
 """Срабатывает по запросы урла который содержит подпись"""
 def user_activate(request, sign):
-    
+    """
+    TODO: Function changes the 'sign' of signer from the url 'activate/<str:sign>'.\
+        If all is OK,  we get the 301 code by \
+        the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
+        - user.is_active = True
+        - user.is_activated = True (of table 'UserRegister').
+    :param request:
+    :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'
+    :return:
+    """
     _text = f"[{user_activate.__name__}]:"
     _first_name = None
     try:
@@ -56,8 +64,6 @@ def user_activate(request, sign):
         if user.is_activated:
             _text = f"{_text} the object 'user' has 'True' value \
 from 'is_activated'. Redirect. 301"
-            # _http = HttpResponseRedirect.__init__(
-            #     redirect_to='admin/')
             response = HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
             # response = HttpResponseRedirect(URL_REDIRECT_IF_NOTGET_AUTHENTICATION)
             return response
