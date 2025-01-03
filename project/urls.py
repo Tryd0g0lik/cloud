@@ -19,7 +19,6 @@ from django.contrib import admin
 
 from django.urls import include, path, re_path
 
-from cloud_user.contribute.controler_activate import user_activate
 # from cloud_user.urls_users import (urlpatterns, router)
 from cloud_user.urls_users import ( urlpatterns, router)
 

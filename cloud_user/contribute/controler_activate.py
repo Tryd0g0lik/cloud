@@ -7,7 +7,7 @@ Email contains the tokken-link. When user presses by the token-link, this run \
 the function (below).
 """
 import logging
-
+from django.urls import reverse
 from django.core.signing import BadSignature
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import (redirect, get_object_or_404)
@@ -28,22 +28,22 @@ log = logging.getLogger(__name__)
 def user_activate(request, sign):
     
     _text = f"[{user_activate.__name__}]:"
-    _username = None
+    _first_name = None
     try:
         log.info(f"{_text} START")
-        _username = signer.unsign(sign)
-        log.info(f"{_text} Get '_username': {_username.__dict__.__srtr__()} ")
+        _first_name = signer.unsign(sign)
+        log.info(f"{_text} Get '_first_name': {_first_name.__str__()} ")
     except BadSignature as e:
         _text = f"{_text} Mistake => 'BadSignature': {e.__str__()}"
         # return redirect("/", permanent=True,)
         # https://docs.djangoproject.com/en/5.1/ref/request-response/#httpresponse-objects
-        # HttpResponseRedirect.__init__(
-        #     status=404,
-        # )
+        HttpResponseRedirect.__init__( # !!!! Проверка - работает или нет
+            status=404,
+        )
         return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
     # https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/#get-object-or-404
     try:
-        user = get_object_or_404(UserRegister, username=_username)
+        user = get_object_or_404(UserRegister, first_name=_first_name)
         try:
             _text = f"{_text} Get 'user': {user.__dict__.__str__()}"
             # logging, it if return error
@@ -55,10 +55,12 @@ def user_activate(request, sign):
         # check of activated
         if user.is_activated:
             _text = f"{_text} the object 'user' has 'True' value \
-from 'is_activated'."
+from 'is_activated'. Redirect. 301"
             # _http = HttpResponseRedirect.__init__(
             #     redirect_to='admin/')
-            return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
+            response = HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
+            # response = HttpResponseRedirect(URL_REDIRECT_IF_NOTGET_AUTHENTICATION)
+            return response
         _text = f"{_text} the object 'user' can not have 'True' value \
 from 'is_activated'."
         log.info(_text)
@@ -69,7 +71,7 @@ from 'is_activated'."
         user.save()
         _text = f"{_text} the object 'user' can not have 'True' value \
 from 'is_activated'."
-        return redirect(URL_REDIRECT_IF_GET_AUTHENTICATION)
+        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION)
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
     finally:

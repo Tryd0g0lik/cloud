@@ -63,6 +63,7 @@ def send_activation_notificcation(user) -> bool:
         )
         log.info(f"{__text} Create a template for letter the number two ")
         # Run the 'email_user' method from basis the User model
+        # https://docs.djangoproject.com/en/5.1/topics/email/
         user.email_user(subject, body_text)
         _resp_bool = True
         __text = f"{__text} Message send by email of the user."

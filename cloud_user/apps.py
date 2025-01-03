@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 log.info("START")
 
 class CloudUserConfig(AppConfig):
+    """Basis registration of app the cloud_user"""
     default_auto_field = "django.db.models.BigAutoField"
     name = "cloud_user"
     verbose_name = "Профиль пользователя"
@@ -31,7 +32,7 @@ def user_registered_dispatcher(sender, **kwargs)-> bool:
     """
     TODO: This is a handler of signal. Send an activation message by \
         the user email.\
-        This is interface from part of registration the new user.\
+        This is interface from part from registration the new user.\
         Message, it contains the signature of link for authentication
         /
         All interface by the user's authentication in folder '**/contribute'  and \
