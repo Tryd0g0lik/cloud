@@ -13,8 +13,8 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
     log.info("START")
     class Meta:
         model = UserRegister
-        fields = ["id", "first_name","last_name",
-                  "last_login", "email", "password"]
+        fields = ["id", "is_superuser", "first_name", "last_name",
+                  "last_login", "email", "is_active", ]
         log.info("Meta was!")
 
     def create(self, validated_data):
@@ -32,6 +32,7 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
             _user.send_messages = True
             _user.is_active = False
             _user.activated = False
+            _user.is_superuser = False
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)
@@ -50,4 +51,7 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
                 log.error(_text)
             else:
                 log.info(_text)
+        
+        # def update(self, instance, validated_data):
+        #     pass
             

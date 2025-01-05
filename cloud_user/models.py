@@ -71,4 +71,25 @@ to user's email. User indicates his email at the registrations moment.")
                 fields=['username'], name='unique_username'
                 )
         ]
+        
+    @property
+    def is_authenticated(self) -> bool:
+        """
+         TODO: Read-only.  This is method which is always True (as opposed \
+            to AnonymousUser.is_authenticated which is always False). This is\
+            a way to tell if the user has been authenticated. This does not\
+            imply any permissions and doesn’t check if the user is active or\
+            has a valid session. Even though normally you will check this\
+            attribute on request.user to find out whether it has been \
+            populated by the.
+            From user 'object.is_authenticated()'
+        https://docs.djangoproject.com/en/5.1/topics/auth/customizing/\
+#django.contrib.auth.models.AbstractBaseUser.is_authenticated
+        :return: bool
+        """
+        if self.is_active:
+            return True
+        return False
+        
+    
 

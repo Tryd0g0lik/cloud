@@ -13,14 +13,21 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
-from rest_framework import routers
-from cloud_user.views import RegisterUserView
+from django.urls import (path, include)
+from rest_framework import routers, urls
+
+from cloud_user.views import RegisterUserView, LoginUpViews
 
 from cloud_user.contribute.controler_activate import user_activate
 
 router = routers.DefaultRouter()
-router.register('register', RegisterUserView,  basename='user')
-urlpatterns = [
-    path('activate/<str:sign>', user_activate, name="user_activate")
+router.register('newuser', RegisterUserView,  basename='newuser')
+# router.register('login', LoginUpViews, basename='login')
+
+urlpatterns_user = [
+    path('activate/<str:sign>', user_activate, name="user_activate"),
+    path('update/<int:pk>', LoginUpViews.as_view(), name="login"),
+    path("register/", include(router.urls))
+    
 ]
+# , namespace="profile"
