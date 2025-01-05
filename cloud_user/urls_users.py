@@ -26,7 +26,7 @@ router.register('newuser', RegisterUserView,  basename='newuser')
 
 urlpatterns_user = [
     path('activate/<str:sign>', user_activate, name="user_activate"),
-    path('update/<int:pk>', LoginUpViews.as_view(), name="login"),
+    path('login/<int:pk>', LoginUpViews.as_view(), name="login"),
     path("register/", include(router.urls))
     
 ]

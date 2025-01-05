@@ -15,6 +15,7 @@ class RegisterUserView(viewsets.ModelViewSet):
 class LoginUpViews(generics.RetrieveUpdateAPIView):
   queryset = UserRegister.objects.all()
   serializer_class = LoginUpSerializer
+  
   # serializer_class = RegisterUserSerializer
 
     # if not validated_data.get("id") or \

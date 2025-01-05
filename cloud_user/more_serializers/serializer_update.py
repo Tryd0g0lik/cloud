@@ -34,9 +34,28 @@ class LoginUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserRegister
-        fields = ["id", "is_active",]
+        fields = ["id", "is_active"]
     
    
         
-    # def create(self, validated_data):
-    #     pass
+    def update(self, instance, validated_data: [list, dict]) -> object:
+        """
+        TODO: This the method for update date from the user's \
+            login (activation).\
+            URL for a contact is "api/v1/users/login/<int:pk>"
+        :param validated_data: [list, dict]\
+            ```json
+                {
+                    "is_active": True # or False
+                }
+            ```
+            "is_active" the True it is means, what user the activated.
+        :return instance: object
+        """
+        if \
+          validated_data["is_active"] is None or \
+            len(validated_data) > 1:
+            return object()
+        instance = super().update(instance, validated_data)
+        return instance
+    
