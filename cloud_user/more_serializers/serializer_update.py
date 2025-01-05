@@ -34,28 +34,52 @@ class LoginUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserRegister
-        fields = ["id", "is_active"]
+        fields = ["id", "is_active", "email", "password"]
     
    
         
     def update(self, instance, validated_data: [list, dict]) -> object:
+        ## Отработать с cookie
         """
         TODO: This the method for update date from the user's \
             login (activation).\
             URL for a contact is "api/v1/users/login/<int:pk>"
-        :param validated_data: [list, dict]\
-            ```json
+            Method: PATCH
+        :param validated_data: [list, dict].\
+            ```json // it for the logout
                 {
-                    "is_active": True # or False
+                    "is_active": False
+                }
+            ```
+            or
+            ```json // it for the login
+                {
+                    "email": < user@email.this >
+                    "password": < user_password >
+                    "is_active": False
                 }
             ```
             "is_active" the True it is means, what user the activated.
         :return instance: object
         """
+        if validated_data["is_active"] and  \
+            len(validated_data) == 1:
+            instance = super().update(instance, validated_data)
+            return  instance
         if \
-          validated_data["is_active"] is None or \
-            len(validated_data) > 1:
-            return object()
-        instance = super().update(instance, validated_data)
+          len(validated_data) == 2 and \
+          validated_data["email"] and \
+          validated_data["password"] and \
+          validated_data["email"] == instance.email and \
+          validated_data["password"] == instance.password:
+            validated_data["is_active"] = True
+            del validated_data["password"]
+            del validated_data["email"]
+            instance = super().update(instance, validated_data)
+            return instance
+            
+        
         return instance
+    
+    
     

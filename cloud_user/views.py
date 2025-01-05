@@ -15,9 +15,23 @@ class RegisterUserView(viewsets.ModelViewSet):
 class LoginUpViews(generics.RetrieveUpdateAPIView):
   queryset = UserRegister.objects.all()
   serializer_class = LoginUpSerializer
-  
-  # serializer_class = RegisterUserSerializer
-
+  #
+  def patch(self, request, *args, **kwargs):
+    if request.method.lower() == "patch":
+      data = request.data
+      if data:
+        for item in data.keys():
+          kwargs[item] = data[item]
+      if len(kwargs.keys()) == 1:
+        super().patch(request, args, kwargs)
+        return JsonResponse(status=400)
+      elif len(kwargs.keys()) == 3:
+        super().patch(request, args, kwargs)
+        return JsonResponse({"status": "login"}, status=200)
+      return JsonResponse({
+        "error":
+          f"{LoginUpViews.__class__}.{self.patch.__name__} Mistake => \
+Something what wrong"}, status=400)
     # if not validated_data.get("id") or \
     #   not validated_data["is_active"]:
     #   return object()
