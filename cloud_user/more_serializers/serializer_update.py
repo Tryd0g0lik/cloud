@@ -48,15 +48,15 @@ class LoginUpSerializer(serializers.ModelSerializer):
         :param validated_data: [list, dict].\
             ```json // it for the logout
                 {
-                    "is_active": False
+                    "is_active": False // user is logout
                 }
             ```
             or
             ```json // it for the login
-                {
+                { // user  when run the activate event
                     "email": < user@email.this >
                     "password": < user_password >
-                    "is_active": False
+                    "token": < string >
                 }
             ```
             "is_active" the True it is means, what user the activated.

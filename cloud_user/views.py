@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import LoginUpSerializer
 from cloud_user.serializers import RegisterUserSerializer
-
+from asgiref.sync import sync_to_async
 class RegisterUserView(viewsets.ModelViewSet):
   queryset = UserRegister.objects.all()
   serializer_class = RegisterUserSerializer
@@ -16,16 +16,17 @@ class LoginUpViews(generics.RetrieveUpdateAPIView):
   queryset = UserRegister.objects.all()
   serializer_class = LoginUpSerializer
   #
+  
   def patch(self, request, *args, **kwargs):
     if request.method.lower() == "patch":
       data = request.data
       if data:
         for item in data.keys():
           kwargs[item] = data[item]
-      if len(kwargs.keys()) == 1:
+      if len(kwargs.keys()) >= 1 and len(kwargs.keys()) <= 2:
         super().patch(request, args, kwargs)
         return JsonResponse(status=400)
-      elif len(kwargs.keys()) == 3:
+      elif len(kwargs.keys()) >= 3 and len(kwargs.keys()) <= 4:
         super().patch(request, args, kwargs)
         return JsonResponse({"status": "login"}, status=200)
       return JsonResponse({
