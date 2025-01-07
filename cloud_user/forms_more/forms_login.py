@@ -10,7 +10,7 @@ configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 
 # class RegisterUserForm(forms.ModelForm):
-class RegisterUserForm(forms.Form, Logger):
+class LoginForm(forms.Form, Logger):
     '''
    TODO: A form for creating new users (registration a new user)
    `https://docs.djangoproject.com/en/5.0/topics/auth/customizing/#a-full-example`

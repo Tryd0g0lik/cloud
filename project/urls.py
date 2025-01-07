@@ -19,6 +19,7 @@ from django.contrib import admin
 
 from django.urls import include, path, re_path
 
+from cloud_user import views as vws
 # from cloud_user.urls_users import urlpatterns
 from cloud_user.urls_users import urlpatterns_user
 
@@ -27,6 +28,9 @@ from cloud_user.urls_users import urlpatterns_user
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("/", vws.main, name="main"),
+    path("register/", vws.main, name="main"),
+    path("login/", vws.main, name="main"),
     path("api/v1/users/", include((urlpatterns_user, "user"), namespace="user")),
     # path('api/v1/users/activate/<str:sign>', user_activate, name="user_activate"),
     # path("api/v1/users/", include((router.urls, "user"), namespace="user")),
