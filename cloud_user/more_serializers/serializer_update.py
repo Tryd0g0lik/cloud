@@ -24,25 +24,42 @@ log = logging.getLogger(__name__)
 #         pass
 
 class LoginUpSerializer(serializers.ModelSerializer):
-    """
-    username password first_name last_name last_login email
-     is_staff is_active date_joined is_superuser groups
-     user_permissions is_activated is_staff send_messages
-     data_joined
-
-    """
+   
 
     class Meta:
         model = UserRegister
-        fields = ["id", "is_active", "email", "password"]
+        fields = "__all__"
     
-   
-        
+    def get_fields(self):
+        """
+        return \
+         ```json
+           {
+             "id": 19,
+             "last_login": null,
+             "is_superuser": false,
+             "username": "",
+             "first_name": "Денис",
+             "last_name": "Королев",
+             "is_staff": false,
+             "is_active": true,
+             "date_joined": "2025-01-03T13:01:53.238635+07:00"
+           }
+         ```
+       """
+        instance = super().get_fields()
+        exclude_instance = ["password", "is_activated", "email",  "send_messages", "groups", "user_permissions"]
+        new_instance = {}
+        for k, v in instance.items():
+            if k in exclude_instance:
+                continue
+            new_instance[f"{k}"] = v
+        return new_instance
+    
     def update(self, instance, validated_data: [list, dict]) -> object:
         ## Отработать с cookie
         """
-        TODO: This the method for update date from the user's \
-            login (activation).\
+        TODO: This the method for user's profile activation.\
             URL for a contact is "api/v1/users/login/<int:pk>"
             Method: PATCH
         :param validated_data: [list, dict].\

@@ -1,0 +1,18 @@
+# https://docs.swagger.io/spec.html#511-object-example
+# https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.2.md#document-structure
+openapi: 3.0.3
+info:
+  title: Cloud service - OpenAPI 3.0
+  description: |-
+    This is application for a cloud service. This service is a file storage \
+    in clode.
+    \
+    1. User registration.\
+    2. Save nad then uses user's files.
+  termsOfService: < your_url >
+  contact:
+    name: Denis
+    email: work80@mail.ru
+    url: https://github.com/Tryd0g0lik
+  version: "1.0"
+

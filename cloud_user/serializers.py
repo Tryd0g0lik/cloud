@@ -13,9 +13,34 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
     log.info("START")
     class Meta:
         model = UserRegister
-        fields = ["id", "is_superuser", "first_name", "last_name",
-                  "last_login", "email", "is_active", ]
+        fields = "__all__"
         log.info("Meta was!")
+    
+    def get_fields(self):
+        """
+        return \
+         ```json
+           {
+             "id": 19,
+             "last_login": null,
+             "is_superuser": false,
+             "username": "",
+             "first_name": "Денис",
+             "last_name": "Королев",
+             "is_staff": false,
+             "is_active": true,
+             "date_joined": "2025-01-03T13:01:53.238635+07:00"
+           }
+         ```
+       """
+        instance = super().get_fields()
+        exclude_instance = ["password", "is_activated", "email",  "send_messages", "groups", "user_permissions"]
+        new_instance = {}
+        for k, v in instance.items():
+            if k in exclude_instance:
+                continue
+            new_instance[f"{k}"] = v
+        return new_instance
 
     def create(self, validated_data):
         _text = f"[{self.print_class_name()}.\

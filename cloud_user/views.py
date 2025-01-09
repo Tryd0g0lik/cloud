@@ -4,8 +4,8 @@ from rest_framework import (viewsets, generics, mixins)
 from rest_framework.response import Response
 from django.http import JsonResponse
 
-from cloud_user.forms import RegisterUserForm
-from cloud_user.forms_more.forms_login import LoginForm
+# from cloud_user.forms import RegisterUserForm
+# from cloud_user.forms_more.forms_login import LoginForm
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import LoginUpSerializer
 from cloud_user.serializers import RegisterUserSerializer
@@ -17,6 +17,14 @@ class RegisterUserView(viewsets.ModelViewSet):
   
 # class LoginUpViews(viewsets.ModelViewSet ):
 class LoginUpViews(generics.RetrieveUpdateAPIView):
+  """
+  TODO: This the method for user's profile activation.\
+      URL for a contact is "api/v1/users/login/<int:pk>"\
+      Method: PATCH
+      Here, the entrypoint receives data (JSON).
+      ```json
+      ```
+  """
   queryset = UserRegister.objects.all()
   serializer_class = LoginUpSerializer
   #
@@ -57,13 +65,13 @@ def main(request):
     template = "users/index.html"
     title = "Главная"
     context_ = {"page_name": title}
-    if request.path == "register/":
-      title = "Регистрация"
-      form = RegisterUserForm()
-      context_ = {"form": form, "page_name": title}
-    elif request.path == "login/":
-      title = "Активизация"
-      form = LoginForm()
-      context_ = {"form": form, "page_name": title}
+    # if request.path == "register/":
+    #   title = "Регистрация"
+    #   form = RegisterUserForm()
+    #   context_ = {"form": form, "page_name": title}
+    # elif request.path == "login/":
+    #   title = "Активизация"
+    #   form = LoginForm()
+    #   context_ = {"form": form, "page_name": title}
     return render(request, template, context_)
 
