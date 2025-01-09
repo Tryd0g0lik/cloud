@@ -1,18 +1,134 @@
 # https://docs.swagger.io/spec.html#511-object-example
 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.2.md#document-structure
-openapi: 3.0.3
+openapi: '3.0.3'
 info:
+  version: '1.0.0'
   title: Cloud service - OpenAPI 3.0
   description: |-
     This is application for a cloud service. This service is a file storage \
     in clode.
-    \
     1. User registration.\
     2. Save nad then uses user's files.
-  termsOfService: < your_url >
   contact:
     name: Denis
     email: work80@mail.ru
     url: https://github.com/Tryd0g0lik
-  version: "1.0"
+paths:
+  /users/patch/{pk}/:
+    get:
+      tags:
+        - user
+      summary: Read a user data
+      description: |-
+        For update data of single cell or more cells.
+      operationId: UserPatchViews
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 12
+      responses:
+        200:
+          description: Get the array of object from db
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProperties'
+        404:
+          description: Not found for the provided `pk`
+          content:
+            application/json:
+              schema:
+                properties:
+                    detail:
+                        $ref: '#/components/schemas/ErrorUsedId'
+              example:
+                detail: No UserRegister matches the given query.
+        500:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
+
+components:
+  schemas:
+    UserId:
+      type: object
+      properties:
+        pk:
+          type: integer
+          nullable: false
+          example: 1
+    UserProperties:
+      type: object
+      required:
+        - id
+        - last_login
+        - is_superuser
+        - username
+        - first_name
+        - last_name
+        - is_staff
+        - is_active
+        - date_joined
+      properties:
+        id:
+          $ref: '#/components/schemas/UserId'
+        last_login:
+            oneOf:
+                - type: string
+                  nullable: true
+                  description: |-
+                    Itis an alias of user.
+                    Max length is 150 characters.
+                  example: rabbit
+        is_superuser:
+            type: boolean
+            example: false
+            description: If it is the 'True', it means that is the superuser
+        username:
+            type: string
+            example: Victorovich
+            description: |-
+                This is unique name of user.
+                 Max length is 150 characters.
+        first_name:
+            type: string
+            nullable: true
+            description: Max length is 150 characters.
+        last_name:
+            type: string
+            nullable: true
+            description: Max length is 150 characters.
+        is_staff:
+            type: boolean
+            description: Designates whether the user can log into this admin site. default=False
+        is_active:
+            type: boolean
+            description: |-
+                Определяет, должен ли этот пользователь рассматриваться как активным.
+        date_joined:
+            type: string
+            description: |-
+                String, datetime. Format is "2024-10-01" or "2024.10.01". 
+                This is date of the user's registration.
+            format: date-time
+    ErrorUsedId:
+      type: string
+      required:
+        - detail
+      properties:
+        detail:
+          description: A human readable error message
+          type: string
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+security:
+  - ApiKey: []
