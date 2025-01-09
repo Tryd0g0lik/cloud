@@ -16,17 +16,17 @@ Including another URLconf
 from django.urls import (path, include)
 from rest_framework import routers, urls
 
-from cloud_user.views import RegisterUserView, LoginUpViews
+from cloud_user.views import RegisterUserView, UserPatchViews
 
 from cloud_user.contribute.controler_activate import user_activate
 
 router = routers.DefaultRouter()
 router.register("", RegisterUserView,  basename="newuser")
-# router.register("login", LoginUpViews, basename="login")
+# router.register("login", UserPatchViews, basename="login")
 
 urlpatterns_user = [
     path("activate/<str:sign>/", user_activate, name="user_activate"),
-    path("login/<int:pk>/", LoginUpViews.as_view(), name="login"),
+    path("patch/<int:pk>/", UserPatchViews.as_view(), name="login"),
     path("register/", include(router.urls))
     
 ]

@@ -23,15 +23,30 @@ log = logging.getLogger(__name__)
 #     def create(self, validated_data):
 #         pass
 
-class LoginUpSerializer(serializers.ModelSerializer):
-   
-
+class UserPatchSerializer(serializers.ModelSerializer):
+    """
+    return \
+         ```json
+           {
+             "id": 19,
+             "last_login": null,
+             "is_superuser": false,
+             "username": "",
+             "first_name": "Денис",
+             "last_name": "Королев",
+             "is_staff": false,
+             "is_active": true,
+             "date_joined": "2025-01-03T13:01:53.238635+07:00"
+           }
+   """
     class Meta:
         model = UserRegister
         fields = "__all__"
     
     def get_fields(self):
         """
+        Exclude fields: "password", "is_activated", "email",  "send_messages", \
+            "groups", "user_permissions"
         return \
          ```json
            {
@@ -59,16 +74,18 @@ class LoginUpSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data: [list, dict]) -> object:
         ## Отработать с cookie
         """
-        TODO: This the method for user's profile activation.\
-            URL for a contact is "api/v1/users/login/<int:pk>"
+        TODO: This for a PATCH method. For update data of single cell or more cells.
             Method: PATCH
+            URL: for a contact is "api/v1/users/patch/<int:pk>"
+            Method: PUT is not works.
         :param validated_data: [list, dict].\
+            For change the single cell
             ```json // it for the logout
                 {
                     "is_active": False // user is logout
                 }
             ```
-            or
+            or more
             ```json // it for the login
                 { // user  when run the activate event
                     "email": < user@email.this >
@@ -76,25 +93,25 @@ class LoginUpSerializer(serializers.ModelSerializer):
                     "token": < string >
                 }
             ```
-            "is_active" the True it is means, what user the activated.
-        :return instance: object
+           
+        :return instance: object \
+        ```json
+            {
+              "id": 20,
+              "last_login": null,
+              "is_superuser": false,
+              "username": "Rabbit",
+              "first_name": "Денис",
+              "last_name": "Сергеевич",
+              "is_staff": false,
+              "is_active": false,
+              "date_joined": "2025-01-08T16:47:53.883666+07:00"
+            }
+        '''
         """
-        if validated_data["is_active"] and  \
-            len(validated_data) == 1:
-            instance = super().update(instance, validated_data)
-            return  instance
-        if \
-          len(validated_data) == 2 and \
-          validated_data["email"] and \
-          validated_data["password"] and \
-          validated_data["email"] == instance.email and \
-          validated_data["password"] == instance.password:
-            validated_data["is_active"] = True
-            del validated_data["password"]
-            del validated_data["email"]
-            instance = super().update(instance, validated_data)
-            return instance
-            
+        
+        
+        instance = super().update(instance, validated_data)
         
         return instance
     

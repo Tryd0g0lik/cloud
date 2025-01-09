@@ -7,7 +7,7 @@ from django.http import JsonResponse
 # from cloud_user.forms import RegisterUserForm
 # from cloud_user.forms_more.forms_login import LoginForm
 from cloud_user.models import UserRegister
-from cloud_user.more_serializers.serializer_update import LoginUpSerializer
+from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import RegisterUserSerializer
 from asgiref.sync import sync_to_async
 class RegisterUserView(viewsets.ModelViewSet):
@@ -15,18 +15,30 @@ class RegisterUserView(viewsets.ModelViewSet):
   serializer_class = RegisterUserSerializer
   # permission_classes = [IsAdminUser]
   
-# class LoginUpViews(viewsets.ModelViewSet ):
-class LoginUpViews(generics.RetrieveUpdateAPIView):
+# class UserPatchViews(viewsets.ModelViewSet ):
+class UserPatchViews(generics.RetrieveUpdateAPIView):
   """
-  TODO: This the method for user's profile activation.\
-      URL for a contact is "api/v1/users/login/<int:pk>"\
-      Method: PATCH
-      Here, the entrypoint receives data (JSON).
-      ```json
-      ```
+  TODO: For update data of single cell or more cells.
+    Method: PATCH.
+    URL: for a contact is "api/v1/users/patch/<int:pk>"
+    Method: PUT is not works.
+  :return \
+    ```json
+    {
+      "id": 20,
+      "last_login": null,
+      "is_superuser": false,
+      "username": "Rabbit",
+      "first_name": "Денис",
+      "last_name": "Сергеевич",
+      "is_staff": false,
+      "is_active": false,
+      "date_joined": "2025-01-08T16:47:53.883666+07:00"
+    }
+    '''
   """
   queryset = UserRegister.objects.all()
-  serializer_class = LoginUpSerializer
+  serializer_class = UserPatchSerializer
   #
   
   def patch(self, request, *args, **kwargs):
@@ -34,17 +46,20 @@ class LoginUpViews(generics.RetrieveUpdateAPIView):
       data = request.data
       if data:
         for item in data.keys():
+          if item == "id":
+            continue
           kwargs[item] = data[item]
-      if len(kwargs.keys()) >= 1 and len(kwargs.keys()) <= 2:
-        super().patch(request, args, kwargs)
-        return JsonResponse(status=400)
-      elif len(kwargs.keys()) >= 3 and len(kwargs.keys()) <= 4:
-        super().patch(request, args, kwargs)
-        return JsonResponse({"status": "login"}, status=200)
-      return JsonResponse({
+        instance = super().patch(request, args, kwargs)
+        return Response(instance.data, status=200)
+      return Response({
+        "message": "Not Ok",
         "error":
-          f"{LoginUpViews.__class__}.{self.patch.__name__} Mistake => \
+          f"{UserPatchViews.__class__}.{self.patch.__name__} Mistake => \
 Something what wrong"}, status=400)
+
+  def put(self, request, *args, **kwargs):
+    request.data["Message"] = "Not Ok"
+    return Response(request.data, status=400)
     # if not validated_data.get("id") or \
     #   not validated_data["is_active"]:
     #   return object()

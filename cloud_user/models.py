@@ -18,7 +18,7 @@ class UserRegister(AbstractUser):
            name of user
        :param first_name: str or None. Max length is 150 characters.
        :param last_name: str or None. Max length is 150 characters.
-       :param last_login: str or None. Max length is 150 characters.
+       :param last_login: str or None, format date-time.
        :param email: str. User email. Max length is 320 characters.
        :param is_staff: bool. Designates whether the user can log into \
            this admin site.
