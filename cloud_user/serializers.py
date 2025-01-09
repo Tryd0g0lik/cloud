@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from cloud_user.apps import signal_user_registered
 from cloud_user.models import UserRegister
+from cloud_user.services import find_superuser
 from logs import configure_logging, Logger
 
 configure_logging(logging.INFO)
@@ -79,4 +80,18 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
         
         # def update(self, instance, validated_data):
         #     pass
-            
+    
+    def update(self, instance, validated_data):
+        superuser = find_superuser()
+        if superuser:
+            superuser_id = superuser.id
+            instance = None
+            if validated_data["id"] == superuser_id:
+                instance = super().update(instance, validated_data)
+            else:
+                validated_data["is_superuser"] = False
+                instance = super().update(instance, validated_data)
+            return instance
+        instance = super().update(instance, validated_data)
+        return instance
+        

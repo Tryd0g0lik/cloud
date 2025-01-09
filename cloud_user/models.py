@@ -26,7 +26,7 @@ class UserRegister(AbstractUser):
            as active.
        :param date_joined: date. Date of registration.
        :param is_superuser: bool. Designates that this user has \
-           all permissions. He is the admin site.
+           all permissions. He is the admin site and only one.
        :param groups:
        :param  password: str. Max length of characters is 128.
        """
