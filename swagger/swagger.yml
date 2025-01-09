@@ -52,8 +52,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-
+    patch:
+      tags:
+        - user
+      summary: Update of data from user db
+      description: |-
+        Update the single cell or more cells from user's data of db
+      operationId: UserPatchViews
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 12
+      responses:
+        200:
+          description: Get the array of object from db
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProperties'
+        404:
+          description: Not found for the provided `pk`
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    $ref: '#/components/schemas/ErrorUsedId'
+              example:
+                detail: No UserRegister matches the given query.
+        500:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     UserId:
