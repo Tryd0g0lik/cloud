@@ -16,12 +16,12 @@ Including another URLconf
 from django.urls import (path, include)
 from rest_framework import routers, urls
 
-from cloud_user.views import RegisterUserView, UserPatchViews
+from cloud_user.views import UserView, UserPatchViews
 
 from cloud_user.contribute.controler_activate import user_activate
 
 router = routers.DefaultRouter()
-router.register("", RegisterUserView,  basename="fulluser")
+router.register("", UserView, basename="fulluser")
 # router.register("login", UserPatchViews, basename="login")
 
 urlpatterns_user = [

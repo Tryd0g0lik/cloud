@@ -10,7 +10,7 @@ from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import RegisterUserSerializer
 from asgiref.sync import sync_to_async
-class RegisterUserView(viewsets.ModelViewSet):
+class UserView(viewsets.ModelViewSet):
   queryset = UserRegister.objects.all()
   serializer_class = RegisterUserSerializer
   # permission_classes = [IsAdminUser]
