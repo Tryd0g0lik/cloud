@@ -57,7 +57,8 @@ paths:
         - user
       summary: Update of data from user db
       description: |-
-        Update the single cell or more cells from user's data of db
+        Update the single cell or more cells from user's data of db.
+        When changing one the your cell, other cells will have not can change.
       operationId: UserPatchViews
       parameters:
         - name: pk
@@ -73,6 +74,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProperties'
+              example:
+               last_login:
+                $ref: '#/components/schemas/UserProperties/properties/last_login/oneOf/0/example'
+               is_superuser:
+                $ref: '#/components/schemas/UserProperties/properties/is_superuser/example'
+               username:
+                $ref: '#/components/schemas/UserProperties/properties/username/example'
+               first_name:
+                $ref: '#/components/schemas/UserProperties/properties/first_name/example'
+               last_name:
+                $ref: '#/components/schemas/UserProperties/properties/last_name/example'
+               is_staff:
+                $ref: '#/components/schemas/UserProperties/properties/is_staff/example'
+               is_active:
+                $ref: '#/components/schemas/UserProperties/properties/is_active/example'
+               date_joined:
+                $ref: '#/components/schemas/UserProperties/properties/date_joined/example'
         404:
           description: Not found for the provided `pk`
           content:
@@ -89,6 +107,120 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /users/choice/{pk}/:
+    get:
+      tags:
+        - user
+      summary: Read a user data
+      description: |-
+        For update data of single cell or more cells.
+      operationId: UserPatchViews
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 12
+      responses:
+        200:
+          description: Get the array of object from db
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProperties'
+              example:
+               last_login:
+                $ref: '#/components/schemas/UserProperties/properties/last_login/oneOf/0/example'
+               is_superuser:
+                $ref: '#/components/schemas/UserProperties/properties/is_superuser/example'
+               username:
+                $ref: '#/components/schemas/UserProperties/properties/username/example'
+               first_name:
+                $ref: '#/components/schemas/UserProperties/properties/first_name/example'
+               last_name:
+                $ref: '#/components/schemas/UserProperties/properties/last_name/example'
+               is_staff:
+                $ref: '#/components/schemas/UserProperties/properties/is_staff/example'
+               is_active:
+                $ref: '#/components/schemas/UserProperties/properties/is_active/example'
+               date_joined:
+                $ref: '#/components/schemas/UserProperties/properties/date_joined/example'
+        404:
+          description: Not found for the provided `pk`
+          content:
+            application/json:
+              schema:
+                properties:
+                    detail:
+                        $ref: '#/components/schemas/ErrorUsedId'
+              example:
+                detail: No UserRegister matches the given query.
+        500:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - user
+      summary: Update of data from user db
+      description: |-
+        Update everyone of cells from user's data of db.
+        If youy chang only one cell, other cells will have value the null. 
+
+      operationId: UserPatchViews
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 12
+      responses:
+        200:
+          description: Get the array of object from db
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProperties'
+              example:
+               last_login:
+                $ref: '#/components/schemas/UserProperties/properties/last_login/oneOf/0/example'
+               is_superuser:
+                $ref: '#/components/schemas/UserProperties/properties/is_superuser/example'
+               username:
+                $ref: '#/components/schemas/UserProperties/properties/username/example'
+               first_name:
+                $ref: '#/components/schemas/UserProperties/properties/first_name/example'
+               last_name:
+                $ref: '#/components/schemas/UserProperties/properties/last_name/example'
+               is_staff:
+                $ref: '#/components/schemas/UserProperties/properties/is_staff/example'
+               is_active:
+                $ref: '#/components/schemas/UserProperties/properties/is_active/example'
+               date_joined:
+                $ref: '#/components/schemas/UserProperties/properties/date_joined/example'
+        404:
+          description: Not found for the provided `pk`
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    $ref: '#/components/schemas/ErrorUsedId'
+              example:
+                detail: No UserRegister matches the given query.
+        500:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    # delete:
+        # dsds
+
 components:
   schemas:
     UserId:
@@ -116,11 +248,19 @@ components:
         last_login:
             oneOf:
                 - type: string
+                  format: date-time
                   nullable: true
                   description: |-
                     Itis an alias of user.
                     Max length is 150 characters.
-                  example: rabbit
+                  example: 2024-01-01
+                - type: string
+                  format: date-time
+                  nullable: true
+                  description: |-
+                    Itis an alias of user.
+                    Max length is 150 characters.
+                  example: 2024.01.01
         is_superuser:
             type: boolean
             example: false
@@ -135,23 +275,28 @@ components:
             type: string
             nullable: true
             description: Max length is 150 characters.
+            example: null
         last_name:
             type: string
             nullable: true
             description: Max length is 150 characters.
+            example: Denis
         is_staff:
             type: boolean
             description: Designates whether the user can log into this admin site. default=False
+            example: false
         is_active:
             type: boolean
             description: |-
-                Определяет, должен ли этот пользователь рассматриваться как активным.
+                This is the status user. He is online (true) or ofline (false).
+            example: false
         date_joined:
             type: string
             description: |-
                 String, datetime. Format is "2024-10-01" or "2024.10.01". 
                 This is date of the user's registration.
             format: date-time
+            example: 2024-01-01
     ErrorUsedId:
       type: string
       required:
