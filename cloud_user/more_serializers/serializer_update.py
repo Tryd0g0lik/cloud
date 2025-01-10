@@ -1,0 +1,119 @@
+import logging
+from rest_framework import serializers
+from cloud_user.models import UserRegister
+from logs import configure_logging, Logger
+
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
+
+
+# class UpdateUserSerializer(serializers.ModelSerializer):
+#     """
+#     username password first_name last_name last_login email
+#      is_staff is_active date_joined is_superuser groups
+#      user_permissions is_activated is_staff send_messages
+#      data_joined
+#
+#     """
+#     class Meta:
+#         model = UserRegister
+#         fields = ["id", "is_superuser", "first_name", "last_name",
+#                   "last_login", "email", "is_active", ]
+# #
+#     def create(self, validated_data):
+#         pass
+
+class UserPatchSerializer(serializers.ModelSerializer):
+    """
+    return \
+         ```json
+           {
+             "id": 19,
+             "last_login": null,
+             "is_superuser": false,
+             "username": "",
+             "first_name": "Денис",
+             "last_name": "Королев",
+             "is_staff": false,
+             "is_active": true,
+             "date_joined": "2025-01-03T13:01:53.238635+07:00"
+           }
+   """
+    class Meta:
+        model = UserRegister
+        fields = "__all__"
+    
+    def get_fields(self):
+        """
+        Exclude fields: "password", "is_activated", "email",  "send_messages", \
+            "groups", "user_permissions"
+        return \
+         ```json
+           {
+             "id": 19,
+             "last_login": null,
+             "is_superuser": false,
+             "username": "",
+             "first_name": "Денис",
+             "last_name": "Королев",
+             "is_staff": false,
+             "is_active": true,
+             "date_joined": "2025-01-03T13:01:53.238635+07:00"
+           }
+         ```
+       """
+        instance = super().get_fields()
+        exclude_instance = ["password", "is_activated", "email",  "send_messages", "groups", "user_permissions"]
+        new_instance = {}
+        for k, v in instance.items():
+            if k in exclude_instance:
+                continue
+            new_instance[f"{k}"] = v
+        return new_instance
+    
+    def update(self, instance, validated_data: [list, dict]) -> object:
+        ## Отработать с cookie
+        """
+        TODO: This for a PATCH method. For update data of single cell or more cells.
+            Method: PATCH
+            URL: for a contact is "api/v1/users/patch/<int:pk>"
+            Method: PUT is not works.
+        :param validated_data: [list, dict].\
+            For change the single cell
+            ```json // it for the logout
+                {
+                    "is_active": False // user is logout
+                }
+            ```
+            or more
+            ```json // it for the login
+                { // user  when run the activate event
+                    "email": < user@email.this >
+                    "password": < user_password >
+                    "token": < string >
+                }
+            ```
+           
+        :return instance: object \
+        ```json
+            {
+              "id": 20,
+              "last_login": null,
+              "is_superuser": false,
+              "username": "Rabbit",
+              "first_name": "Денис",
+              "last_name": "Сергеевич",
+              "is_staff": false,
+              "is_active": false,
+              "date_joined": "2025-01-08T16:47:53.883666+07:00"
+            }
+        '''
+        """
+        
+        
+        instance = super().update(instance, validated_data)
+        
+        return instance
+    
+    
+    

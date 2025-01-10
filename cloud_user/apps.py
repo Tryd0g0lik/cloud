@@ -4,6 +4,7 @@ the total app.
 """
 
 import logging
+import asyncio
 from django.apps import AppConfig
 from django.dispatch import Signal
 
@@ -66,7 +67,6 @@ def user_registered_dispatcher(sender, **kwargs)-> bool:
         log.info(__text)
         return _resp_bool
 
-log.info(f" The 'user_registered' is before the beginning")
 signal_user_registered.connect(weak=False,
                                receiver=user_registered_dispatcher)
 # After connect
