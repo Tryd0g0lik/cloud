@@ -8,11 +8,11 @@ from django.http import JsonResponse
 # from cloud_user.forms_more.forms_login import LoginForm
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
-from cloud_user.serializers import RegisterUserSerializer
+from cloud_user.serializers import UserSerializer
 from asgiref.sync import sync_to_async
 class UserView(viewsets.ModelViewSet):
   queryset = UserRegister.objects.all()
-  serializer_class = RegisterUserSerializer
+  serializer_class = UserSerializer
   # permission_classes = [IsAdminUser]
   
 # class UserPatchViews(viewsets.ModelViewSet ):

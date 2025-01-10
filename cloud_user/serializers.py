@@ -10,7 +10,7 @@ from logs import configure_logging, Logger
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 
-class RegisterUserSerializer(serializers.ModelSerializer, Logger):
+class UserSerializer(serializers.ModelSerializer, Logger):
     log.info("START")
     class Meta:
         model = UserRegister
@@ -66,8 +66,8 @@ class RegisterUserSerializer(serializers.ModelSerializer, Logger):
             _text = (_text.split(":"))[0] + ":"
             # Send of Signal
             # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
-            signal_user_registered.send_robust(RegisterUserSerializer,
-                                        isinstance=_user)
+            signal_user_registered.send_robust(UserSerializer,
+                                               isinstance=_user)
             _text = f"{_text} Signal was sent."
             return _user
         except Exception as e:
