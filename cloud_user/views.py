@@ -15,6 +15,16 @@ class UserView(viewsets.ModelViewSet):
   serializer_class = UserSerializer
   # permission_classes = [IsAdminUser]
   
+  def destroy(self, request, *args, **kwargs):
+    instance = None
+    try:
+      instance = super().destroy(request, *args, **kwargs)
+      instance.data["message"] = "Ok"
+    except Exception as e:
+      instance = Response({"message": f"Not Ok. Mistake => {e.__str__()}", }, status=400)
+    finally:
+      return instance
+      
 # class UserPatchViews(viewsets.ModelViewSet ):
 class UserPatchViews(generics.RetrieveUpdateAPIView):
   """
