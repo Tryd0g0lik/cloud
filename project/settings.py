@@ -279,9 +279,6 @@ CACHES = {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": "cacher",
     },
-    'no_hash_cache': {
-        'BACKEND': cloud.models.NoHashCache,
-    }
 }
 # second a live time of session
 CACHE_MIDDLEWARE_SECONDS = 1900
