@@ -10,7 +10,8 @@ import logging
 from django.core.signing import BadSignature
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-
+from django.core.cache import cache
+from cloud_user.contribute.sessions import create_signer
 from cloud_user.contribute.utilites import signer
 from cloud_user.models import UserRegister
 from dotenv_ import (
@@ -31,16 +32,19 @@ def user_activate(request, sign):
         the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
         - user.is_active = True
         - user.is_activated = True (of table 'UserRegister').
+        \
+        Response (of HttpResponseRedirect)  has data for the cookie. Data of \
+        variable `user_session_{id}`. It is more info in README::COOKIE.
     :param request:
     :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'
     :return:
     """
     _text = f"[{user_activate.__name__}]:"
-    _first_name = None
+    username = None
     try:
         log.info(f"{_text} START")
-        _first_name = signer.unsign(sign)
-        log.info(f"{_text} Get '_first_name': {_first_name.__str__()} ")
+        username = signer.unsign(sign)
+        log.info(f"{_text} Get '_first_name': {username.__str__()} ")
     except BadSignature as e:
         _text = f"{_text} Mistake => 'BadSignature': {e.__str__()}"
         # return redirect("/", permanent=True,)
@@ -48,10 +52,10 @@ def user_activate(request, sign):
         HttpResponseRedirect.__init__( # !!!! Проверка - работает или нет
             status=404,
         )
-        return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
+        return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}")
     # https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/#get-object-or-404
     try:
-        user = get_object_or_404(UserRegister, first_name=_first_name)
+        user = get_object_or_404(UserRegister, username=username)
         try:
             _text = f"{_text} Get 'user': {user.__dict__.__str__()}"
             # logging, it if return error
@@ -64,7 +68,7 @@ def user_activate(request, sign):
         if user.is_activated:
             _text = f"{_text} the object 'user' has 'True' value \
 from 'is_activated'. Redirect. 301"
-            response = HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}/")
+            response = HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}")
             # response = HttpResponseRedirect(URL_REDIRECT_IF_NOTGET_AUTHENTICATION)
             return response
         _text = f"{_text} the object 'user' can not have 'True' value \
@@ -77,7 +81,15 @@ from 'is_activated'."
         user.save()
         _text = f"{_text} the object 'user' can not have 'True' value \
 from 'is_activated'."
-        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION)
+        # CREATE SIGNER
+        user_session = create_signer(user)
+        cache.set(f"user_session_{user.id}", user_session)
+        """ New object has tha `user_session_{id}` variable"""
+        data = {}
+        # SESSION KEY unique for user identification
+        data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
+        HttpResponseRedirect.set_cookie = {**data}
+        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION,)
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
     finally:

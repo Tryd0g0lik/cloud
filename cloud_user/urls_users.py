@@ -16,7 +16,7 @@ Including another URLconf
 from django.urls import (path, include)
 from rest_framework import routers, urls
 
-from cloud_user.views import UserView, UserPatchViews
+from cloud_user.views import UserView, UserPatchViews, send_message
 
 from cloud_user.contribute.controler_activate import user_activate
 
@@ -26,6 +26,7 @@ router.register("", UserView, basename="fulluser")
 
 urlpatterns_user = [
     path("activate/<str:sign>/", user_activate, name="user_activate"),
+    path("email/message/", send_message, name="emailmessage"),
     path("patch/<int:pk>/", UserPatchViews.as_view(), name="login"),
     path("choice/", include(router.urls))
     

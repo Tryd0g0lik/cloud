@@ -13,6 +13,9 @@ info:
     name: Denis
     email: work80@mail.ru
     url: https://github.com/Tryd0g0lik
+servers:
+  - url: http://localhost:8000/api/v1/
+    description: "Basis server"
 paths:
   /users/patch/{pk}/:
     get:
@@ -27,11 +30,24 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            $ref: '#/components/schemas/UserId'
           example: 12
+        - name: user_session
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
+
       responses:
         200:
-          description: Get the array of object from db
+          description: Get the json's array of objects from db
           content:
             application/json:
               schema:
@@ -59,38 +75,76 @@ paths:
       description: |-
         Update the single cell or more cells from user's data of db.
         When changing one the your cell, other cells will have not can change.
+        Hera changes the user's 'is_active' == True (profile is online) of False (profile is ofline)
       operationId: UserPatchViews
       parameters:
         - name: pk
           in: path
           required: true
           schema:
-            type: integer
+            $ref: '#/components/schemas/UserId'
           example: 12
+        - name: user_session
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
+      security:
+        - CookieAuth: []
+          value: ["gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"]
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                type: object
+                oneOf:
+                    - properties:
+                        is_active:
+                            type: boolean
+                            description: User into online (itis True) or ofline (False). Change the user status online.
+                            example: false
+                    - properties:
+                        first_name:
+                            type: string
+                            description: Change the user name.
+                            example: Serge
+                        last_name:
+                            type: string
+                            description: Change the last name.
+                            example: Gerasimov
+
       responses:
         200:
-          description: Get the array of object from db
+          description: Get the json of object from db
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProperties'
+                $ref: '#/components/schemas/UserProperties/oneOf/0'
               example:
                last_login:
-                $ref: '#/components/schemas/UserProperties/properties/last_login/oneOf/0/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_login/oneOf/0/example'
                is_superuser:
-                $ref: '#/components/schemas/UserProperties/properties/is_superuser/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_superuser/example'
                username:
-                $ref: '#/components/schemas/UserProperties/properties/username/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/username/example'
                first_name:
-                $ref: '#/components/schemas/UserProperties/properties/first_name/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/first_name/example'
                last_name:
-                $ref: '#/components/schemas/UserProperties/properties/last_name/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_name/example'
                is_staff:
-                $ref: '#/components/schemas/UserProperties/properties/is_staff/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_staff/example'
                is_active:
-                $ref: '#/components/schemas/UserProperties/properties/is_active/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_active/example'
                date_joined:
-                $ref: '#/components/schemas/UserProperties/properties/date_joined/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/date_joined/example'
         404:
           description: Not found for the provided `pk`
           content:
@@ -120,32 +174,45 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            $ref: '#/components/schemas/UserId'
           example: 12
+        - name: user_session
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
+
       responses:
         200:
-          description: Get the array of object from db
+          description: Get the json of object from db
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProperties'
               example:
                last_login:
-                $ref: '#/components/schemas/UserProperties/properties/last_login/oneOf/0/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_login/oneOf/0/example'
                is_superuser:
-                $ref: '#/components/schemas/UserProperties/properties/is_superuser/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_superuser/example'
                username:
-                $ref: '#/components/schemas/UserProperties/properties/username/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/username/example'
                first_name:
-                $ref: '#/components/schemas/UserProperties/properties/first_name/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/first_name/example'
                last_name:
-                $ref: '#/components/schemas/UserProperties/properties/last_name/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_name/example'
                is_staff:
-                $ref: '#/components/schemas/UserProperties/properties/is_staff/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_staff/example'
                is_active:
-                $ref: '#/components/schemas/UserProperties/properties/is_active/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_active/example'
                date_joined:
-                $ref: '#/components/schemas/UserProperties/properties/date_joined/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/date_joined/example'
         404:
           description: Not found for the provided `pk`
           content:
@@ -176,32 +243,51 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            $ref: '#/components/schemas/UserId'
           example: 12
+        - name: user_session
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
+      requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/UserProperties/oneOf/1'
+
       responses:
         200:
-          description: Get the array of object from db
+          description: Get the json of object from db
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProperties'
+                $ref: '#/components/schemas/UserProperties/oneOf/0'
               example:
                last_login:
-                $ref: '#/components/schemas/UserProperties/properties/last_login/oneOf/0/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_login/oneOf/0/example'
                is_superuser:
-                $ref: '#/components/schemas/UserProperties/properties/is_superuser/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_superuser/example'
                username:
-                $ref: '#/components/schemas/UserProperties/properties/username/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/username/example'
                first_name:
-                $ref: '#/components/schemas/UserProperties/properties/first_name/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/first_name/example'
                last_name:
-                $ref: '#/components/schemas/UserProperties/properties/last_name/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_name/example'
                is_staff:
-                $ref: '#/components/schemas/UserProperties/properties/is_staff/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_staff/example'
                is_active:
-                $ref: '#/components/schemas/UserProperties/properties/is_active/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_active/example'
                date_joined:
-                $ref: '#/components/schemas/UserProperties/properties/date_joined/example'
+                $ref: '#/components/schemas/UserProperties/oneOf/0/properties/date_joined/example'
         404:
           description: Not found for the provided `pk`
           content:
@@ -231,8 +317,20 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            $ref: '#/components/schemas/UserId'
           example: 12
+        - name: user_session
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
       responses:
         204:
           description: It is successful operation. Position was removed.
@@ -265,7 +363,7 @@ paths:
                         $ref: '#/components/schemas/ErrorUsedId'
               example:
                 detail: No UserRegister matches the given query.
-  /users/choice:
+  /users/choice/:
     get:
       tags:
         - user
@@ -273,9 +371,22 @@ paths:
       description: |-
         For update data of single cell or more cells.
       operationId: UserView
+      parameters:
+        - name: user_session
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
       responses:
         200:
-          description: Get the array of object from db
+          description: Get the json's array of objects from db
           content:
             application/json:
               schema:
@@ -313,16 +424,117 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - user
+      summary: Read a user data
+      description: |-
+        For update data of single cell or more cells.
+      operationId: UserPatchViews
+      requestBody:
+        required: true
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/UserProperties/oneOf/1'
+      parameters:
+        - name: is_superuser
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        200:
+          description: Get the json of object from db
+          headers:
+            Set-Cookie:
+                schema:
+                    type: string
+                    example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                    description: Cookie for user session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProperties/oneOf/0'
+                is_active:
+                    type: boolean
+                    example: false
+              example:
+                id: 12
+                last_login:
+                    $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_login/oneOf/0/example'
+                is_superuser:
+                    $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_superuser/example'
+                username:
+                    $ref: '#/components/schemas/UserProperties/oneOf/0/properties/username/example'
+                first_name:
+                    $ref: '#/components/schemas/UserProperties/oneOf/0/properties/first_name/example'
+                last_name:
+                    $ref: '#/components/schemas/UserProperties/oneOf/0/properties/last_name/example'
+                is_staff:
+                    $ref: '#/components/schemas/UserProperties/oneOf/0/properties/is_staff/example'
+                is_active: false
+                date_joined:
+                    $ref: '#/components/schemas/UserProperties/oneOf/0/properties/date_joined/example'
+
+        404:
+          description: Something what wrong!
+          content:
+            application/json:
+              schema:
+                properties:
+                    detail:
+                        type: string
+                        $ref: '#/components/schemas/ErrorUsedId'
+              example:
+                detail: No UserRegister matches the given query.
+        400:
+          description: Here get the syntax error. Here an example the one of mpre errors
+          content:
+            application/json:
+                schema:
+                    properties:
+                        first_name:
+                            type: array
+                            items:
+                                type: string
+
+                example:
+                    first_name: [Это поле не может быть пустым.]
+
+
+        500:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
     UserId:
-      type: object
+      type: integer
       properties:
         pk:
           type: integer
           nullable: false
+          minimum: 0
           example: 1
+    UserPassword:
+        type: string
+        properties:
+          password:
+            type: string
+            example: daaEW12%Ds
+    UserEmail:
+        type: object
+        properties:
+          email:
+            type: string
+            format: email
+            example: user@email.here
+
     Status:
       type: object
       properties:
@@ -334,7 +546,10 @@ components:
       type: object
       required:
         - id
+        - user_session
         - last_login
+        - password
+        - email
         - is_superuser
         - username
         - first_name
@@ -342,61 +557,101 @@ components:
         - is_staff
         - is_active
         - date_joined
-      properties:
-        id:
-          $ref: '#/components/schemas/UserId'
-        last_login:
-            oneOf:
-                - type: string
-                  format: date-time
-                  nullable: true
-                  description: |-
-                    Itis an alias of user.
+      oneOf:
+        - properties:
+            id:
+                $ref: '#/components/schemas/UserId'
+            last_login:
+                oneOf:
+                    -   type: string
+                        format: date-time
+                        nullable: true
+                        description: |-
+                            Itis an alias of user.
+                            Max length is 150 characters.
+                        example: 2024-01-01
+                    -   type: string
+                        format: date-time
+                        nullable: true
+                        description: |-
+                            Itis an alias of user.
+                            Max length is 150 characters.
+                        example: 2024.01.01
+            is_superuser:
+                type: boolean
+                example: false
+                description: |-
+                    If it is the 'True', it means that is the superuser.
+                    Here, the superuser is only one!
+            username:
+                type: string
+                example: Victorovich
+                description: |-
+                    This is unique name of user.
                     Max length is 150 characters.
-                  example: 2024-01-01
-                - type: string
-                  format: date-time
-                  nullable: true
-                  description: |-
-                    Itis an alias of user.
+            first_name:
+                type: string
+                nullable: true
+                description: Max length is 150 characters.
+                example: null
+            last_name:
+                type: string
+                nullable: true
+                description: Max length is 150 characters.
+                example: Denis
+            is_staff:
+                type: boolean
+                description: Designates whether the user can log into this admin site. default=False
+                example: false
+            is_active:
+                type: boolean
+                description: |-
+                    This is the status user. He is online (true) or ofline (false).
+                example: true
+            date_joined:
+                type: string
+                description: |-
+                    String, datetime. Format is "2024-10-01" or "2024.10.01". 
+                    This is date of the user's registration.
+                format: date-time
+                example: 2024-01-01
+        - properties:
+            last_login:
+                oneOf:
+                    -   type: string
+                        format: date-time
+                        nullable: true
+                        description: |-
+                            Itis an alias of user.
+                            Max length is 150 characters.
+                        example: 2024-01-01
+                    -   type: string
+                        format: date-time
+                        nullable: true
+                        description: |-
+                            Itis an alias of user.
+                            Max length is 150 characters.
+                        example: 2024.01.01
+            password:
+                $ref: "#/components/schemas/UserPassword"
+            email:
+                $ref: "#/components/schemas/UserEmail"
+            is_superuser:
+                type: boolean
+                example: false
+                description: If it is the 'True', it means that is the superuser
+            username:
+                type: string
+                example: Victorovich
+                description: |-
+                    This is unique name of user.
                     Max length is 150 characters.
-                  example: 2024.01.01
-        is_superuser:
-            type: boolean
-            example: false
-            description: If it is the 'True', it means that is the superuser
-        username:
-            type: string
-            example: Victorovich
-            description: |-
-                This is unique name of user.
-                 Max length is 150 characters.
-        first_name:
-            type: string
-            nullable: true
-            description: Max length is 150 characters.
-            example: null
-        last_name:
-            type: string
-            nullable: true
-            description: Max length is 150 characters.
-            example: Denis
-        is_staff:
-            type: boolean
-            description: Designates whether the user can log into this admin site. default=False
-            example: false
-        is_active:
-            type: boolean
-            description: |-
-                This is the status user. He is online (true) or ofline (false).
-            example: false
-        date_joined:
-            type: string
-            description: |-
-                String, datetime. Format is "2024-10-01" or "2024.10.01". 
-                This is date of the user's registration.
-            format: date-time
-            example: 2024-01-01
+            first_name:
+                type: string
+                description: Max length is 150 characters.
+                nullable: true
+                example: null
+
     AllUserProperties:
         type: object
         properties:
@@ -464,10 +719,13 @@ components:
         detail:
           description: A human readable error message
           type: string
-  securitySchemes:
-    ApiKey:
-      type: apiKey
-      in: header
-      name: X-Api-Key
-security:
-  - ApiKey: []
+#   securitySchemes:
+#     ApiKey:
+#       type: apiKey
+#       in: header
+#       name: X-Api-Key
+
+
+
+# security:
+#   - ApiKey: []

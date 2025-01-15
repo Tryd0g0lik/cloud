@@ -28,8 +28,12 @@ class UserRegister(AbstractUser):
        :param is_superuser: bool. Designates that this user has \
            all permissions. He is the admin site and only one.
        :param groups:
-       :param  password: str. Max length of characters is 128.
+       :param  password: str. Max length of characters is 128 and min is 3.
        """
+    last_name = models.CharField(_("last name"), max_length=150, null=True,
+                                 blank=True)
+    first_name = models.CharField(_("first name"), max_length=150, null=True,
+                                  blank=True)
     email = models.EmailField(help_text=_("email address"),
                               blank=False,
                               unique=True)

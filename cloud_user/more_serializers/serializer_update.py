@@ -1,6 +1,7 @@
 import logging
 from rest_framework import serializers
 from cloud_user.models import UserRegister
+from cloud_user.contribute.services import get_fields_response
 from logs import configure_logging, Logger
 
 configure_logging(logging.INFO)
@@ -43,33 +44,7 @@ class UserPatchSerializer(serializers.ModelSerializer):
         model = UserRegister
         fields = "__all__"
     
-    def get_fields(self):
-        """
-        Exclude fields: "password", "is_activated", "email",  "send_messages", \
-            "groups", "user_permissions"
-        return \
-         ```json
-           {
-             "id": 19,
-             "last_login": null,
-             "is_superuser": false,
-             "username": "",
-             "first_name": "Денис",
-             "last_name": "Королев",
-             "is_staff": false,
-             "is_active": true,
-             "date_joined": "2025-01-03T13:01:53.238635+07:00"
-           }
-         ```
-       """
-        instance = super().get_fields()
-        exclude_instance = ["password", "is_activated", "email",  "send_messages", "groups", "user_permissions"]
-        new_instance = {}
-        for k, v in instance.items():
-            if k in exclude_instance:
-                continue
-            new_instance[f"{k}"] = v
-        return new_instance
+    
     
     def update(self, instance, validated_data: [list, dict]) -> object:
         ## Отработать с cookie
@@ -112,6 +87,7 @@ class UserPatchSerializer(serializers.ModelSerializer):
         
         
         instance = super().update(instance, validated_data)
+        instance = get_fields_response(self)
         
         return instance
     
