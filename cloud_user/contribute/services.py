@@ -1,7 +1,5 @@
 from cloud_user.models import UserRegister
 
-
-
 def find_superuser()-> [object, None]:
     """
     TODO: This is checker. It checks, we have a superuser in db or not/
@@ -41,7 +39,6 @@ def get_fields_response(obj,
                             "email",  "send_messages",
                             "groups", "user_permissions"]
     new_instance = {}
-    # for k, v in obj.data.items():
     for k, v in dict(obj.data).items():
         if k in exclude_instance:
             continue

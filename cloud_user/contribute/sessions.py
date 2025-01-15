@@ -1,8 +1,6 @@
-import datetime
 import bcrypt
 from django.core.signing import Signer
-from django.core.cache import cache, caches
-from django.contrib.sessions.models import Session
+from django.core.cache import cache
 from cloud_user.hashers import hash_password
 from cloud_user.models import UserRegister
 signer = Signer()
