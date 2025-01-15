@@ -1,3 +1,6 @@
+"""
+cloud_user/views.py
+"""
 # Create your views here.
 import json
 

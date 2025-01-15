@@ -1,5 +1,5 @@
 """
-project/urls.py
+cloud_file/urls_files.py
 URL configuration for project project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -15,22 +15,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import FileStorageViewSet
 
-from django.contrib import admin
-
-from django.urls import include, path, re_path
-
-from cloud_user import views as vws
-# from cloud_user.urls_users import urlpatterns
-from cloud_user.urls_users import urlpatterns_user
-
-
-
+router = DefaultRouter()
+router.register(r'files', FileStorageViewSet, basename='file-storage')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("", vws.main, name="main"),
-    path("api/v1/users/", include((urlpatterns_user, "user"), namespace="user")),
-    # path('api/v1/users/activate/<str:sign>', user_activate, name="user_activate"),
-    # path("api/v1/users/", include((router.urls, "user"), namespace="user")),
+    path('', include(router.urls)),
 ]

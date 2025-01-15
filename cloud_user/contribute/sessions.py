@@ -1,3 +1,8 @@
+"""
+cloud_user/contribute/sessions.py
+    HASH for work with the cacher (from session) table of db.
+    Look to the settings.py::CACHES
+ """
 import bcrypt
 from django.core.signing import Signer
 from django.core.cache import cache

@@ -1,4 +1,5 @@
 """
+cloud_user/contribute/controler_activate.py
 This a function for control an authentication. This is, when, the user \
 makes registration on the site.\
 The 'send_activation_notificcation' from 'app.py' makes sending the email-message \
@@ -27,14 +28,17 @@ log = logging.getLogger(__name__)
 """Срабатывает по запросы урла который содержит подпись"""
 def user_activate(request, sign):
     """
-    TODO: Function changes the 'sign' of signer from the url 'activate/<str:sign>'.\
-        If all is OK,  we get the 301 code by \
-        the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
-        - user.is_active = True
-        - user.is_activated = True (of table 'UserRegister').
-        \
-        Response (of HttpResponseRedirect)  has data for the cookie. Data of \
-        variable `user_session_{id}`. It is more info in README::COOKIE.
+    TODO: From the *_user/serializers.py::UserSerializer.create the message \
+(contain referral link) go out to the user's email.\
+\
+Function changes the 'sign' of signer from the url 'activate/<str:sign>'.\
+If all is OK,  we get the 301 code by \
+the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
+- user.is_active = True
+- user.is_activated = True (of table 'UserRegister').
+\
+Response (of HttpResponseRedirect)  has data for the cookie. Data of \
+variable `user_session_{id}`. It is more info in README::COOKIE.
     :param request:
     :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'
     :return:

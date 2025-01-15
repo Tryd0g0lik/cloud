@@ -1,3 +1,6 @@
+"""
+cloud_user/contribute/utilites.py
+"""
 import logging
 from django.core.signing import Signer
 from django.template.loader import render_to_string
