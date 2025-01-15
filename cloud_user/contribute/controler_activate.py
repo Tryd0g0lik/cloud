@@ -38,7 +38,7 @@ the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
 - user.is_activated = True (of table 'UserRegister').
 \
 Response (of HttpResponseRedirect)  has data for the cookie. Data of \
-variable `user_session_{id}`. It is more info in README::COOKIE.
+variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README::COOKIE.
     :param request:
     :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'
     :return:
@@ -88,11 +88,15 @@ from 'is_activated'."
         # CREATE SIGNER
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session)
+        cache.set(f"is_superuser_{user.id}", user.is_superuser)
         """ New object has tha `user_session_{id}` variable"""
         data = {}
         # SESSION KEY unique for user identification
         data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
-        HttpResponseRedirect.set_cookie = {**data}
+        # COOCLIE SUPERUSER
+        data[f'is_superuser_{user.id}'] = cache.get(f"is_superuser_{user.id}")
+        for k, v in {**data}.items():
+            HttpResponseRedirect.set_cookie(key=k, value=v)
         return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION,)
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"

@@ -15,6 +15,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def list(self, request):
+        
         if request.user.is_staff:
             # Если администратор, получаем файлы всех пользователей
             files = FileStorage.objects.all()
@@ -34,6 +35,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 )
         
         # Сохранение файла на диск с уникальным именем
+        
         file_path = default_storage.save(f'uploads/{file_obj.name}', file_obj)
         
         # Создание записи в БД

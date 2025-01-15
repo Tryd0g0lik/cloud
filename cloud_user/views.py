@@ -10,8 +10,8 @@ from rest_framework import (viewsets, generics, mixins)
 from rest_framework.response import Response
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
-
 from django.http import HttpResponse
+from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (create_signer, check,
                                             hash_create_user_session)
@@ -33,6 +33,40 @@ METHOD: GET, CREATE, PUT, DELETE.
   queryset = UserRegister.objects.all()
   serializer_class = UserSerializer
   # permission_classes = [IsAdminUser]
+  
+  def list(self, request, *args, **kwargs):
+    # key_list = request.COOKIES.keys()
+    # user_session_key_list = \
+    #   [key for key in list(key_list) if r"user_session_*" in key]
+    # numb = user_session_key_list[0].split("_")[-1]
+    # user_session = request.COOKIES.get(f"user_session_{numb}")
+    # is_superuser = request.COOKIES.get(f"is_superuser_{numb}")
+    
+    user_data = dict((get_data_authenticate(request)).__dict__)
+    try:
+      # Check presences the 'user_session', 'is_superuser' in cacher table of db
+      if cache.get(f"is_superuser_{user_data['user_id']}") is not None and \
+        cache.get(f"user_session_{user_data['user_id']}") is not None and \
+        cache.get(f"user_session_{user_data['user_id']}") == user_data['user_session']:
+        # Below, check, It is the superuser or not.
+        # Check, 'user_settion_{id}' secret key from COOCKIE is aquils to
+        # 'user_settion_{id}' from cacher table of db
+        if  cache.get(f"is_superuser_{user_data['user_id']}") == True:
+          # Если администратор, получаем всех пользователей
+          files = UserRegister.objects.all()
+        else:
+          # Получаем файлы только текущего пользователя
+          files = UserRegister.objects.filter(id=request.user)
+      
+        serializer = UserRegister(files, many=True)
+        
+        return Response(serializer.data)
+      return Response({"message": f"[{__name__}::\
+{UserView.__class__.list.__name__}]: "})
+    except Exception as e:
+      return Response({"message": f"[{__name__}::\
+{UserView.__class__.list.__name__}]: \
+Mistake => f{e.__str__()}"})
   
   def retrieve(self, request, *args, **kwargs):
    
@@ -124,11 +158,9 @@ Your profile is not activate"}
     instance = super().create(request, *args, **kwargs)
     instance = get_fields_response(instance)
     response = HttpResponse(instance.data, status=200)
-    # COOCLIE SUPERUSER
-    response.set_cookie('is_superuser', instance.data["is_superuser"])
     
     
-    return instance
+    return response
   
   def destroy(self, request, *args, **kwargs):
     """

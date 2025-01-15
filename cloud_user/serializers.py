@@ -38,6 +38,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             _user.activated = False
             # Cot czn registrate the superuser of user
             _user.is_superuser = False
+            _user.is_staff = False
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)
