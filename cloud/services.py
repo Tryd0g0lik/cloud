@@ -11,15 +11,17 @@ the authenticate of user.
         }' if everything went well or \
     returns the empty object if everything went not well.
     """
-    instance = object()
+    class CookieData:
+        pass
+    instance = CookieData()
     
     try:
         key_list = request.COOKIES.keys()
         user_session_key_list = \
-            [key for key in list(key_list) if r"user_session_*" in key]
+            [key for key in list(key_list) if r"user_session_" in key]
         if len(user_session_key_list) != 0:
             numb = user_session_key_list[0].split("_")[-1]
-            setattr(instance, "user_id", numb)
+            setattr(instance, "id", numb)
             setattr(instance,  "user_session", \
                     request.COOKIES.get(f"user_session_{numb}"))
             setattr(instance, "is_superuser", \

@@ -10,7 +10,7 @@ from rest_framework import (viewsets, generics, mixins)
 from rest_framework.response import Response
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (create_signer, check,
@@ -41,36 +41,42 @@ METHOD: GET, CREATE, PUT, DELETE.
     # numb = user_session_key_list[0].split("_")[-1]
     # user_session = request.COOKIES.get(f"user_session_{numb}")
     # is_superuser = request.COOKIES.get(f"is_superuser_{numb}")
-    
-    user_data = dict((get_data_authenticate(request)).__dict__)
+    class DataCoockie:
+      pass
+    user_data = get_data_authenticate(request)
+    cacher = DataCoockie()
+    cacher.user_session = cache.get(f"user_session_{user_data.id}")
+    cacher.is_superuser = cache.get(f"is_superuser_{user_data.id}")
     try:
       # Check presences the 'user_session', 'is_superuser' in cacher table of db
-      if cache.get(f"is_superuser_{user_data['user_id']}") is not None and \
-        cache.get(f"user_session_{user_data['user_id']}") is not None and \
-        cache.get(f"user_session_{user_data['user_id']}") == user_data['user_session']:
+      if cacher.is_superuser is not None and \
+        cacher.user_session is not None and \
+        cacher.user_session == cache.get(f"user_session_{user_data.id}"):
         # Below, check, It is the superuser or not.
         # Check, 'user_settion_{id}' secret key from COOCKIE is aquils to
         # 'user_settion_{id}' from cacher table of db
-        if  cache.get(f"is_superuser_{user_data['user_id']}") == True:
+        # /* ---------------- cacher.is_superuser = True Удалить ---------------- */
+        if  cacher.is_superuser == True:
           # Если администратор, получаем всех пользователей
           files = UserRegister.objects.all()
+          serializer = UserSerializer(files, many=True)
+          return Response(serializer.data)
         else:
           # Получаем файлы только текущего пользователя
-          files = UserRegister.objects.filter(id=request.user)
+          files = UserRegister.objects.filter(id=int(user_data.id))
       
-        serializer = UserRegister(files, many=True)
-        
-        return Response(serializer.data)
-      return Response({"message": f"[{__name__}::\
-{UserView.__class__.list.__name__}]: "})
+          serializer = UserSerializer(files, many=True)
+          instance = get_fields_response(serializer)
+          return Response(instance)
+      res = {"message": f"[{__name__}::list]: "}
+      return JsonResponse(data=res)
     except Exception as e:
-      return Response({"message": f"[{__name__}::\
-{UserView.__class__.list.__name__}]: \
+      return JsonResponse(data={"message": f"[{__name__}::list]: \
 Mistake => f{e.__str__()}"})
   
   def retrieve(self, request, *args, **kwargs):
    
-    user_session = request.COOKIES.get("user_session")
+    user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
     check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
     
     if not check_bool:
@@ -80,7 +86,7 @@ Your profile is not activate"}), 404
     # if 'pk' in kwargs.keys():
     instance = super().retrieve(request, *args, **kwargs)
     instance = get_fields_response(instance)
-    return instance
+    return JsonResponse(instance)
     # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
   
   def update(self, request, *args, **kwargs):
@@ -157,7 +163,7 @@ Your profile is not activate"}
     
     instance = super().create(request, *args, **kwargs)
     instance = get_fields_response(instance)
-    response = HttpResponse(instance.data, status=200)
+    response = JsonResponse(data=instance, status=200)
     
     
     return response

@@ -83,8 +83,8 @@ from 'is_activated'."
         user.is_active = True
         user.is_activated = True
         user.save()
-        _text = f"{_text} the object 'user' can not have 'True' value \
-from 'is_activated'."
+#         _text = f"{_text} the object 'user' can not have 'True' value \
+# from 'is_activated'."
         # CREATE SIGNER
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session)
@@ -95,13 +95,15 @@ from 'is_activated'."
         data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
         # COOCLIE SUPERUSER
         data[f'is_superuser_{user.id}'] = cache.get(f"is_superuser_{user.id}")
-        for k, v in {**data}.items():
-            HttpResponseRedirect.set_cookie(key=k, value=v)
-        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION,)
+        # for k, v in {**data}.items():
+        #     HttpResponseRedirect.set_cookie(key=k, value=v)
+       
+        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION, {**data})
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
     finally:
         if "Mistake" in _text:
             log.error(_text)
         else:
+            _text = 'Ok'
             log.info(_text)
