@@ -1,9 +1,12 @@
 """
 cloud_file/views.py
 """
+from django.core.files.base import ContentFile
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+
+from cloud_user.models import UserRegister
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
@@ -12,7 +15,7 @@ import os
 
 
 class FileStorageViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
     
     def list(self, request):
         
@@ -27,20 +30,28 @@ class FileStorageViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     def create(self, request):
+        # class FileLoad:
+        #     def __init__(self):
+        #         self.name = self.read_file()
+        #     def read_file(self):
+        #         f = open("e://Netologe/diplom/archiv/README.docx", "rb", encoding='utf-8')
+        #         file = f.read()
+        #         f.close()
+        #         return file
+                
+        # добавить куки и сделать свагер
         file_obj = request.FILES.get('file')
         if not file_obj:
             return Response(
                 {"error": "No file provided."},
                 status=status.HTTP_400_BAD_REQUEST
                 )
-        
         # Сохранение файла на диск с уникальным именем
-        
-        file_path = default_storage.save(f'uploads/{file_obj.name}', file_obj)
-        
+        file_path = default_storage.save(f'uploads/test_file.docx', file_obj)
         # Создание записи в БД
+        user = UserRegister.objects.all().first()
         file_record = FileStorage.objects.create(
-            user=request.user,
+            user=user, # request.user,
             original_name=file_obj.name,
             size=file_obj.size,
             file_path=file_path,

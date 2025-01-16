@@ -20,8 +20,8 @@ from rest_framework.routers import DefaultRouter
 from .views import FileStorageViewSet
 
 router = DefaultRouter()
-router.register(r'files', FileStorageViewSet, basename='file-storage')
+router.register(r'', FileStorageViewSet, basename='file-storage')
 
-urlpatterns = [
+urlpatterns_files = [
     path('', include(router.urls)),
 ]

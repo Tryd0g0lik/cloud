@@ -32,7 +32,7 @@ METHOD: GET, CREATE, PUT, DELETE.
   """
   queryset = UserRegister.objects.all()
   serializer_class = UserSerializer
-  permission_classes = [permissions.IsAuthenticated]
+  # permission_classes = [permissions.IsAuthenticated]
   # permission_classes = [IsAdminUser]
   
   def list(self, request, *args, **kwargs):
