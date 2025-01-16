@@ -1,4 +1,6 @@
-"""Here is register app the "cloud_user and receiver function \
+"""
+cloud_user/apps.py
+Here is register app the "cloud_user and receiver function \
 the 'user_registered_dispatcher' in 'Signal'. It is by activation \
 the total app.
 """

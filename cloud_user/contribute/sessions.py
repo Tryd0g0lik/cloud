@@ -1,8 +1,11 @@
-import datetime
+"""
+cloud_user/contribute/sessions.py
+    HASH for work with the cacher (from session) table of db.
+    Look to the settings.py::CACHES
+ """
 import bcrypt
 from django.core.signing import Signer
-from django.core.cache import cache, caches
-from django.contrib.sessions.models import Session
+from django.core.cache import cache
 from cloud_user.hashers import hash_password
 from cloud_user.models import UserRegister
 signer = Signer()
@@ -109,19 +112,19 @@ Mistake => {e.__str__()}")
         pass
     
 def update(pk: int, session_key: str,
-                        sessin_time: int =86400 ):
+                        live_time: int =86400 ):
     """"
     TODO: Create the new value for 'user_session_{id}'. Time live is 86400 seconds\
 (or 24 hours) This is for the single object from user's db.
     :param pk: int. Index of single object from db.
     :param session_key: str. It is the key name
-    :param sessin_time: int This is a time live for session key. By the default \
+    :param live_time: int This is a time live for session key. By the default \
 value is the 86400 hours.
     :return: False means what the updates have can not get or Ture,
     """
     status_bool = False
     try:
-        status_bool = hash_create_user_session(pk, session_key, sessin_time)
+        status_bool = hash_create_user_session(pk, session_key, live_time)
     except Exception as e:
         raise ValueError(f'[{__name__}::{update.__name__}]: \
 Mistake => {e.__str__()}')

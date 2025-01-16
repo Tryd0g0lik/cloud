@@ -1,4 +1,5 @@
 """
+cloud_user/contribute/controler_activate.py
 This a function for control an authentication. This is, when, the user \
 makes registration on the site.\
 The 'send_activation_notificcation' from 'app.py' makes sending the email-message \
@@ -27,14 +28,17 @@ log = logging.getLogger(__name__)
 """Срабатывает по запросы урла который содержит подпись"""
 def user_activate(request, sign):
     """
-    TODO: Function changes the 'sign' of signer from the url 'activate/<str:sign>'.\
-        If all is OK,  we get the 301 code by \
-        the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
-        - user.is_active = True
-        - user.is_activated = True (of table 'UserRegister').
-        \
-        Response (of HttpResponseRedirect)  has data for the cookie. Data of \
-        variable `user_session_{id}`. It is more info in README::COOKIE.
+    TODO: From the *_user/serializers.py::UserSerializer.create the message \
+(contain referral link) go out to the user's email.\
+\
+Function changes the 'sign' of signer from the url 'activate/<str:sign>'.\
+If all is OK,  we get the 301 code by \
+the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
+- user.is_active = True
+- user.is_activated = True (of table 'UserRegister').
+\
+Response (of HttpResponseRedirect)  has data for the cookie. Data of \
+variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README::COOKIE.
     :param request:
     :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'
     :return:
@@ -79,21 +83,27 @@ from 'is_activated'."
         user.is_active = True
         user.is_activated = True
         user.save()
-        _text = f"{_text} the object 'user' can not have 'True' value \
-from 'is_activated'."
+#         _text = f"{_text} the object 'user' can not have 'True' value \
+# from 'is_activated'."
         # CREATE SIGNER
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session)
+        cache.set(f"is_superuser_{user.id}", user.is_superuser)
         """ New object has tha `user_session_{id}` variable"""
         data = {}
         # SESSION KEY unique for user identification
         data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
-        HttpResponseRedirect.set_cookie = {**data}
-        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION,)
+        # COOCLIE SUPERUSER
+        data[f'is_superuser_{user.id}'] = cache.get(f"is_superuser_{user.id}")
+        # for k, v in {**data}.items():
+        #     HttpResponseRedirect.set_cookie(key=k, value=v)
+       
+        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION, {**data})
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
     finally:
         if "Mistake" in _text:
             log.error(_text)
         else:
+            _text = 'Ok'
             log.info(_text)

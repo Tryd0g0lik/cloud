@@ -1,4 +1,7 @@
-"""Here is a serializer fot user registration"""
+"""
+cloud_user/serializers.py
+Here is a serializer fot user registration
+"""
 import logging
 from rest_framework import serializers
 
@@ -33,14 +36,18 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             _user.send_messages = True
             _user.is_active = False
             _user.activated = False
+            # Cot czn registrate the superuser of user
             _user.is_superuser = False
+            _user.is_staff = False
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)
             # get the text from the basis value
             _text = (_text.split(":"))[0] + ":"
 
-            # Send of Signal
+            # Send of Signal. Sends the message with the referral link for
+            # user authentication.
+            # The *_user/controler_activate.py::user_activate make changes in db.
             # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
             signal_user_registered.send_robust(UserSerializer,
                                                isinstance=_user)
@@ -60,7 +67,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
 
     def update(self, instance, validated_data):
         superuser = find_superuser()
-        if superuser:
+        if superuser: # ????? What the logic?
             superuser_id = superuser.id
             instance = None
             if validated_data["id"] == superuser_id:

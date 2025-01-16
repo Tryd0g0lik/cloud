@@ -1,11 +1,13 @@
+"""
+cloud_user/serializers.py
+Not more functions
+"""
 from cloud_user.models import UserRegister
-
-
 
 def find_superuser()-> [object, None]:
     """
-    TODO: This is checker. It checks, we have a superuser in db or not/
-        'True' if haves a superuser or 'False'
+    TODO: Checker. It checks, we have a superuser in db or not/
+'True' if haves a superuser or 'False'
     :return: object or None
     """
     superuser_list = UserRegister.objects.filter(is_superuser=True)
@@ -17,6 +19,8 @@ def get_fields_response(obj,
                         exclude_instance=[]
                         ):
     """
+    TODO: This is function for returning the set of fields. They are sending \
+in response for the client.
     :param exclude_instance: list. This for the fields exclude. Bu default is \
     ["password", "is_activated",
     "email",  "send_messages",
@@ -41,7 +45,6 @@ def get_fields_response(obj,
                             "email",  "send_messages",
                             "groups", "user_permissions"]
     new_instance = {}
-    # for k, v in obj.data.items():
     for k, v in dict(obj.data).items():
         if k in exclude_instance:
             continue

@@ -1,3 +1,6 @@
+"""
+cloud_user/views.py
+"""
 # Create your views here.
 import json
 
@@ -7,8 +10,8 @@ from rest_framework import (viewsets, generics, mixins)
 from rest_framework.response import Response
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
-
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (create_signer, check,
                                             hash_create_user_session)
@@ -31,9 +34,49 @@ METHOD: GET, CREATE, PUT, DELETE.
   serializer_class = UserSerializer
   # permission_classes = [IsAdminUser]
   
+  def list(self, request, *args, **kwargs):
+    # key_list = request.COOKIES.keys()
+    # user_session_key_list = \
+    #   [key for key in list(key_list) if r"user_session_*" in key]
+    # numb = user_session_key_list[0].split("_")[-1]
+    # user_session = request.COOKIES.get(f"user_session_{numb}")
+    # is_superuser = request.COOKIES.get(f"is_superuser_{numb}")
+    class DataCoockie:
+      pass
+    coockie_data = get_data_authenticate(request)
+    cacher = DataCoockie()
+    cacher.user_session = cache.get(f"user_session_{coockie_data.id}")
+    cacher.is_superuser = cache.get(f"is_superuser_{coockie_data.id}")
+    try:
+      # Check presences the 'user_session', 'is_superuser' in cacher table of db
+      if cacher.is_superuser is not None and \
+        cacher.user_session is not None and \
+        cacher.user_session == cache.get(f"user_session_{coockie_data.id}"):
+        # Below, check, It is the superuser or not.
+        # Check, 'user_settion_{id}' secret key from COOCKIE is aquils to
+        # 'user_settion_{id}' from cacher table of db
+        # /* ---------------- cacher.is_superuser = True Удалить ---------------- */
+        if  cacher.is_superuser == True:
+          # Если администратор, получаем всех пользователей
+          files = UserRegister.objects.all()
+          serializer = UserSerializer(files, many=True)
+          return Response(serializer.data)
+        else:
+          # Получаем файлы только текущего пользователя
+          files = UserRegister.objects.filter(id=int(coockie_data.id))
+      
+          serializer = UserSerializer(files, many=True)
+          instance = get_fields_response(serializer)
+          return Response(instance)
+      res = {"message": f"[{__name__}::list]: "}
+      return JsonResponse(data=res)
+    except Exception as e:
+      return JsonResponse(data={"message": f"[{__name__}::list]: \
+Mistake => f{e.__str__()}"})
+  
   def retrieve(self, request, *args, **kwargs):
    
-    user_session = request.COOKIES.get("user_session")
+    user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
     check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
     
     if not check_bool:
@@ -43,7 +86,7 @@ Your profile is not activate"}), 404
     # if 'pk' in kwargs.keys():
     instance = super().retrieve(request, *args, **kwargs)
     instance = get_fields_response(instance)
-    return instance
+    return JsonResponse(instance)
     # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
   
   def update(self, request, *args, **kwargs):
@@ -76,7 +119,7 @@ Your profile is not activate"}
       f'pbkdf2${str(20000)}{hash_password(request.data["password"]).decode("utf-8")}'
     
     instance = super().update(request, *args, **kwargs)
-    return Response(instance, status=200) # Проверить
+    return Response(instance.data, status=200) # Проверить
   def create(self, request, *args, **kwargs):
     """
     TODO: Entrypoint for the POST method of request \
@@ -120,12 +163,10 @@ Your profile is not activate"}
     
     instance = super().create(request, *args, **kwargs)
     instance = get_fields_response(instance)
-    response = HttpResponse(instance.data, status=200)
-    # COOCLIE SUPERUSER
-    response.set_cookie('is_superuser', instance.data["is_superuser"])
+    response = JsonResponse(data=instance, status=200)
     
     
-    return instance
+    return response
   
   def destroy(self, request, *args, **kwargs):
     """
@@ -138,18 +179,30 @@ Your profile is not activate"}
     instance = None
     user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
     check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
+
+    # CHECK to USER
+    class DataCoockie:
+      pass
+
+    coockie_data = get_data_authenticate(request)
+    cacher = DataCoockie()
+    cacher.user_session = cache.get(f"user_session_{coockie_data.id}")
+    cacher.is_superuser = cache.get(f"is_superuser_{coockie_data.id}")
     
     if not check_bool:
       return Response({"message": f"[{__name__}::{self.__class__.destroy.__name__}]: Not OK"})
     try:
-      # Remove the user
-      instance = super().destroy(request, *args, **kwargs)
-      # Remove cache the user
-      
-      cache.delete(f"user_session_{kwargs['pk']}")
-      instance.data["message"] = "Ok"
+      if cacher.is_superuser and \
+        cacher.user_session == cache.get(f"user_session_{coockie_data.id}"):
+        # Remove the user
+        instance = super().destroy(request, *args, **kwargs)
+        # Remove cache the user
+        cache.delete(f"user_session_{kwargs['pk']}")
+        cache.delete(f"is_superuser{kwargs['pk']}")
+        instance = Response()
     except Exception as e:
-      instance = Response({"message": f"Not Ok. Mistake => {e.__str__()}", }, status=400)
+      instance = Response({"message": f"Not Ok.\
+Mistake => {e.__str__()}", }, status=400)
     finally:
       return instance
       
@@ -191,7 +244,17 @@ request.data["is_active"] == True, and 'is_active'
     :return: the data of body and 'user_session_{id}' from cookie
     """
     
-    if request.method.lower() == "patch":
+    # CHECK to USER
+    class DataCoockie:
+      pass
+    coockie_data = get_data_authenticate(request)
+    cacher = DataCoockie()
+    cacher.user_session = cache.get(f"user_session_{coockie_data.id}")
+    cacher.is_superuser = cache.get(f"is_superuser_{coockie_data.id}")
+    # try:
+    
+    if cacher.user_session == cache.get(f"user_session_{coockie_data.id}") and \
+      request.method.lower() == "patch":
       data = request.data
       user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
       # CHECK a COOKIE KEY
@@ -219,7 +282,7 @@ Something what wrong. Check the 'pk'."}
         # CHANGE
         instance = super().patch(request, args, kwargs)
     
-        response = HttpResponse(instance.data, status=200)
+        response = Response(instance.data, status=200)
         # IS_ACTIVE
         if data["is_active"]:
           hash_create_user_session(kwargs['pk'],
@@ -229,8 +292,6 @@ Something what wrong. Check the 'pk'."}
           response.set_cookie(f"user_session_{kwargs['pk']}", True)
         # elif not data["is_active"]:
         #   (user_list.first()).is_active = False
-          
-        
         user_list.first().save()
         return response
       return Response({
