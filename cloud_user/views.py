@@ -6,7 +6,7 @@ import json
 
 from django.shortcuts import render
 from django.core.cache import (cache, caches)
-from rest_framework import (viewsets, generics, mixins)
+from rest_framework import (viewsets, generics, mixins, permissions)
 from rest_framework.response import Response
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
@@ -32,6 +32,7 @@ METHOD: GET, CREATE, PUT, DELETE.
   """
   queryset = UserRegister.objects.all()
   serializer_class = UserSerializer
+  permission_classes = [permissions.IsAuthenticated]
   # permission_classes = [IsAdminUser]
   
   def list(self, request, *args, **kwargs):
