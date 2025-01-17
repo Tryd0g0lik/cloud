@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "cloud_user",
     "cloud_file",
-    # "cloud",
+    "cloud",
 ]
 
 MIDDLEWARE = [
