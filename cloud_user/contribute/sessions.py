@@ -6,7 +6,7 @@ cloud_user/contribute/sessions.py
 import bcrypt
 from django.core.signing import Signer
 from django.core.cache import cache
-from cloud_user.hashers import hash_password
+from cloud.hashers import hash_password
 from cloud_user.models import UserRegister
 signer = Signer()
 def create_signer(user: UserRegister) -> str:

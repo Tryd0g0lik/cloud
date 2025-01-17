@@ -2,24 +2,22 @@
 cloud_user/views.py
 """
 # Create your views here.
-import json
 
 from django.shortcuts import render
-from django.core.cache import (cache, caches)
-from rest_framework import (viewsets, generics, mixins, permissions)
+from django.core.cache import (cache)
+from rest_framework import (viewsets, generics)
 from rest_framework.response import Response
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
-from cloud_user.contribute.sessions import (create_signer, check,
+from cloud_user.contribute.sessions import (check,
                                             hash_create_user_session)
-from cloud_user.hashers import hash_password
+from cloud.hashers import hash_password
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
-from asgiref.sync import sync_to_async
 
 from cloud_user.contribute.services import get_fields_response
 
