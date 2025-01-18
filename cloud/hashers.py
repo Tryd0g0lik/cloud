@@ -9,7 +9,7 @@ from django.contrib.auth.hashers import ( md5,
 import bcrypt
 
 from project.settings import MEDIA_ROOT
-
+from cloud_file.models import UserRegister
 
 class PBKDF2WrappedMD5PasswordHasher(PBKDF2PasswordHasher):
     algorithm = "pbkdf2_wrapped_md5"
@@ -48,3 +48,4 @@ means they (files) is equally.
         hasher.update(content)
         control_summ = hasher.hexdigest()
     return control_summ
+
