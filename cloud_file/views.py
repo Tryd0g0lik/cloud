@@ -10,7 +10,9 @@ from asgiref.sync import sync_to_async
 
 from django.core.files.base import ContentFile
 from django.http import HttpResponse, JsonResponse
-from rest_framework import viewsets, permissions, status
+# from rest_framework import viewsets, permissions, status
+from rest_framework import status
+from adrf import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
@@ -46,7 +48,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             pass
         
         # GET user ID
-        cookie_data = get_data_authenticate(request)
+        cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
         user_session = await sync_to_async(cache.get)(f"user_session_{user_ind}")
         cache.close()
@@ -57,7 +59,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                                 status=status.HTTP_400_BAD_REQUEST)
         if not file_obj or user_session != \
           getattr(cookie_data, f"user_session"):
-            return Response(
+            return JsonResponse(
                 {"error": "No file provided."},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -65,31 +67,33 @@ class FileStorageViewSet(viewsets.ViewSet):
         time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
         file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
 
-        result_bool = FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
+        result_bool = await asyncio.create_task(
+            FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
+        )
         # Создание записи в БД
         if not result_bool:
             await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
             time_path = time_path.replace("card/", "uploads/")
             file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
-            user = sync_to_async(list)(UserRegister.objects.filter)(id=int(user_ind))
-            file_record = await sync_to_async(FileStorage.objects.create)(
-                user= user[0],
+            user_list = await sync_to_async(list)(UserRegister.objects.filter(id=int(user_ind)))
+            file_record = await sync_to_async(FileStorage.objects.acreate())(
+                user= user_list.afirst(),
                 original_name=file_obj.name,
                 size=file_obj.size,
                 file_path="%s" % file_path,
             )
-            serializer = await sync_to_async(FileStorageSerializer)(file_record)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer = self.serializer_class(file_record)
+            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
         else:
             #
             await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
         time_path = time_path.replace("card/", "uploads/")
-        file_old_list = await sync_to_async(list)(FileStorage.objects.filter)(file_path=f"{time_path}/{file_obj.name}")
+        file_old_list = await sync_to_async(list)(FileStorage.objects.filter(file_path=f"{time_path}/{file_obj.name}"))
         if len(file_old_list) > 0:
-            serializer = FileStorageSerializer(file_old_list[0])
-            return Response(serializer.data,
+            serializer = self.serializer_class(file_old_list[0])
+            return JsonResponse(serializer.data,
                             status=status.HTTP_208_ALREADY_REPORTED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
     
     def destroy(self, request, pk=None):
         try:
@@ -207,9 +211,9 @@ class FileStorageViewSet(viewsets.ViewSet):
             )
 
     @staticmethod
-    def compare_twoFiles(
+    async def compare_twoFiles(
       link_ofNew_file: int, user_id: int,
-      db_model: UserRegister
+      db_model: FileStorage
       ) -> bool:
         """
         TODO: We can check the one file without change and it, but with a change. \
@@ -222,7 +226,7 @@ If we will be  check the one file with itself (and both files will be unchanged)
         """
         try:
         
-            files_list = db_model.objects.filter(user_id=user_id)
+            files_list = await sync_to_async(list)(db_model.objects.filter(user_id=user_id))
             if len(list(files_list)) == 0:
                 return False
             hash_new_file = md5_chacker(f"{link_ofNew_file}")
@@ -230,8 +234,8 @@ If we will be  check the one file with itself (and both files will be unchanged)
             if len(list_bool) > 0:
                 return True
             return False
-        except:
-            pass
+        except Exception as e:
+            return False
         finally:
             pass
 # Важно: Не забудьте добавить маршруты для вашего ViewSet в urls.py.

@@ -30,6 +30,7 @@ djangorestframework="3.15.2"
 django-cors-headers="4.6.0"
 Django="4.2.17"
 django-webpack-loader = "^3.1.1"
+adrf = "^0.1.9"
 
 [build-system]
 requires = ["poetry-core"]

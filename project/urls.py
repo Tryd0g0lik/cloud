@@ -35,7 +35,7 @@ urlpatterns = [
     path("api/v1/users/", include((urlpatterns_user, "user"), namespace="user")),
     path("api/v1/files/", include((urlpatterns_files, "files"), namespace="file")),
     path("api/v1/session/increase/time/", user_update_sessionTime, name="session"),
-    path("/api/v1/files/",  FileStorageViewSet.as_view({'get': 'list'}), name="file")
+    
     # path('api/v1/users/activate/<str:sign>', user_activate, name="user_activate"),
     # path("api/v1/users/", include((router.urls, "user"), namespace="user")),
 ]
