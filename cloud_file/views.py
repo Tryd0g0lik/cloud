@@ -25,6 +25,8 @@ from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime
 
+# instance = get_data_authenticate(request)
+
 
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
@@ -97,76 +99,88 @@ class FileStorageViewSet(viewsets.ViewSet):
                             status=status.HTTP_208_ALREADY_REPORTED)
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
     
-    def destroy(self, request, pk=None):
+    async def destroy(self, request, pk=None):
         try:
-            file_record = FileStorage.objects.get(pk=pk)
-            if file_record.user != request.user and not request.user.is_staff:
+            file_record = await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
+            if len(file_record) == 0:
+                return JsonResponse({"error": "'pk' invalid"},
+                                    status=status.HTTP_400_BAD_REQUEST)
+            
+            if  \
+              file_record.user != request.user and \
+              not request.user.is_staff:
                 return Response(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
             # Удаляем файл из хранилища и запись из БД
-            default_storage.delete(file_record.file_path)
-            file_record.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            await sync_to_async(default_storage.delete(file_record.file_path))
+            await sync_to_async(file_record.delete())
+            return JsonResponse(status=status.HTTP_204_NO_CONTENT)
         except FileStorage.DoesNotExist:
-            return Response(
+            return JsonResponse(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
     @action(detail=True, methods=['post'])
-    def rename(self, request, pk=None):
+    async def rename(self, request, pk=None):
         new_name = request.data.get('new_name')
         if not new_name:
-            return Response(
+            return JsonResponse(
                 {"error": "New name is required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         try:
-            file_record = FileStorage.objects.get(pk=pk)
-            if file_record.user != request.user and not request.user.is_staff:
-                return Response(
+            file_record_list =\
+                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
+            
+            if len(file_record_list) or\
+              file_record_list[0].user != request.user and not request.user.is_staff:
+                return JsonResponse(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
             # Переименование файла на диске и обновление записи в БД
             new_file_path = os.path.join(
-                os.path.dirname(file_record.file_path.name), new_name
+                os.path.dirname(file_record_list[0].file_path.name), new_name
             )
-            default_storage.save(
+            default_storage.asave(
                 new_file_path, default_storage.open(
-                    file_record.file_path.name
+                    file_record_list[0].file_path.name
                 )
             )
-            file_record.original_name = new_name
-            file_record.file_path.name = new_file_path
-            file_record.save()
+            file_record_list[0].original_name = new_name
+            file_record_list[0].file_path.name = new_file_path
+            file_record_list[0].asave()
             
-            return Response(self.serializer_class(file_record).data)
+            return JsonResponse(self.serializer_class(file_record_list).data)
         except FileStorage.DoesNotExist:
-            return Response(
+            return JsonResponse(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
     @action(detail=True, methods=['post'])
-    def update_comment(self, request, pk=None):
+    async def update_comment(self, request, pk=None):
         comment = request.data.get('comment')
         try:
-            file_record = FileStorage.objects.get(pk=pk)
-            if file_record.user != request.user and not request.user.is_staff:
-                return Response(
+            file_record_list = \
+                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
+            if len(file_record_list) or \
+              file_record_list[0].user != request.user and \
+              not request.user.is_staff:
+                return JsonResponse(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            file_record.comment = comment
-            file_record.save()
-            return Response(self.serializer_class(file_record).data)
+            file_record_list[0].comment = comment
+            file_record_list[0].asave()
+            return JsonResponse(self.serializer_class(file_record_list[0]).data)
         except FileStorage.DoesNotExist:
-            return Response(
+            return JsonResponse(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
