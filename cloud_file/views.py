@@ -10,7 +10,6 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
-from django.contrib.auth.hashers import md5
 
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
@@ -203,7 +202,10 @@ class FileStorageViewSet(viewsets.ViewSet):
       db_model: UserRegister
       ) -> bool:
         """
-
+        TODO: We can check the one file without change and it, but with a change. \
+The check will return the False.\
+If we will be  check the one file with itself (and both files will be unchanged),\
+ the check will return the True.
         :param index_old: int User id
         :param file: New file from the "request.FILES.get('file')"
         :return: True if file was equally  and the False when it can't be the equally
@@ -213,10 +215,6 @@ class FileStorageViewSet(viewsets.ViewSet):
             files_list = db_model.objects.filter(user_id=user_id)
             if len(list(files_list)) == 0:
                 return False
-            # for view  in list(files_list):
-            #     if md5_chacker(f"{link_ofNew_file}") \
-            #       == md5_chacker(view.file_path):
-            #
             hash_new_file = md5_chacker(f"{link_ofNew_file}")
             list_bool = [view for view in list(files_list) if hash_new_file == md5_chacker(view.file_path)]
             if len(list_bool) > 0:
