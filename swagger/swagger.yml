@@ -17,7 +17,7 @@ servers:
   - url: http://localhost:8000/api/v1/
     description: "Basis server"
 paths:
-  /users/patch/{pk}/:
+  users/patch/{pk}/:
     get:
       tags:
         - user
@@ -32,13 +32,13 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session
+        - name: user_session_<user_id>
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser
+        - name: is_superuser_<user_id>
           in: cookie
           required: false
           schema:
@@ -84,13 +84,13 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session
+        - name: user_session_<user_id>
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser
+        - name: is_superuser_<user_id>
           in: cookie
           required: false
           schema:
@@ -161,7 +161,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /users/choice/{pk}/:
+  users/choice/{pk}/:
     get:
       tags:
         - user
@@ -176,13 +176,13 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session
+        - name: user_session_<user_id>
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser
+        - name: is_superuser_<user_id>
           in: cookie
           required: false
           schema:
@@ -245,13 +245,13 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session
+        - name: user_session_<user_id>
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser
+        - name: is_superuser_<user_id>
           in: cookie
           required: false
           schema:
@@ -319,13 +319,13 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session
+        - name: user_session_<user_id>
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser
+        - name: is_superuser_<user_id>
           in: cookie
           required: false
           schema:
@@ -363,7 +363,7 @@ paths:
                         $ref: '#/components/schemas/ErrorUsedId'
               example:
                 detail: No UserRegister matches the given query.
-  /users/choice/:
+  users/choice/:
     get:
       tags:
         - user
@@ -372,13 +372,13 @@ paths:
         For update data of single cell or more cells.
       operationId: UserView
       parameters:
-        - name: user_session
+        - name: user_session_<user_id>
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser
+        - name: is_superuser_<user_id>
           in: cookie
           required: false
           schema:
@@ -437,13 +437,7 @@ paths:
             application/json:
                 schema:
                     $ref: '#/components/schemas/UserProperties/oneOf/1'
-      parameters:
-        - name: is_superuser
-          in: cookie
-          required: false
-          schema:
-            type: boolean
-            example: false
+
       responses:
         200:
           description: Get the json of object from db
@@ -493,16 +487,18 @@ paths:
           description: Here get the syntax error. Here an example the one of mpre errors
           content:
             application/json:
-                schema:
-                    properties:
-                        first_name:
-                            type: array
-                            items:
+                 schema:
+                    oneOf:
+                      - properties:
+                            first_name:
+                                type: array
+                                items:
+                                    type: string
+                      - properties:
+                            detail:
                                 type: string
-
-                example:
-                    first_name: [Это поле не может быть пустым.]
-
+                 example:
+                    - detail: "Учетные данные не были предоставлены."
 
         500:
           description: Unexpected error
@@ -510,7 +506,69 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  files/:
+    post:
+      tags:
+        - file
+      summary: Store of files
+      operationId: FileStorageViewSet
+      requestBody:
+        required: true
+        content:
+          multipart/from-data:
+            schema:
+              $ref: '#/components/shemas/FileOfForm'
+      parameters:
+        - name: user_session_<user_id>
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+            description: |-
+              This. the user receives from registration.
+        - name: is_superuser_<user_id>
+          in: cookie
+          required: false
+          schema:
+            type: boolean
+            example: false
+          example: true
+          description: |-
+              This. the user receives from registration.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/componnts/schemas/FileProperties'
+              example:
+                id: 30
+                original_name: "README.docx"
+                size: 27981
+                upload_date: "2025-01-18T17:18:03.154301+07:00"
+                last_downloaded: null
+                comment: null
+                file_path: "/uploads/2025/1/18/README.docx"
+                special_link: "dda8958e-1711-464e-9d47-acd292241149"
+        400:
+          content:
+            application/json:
+              schema:
+                properties:
+                    error:
+                        $ref: '#/components/schemas/ErrorFile'
+              example:
+                error: No file provided
+        404:
+          content:
+            application/json:
+              schema:
+                properties:
+                    error:
+                        $ref: '#/components/schemas/ErrorFile'
+              example:
+                error: File not found.
 components:
   schemas:
     UserId:
@@ -709,8 +767,56 @@ components:
                         example: false
                     date_joined:
                         example: 2024-01-01
-
-
+    FileProperties:
+      type: object
+      required:
+        - id
+        - original_name
+        - size
+        - upload_date
+        - last_downloaded
+        - comment
+        - file_path
+        - special_link
+      oneOf:
+        - properties:
+            id:
+              $ref: '#/components/schemas/UserId'
+            original_name:
+              type: string
+              example: "README.docx"
+            size:
+              type: integer
+              example: 27981
+              description: |-
+                This is the weight of files.
+            upload_date:
+              type: string
+              format: date-time
+              example: "2025-01-18T17:18:03.154301+07:00"
+            last_downloaded:
+              type: string
+              format: date-time
+              nullable: true
+              example: "2025-01-18T17:18:03.154301+07:00"
+            comment:
+              type: string
+              nullable: true
+              example: his is the my first file
+            file_path:
+              type: string
+              example: "/uploads/2025/1/18/README.docx"
+            special_link:
+              type: string
+              description:  It is for a creating the link for the download
+              example: dda8958e-1711-464e-9d47-acd292241149
+    FileOfForm:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: File for upload. Bstring of the data type.
     ErrorUsedId:
       type: string
       required:
@@ -719,7 +825,17 @@ components:
         detail:
           description: A human readable error message
           type: string
-#   securitySchemes:
+    ErrorFile:
+      type: string
+      required:
+          - error
+      properties:
+          error:
+            type: string
+            example:  No file provided
+
+#
+# securitySchemes:
 #     ApiKey:
 #       type: apiKey
 #       in: header

@@ -168,7 +168,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         try:
             file_record_list = \
                 await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
-            if len(file_record_list) == 0or \
+            if len(file_record_list) == 0 or \
               file_record_list[0].user != request.user and \
               not request.user.is_staff:
                 return JsonResponse(
