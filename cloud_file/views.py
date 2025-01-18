@@ -4,10 +4,12 @@ cloud_file/views.py
 import asyncio
 import json
 import os
+
+from asgiref.sync import sync_to_async
 # from datetime import timezone
 
 from django.core.files.base import ContentFile
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -19,9 +21,8 @@ from cloud_user.models import UserRegister
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
-from django.conf import settings
-
 from datetime import datetime
+
 
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
@@ -51,6 +52,9 @@ class FileStorageViewSet(viewsets.ViewSet):
         cache.close()
         # добавить куки и сделать свагер
         file_obj = request.FILES.get('file')
+        if not file_obj:
+            return JsonResponse({"error": "No file provided"},
+                                status=status.HTTP_400_BAD_REQUEST)
         if not file_obj or user_session != \
           getattr(cookie_data, f"user_session"):
             return Response(
