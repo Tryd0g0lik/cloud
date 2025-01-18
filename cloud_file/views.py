@@ -1,6 +1,8 @@
 """
 cloud_file/views.py
 """
+import asyncio
+import json
 import os
 # from datetime import timezone
 
@@ -23,7 +25,8 @@ from datetime import datetime
 
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
-    
+    queryset = FileStorage.objects.all()
+    serializer_class  = FileStorageSerializer
     def list(self, request):
         
         if request.user.is_staff:
@@ -57,6 +60,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         # Сохранение файла на диск с уникальным именем
         time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
         file_path = default_storage.save(f"{time_path}/{file_obj.name}", file_obj)
+
         result_bool = FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
         # Создание записи в БД
         if not result_bool:
@@ -70,14 +74,16 @@ class FileStorageViewSet(viewsets.ViewSet):
                 size=file_obj.size,
                 file_path="%s" % file_path,
             )
-            
-            return Response(file_record, status=status.HTTP_201_CREATED)
+            serializer = FileStorageSerializer(file_record)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            time_path = time_path.replace("card/", "uploads/")
+            #
             default_storage.delete(f"{time_path}/{file_obj.name}")
-        file_old = FileStorage.objects.filter(file_path=time_path)
-        if len(file_old) > 0:
-            return Response(file_old.data,
+        time_path = time_path.replace("card/", "uploads/")
+        file_old_list = FileStorage.objects.filter(file_path=f"{time_path}/{file_obj.name}")
+        if len(file_old_list) > 0:
+            serializer = FileStorageSerializer(file_old_list[0])
+            return Response(serializer.data,
                             status=status.HTTP_208_ALREADY_REPORTED)
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
