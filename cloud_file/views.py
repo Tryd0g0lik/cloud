@@ -40,7 +40,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         serializer = FileStorageSerializer(files, many=True)
         return Response(serializer.data)
     
-    def create(self, request):
+    async def create(self, request):
         # https://docs.djangoproject.com/en/4.2/topics/http/file-uploads/
         class DataCoockie:
             pass
@@ -48,7 +48,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         # GET user ID
         cookie_data = get_data_authenticate(request)
         user_ind = getattr(cookie_data, "id")
-        user_session = cache.get(f"user_session_{user_ind}")
+        user_session = await sync_to_async(cache.get)(f"user_session_{user_ind}")
         cache.close()
         # добавить куки и сделать свагер
         file_obj = request.FILES.get('file')
@@ -63,28 +63,28 @@ class FileStorageViewSet(viewsets.ViewSet):
             )
         # Сохранение файла на диск с уникальным именем
         time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
-        file_path = default_storage.save(f"{time_path}/{file_obj.name}", file_obj)
+        file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
 
         result_bool = FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
         # Создание записи в БД
         if not result_bool:
-            default_storage.delete(f"{time_path}/{file_obj.name}")
+            await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
             time_path = time_path.replace("card/", "uploads/")
-            file_path = default_storage.save(f"{time_path}/{file_obj.name}", file_obj)
-            user = UserRegister.objects.filter(id=int(user_ind))
-            file_record = FileStorage.objects.create(
+            file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
+            user = sync_to_async(list)(UserRegister.objects.filter)(id=int(user_ind))
+            file_record = await sync_to_async(FileStorage.objects.create)(
                 user= user[0],
                 original_name=file_obj.name,
                 size=file_obj.size,
                 file_path="%s" % file_path,
             )
-            serializer = FileStorageSerializer(file_record)
+            serializer = await sync_to_async(FileStorageSerializer)(file_record)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             #
-            default_storage.delete(f"{time_path}/{file_obj.name}")
+            await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
         time_path = time_path.replace("card/", "uploads/")
-        file_old_list = FileStorage.objects.filter(file_path=f"{time_path}/{file_obj.name}")
+        file_old_list = await sync_to_async(list)(FileStorage.objects.filter)(file_path=f"{time_path}/{file_obj.name}")
         if len(file_old_list) > 0:
             serializer = FileStorageSerializer(file_old_list[0])
             return Response(serializer.data,
