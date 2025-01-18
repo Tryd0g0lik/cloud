@@ -30,16 +30,16 @@ class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
     serializer_class  = FileStorageSerializer
-    def list(self, request):
+    async def list(self, request):
         
         if request.user.is_staff:
             # Если администратор, получаем файлы всех пользователей
-            files = FileStorage.objects.all()
+            files = sync_to_async(list)(FileStorage.objects.all())
         else:
             # Получаем файлы только текущего пользователя
-            files = FileStorage.objects.filter(user=request.user)
+            files = sync_to_async(list)(FileStorage.objects.filter(user=request.user))
         
-        serializer = FileStorageSerializer(files, many=True)
+        serializer = self.serializer_class(files, many=True)
         return Response(serializer.data)
     
     async def create(self, request):
@@ -47,12 +47,12 @@ class FileStorageViewSet(viewsets.ViewSet):
         class DataCoockie:
             pass
         
-        # GET user ID
+        # GET the user ID from COOKIE
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
         user_session = await sync_to_async(cache.get)(f"user_session_{user_ind}")
         cache.close()
-        # добавить куки и сделать свагер
+        # GET the file's data
         file_obj = request.FILES.get('file')
         if not file_obj:
             return JsonResponse({"error": "No file provided"},
@@ -63,17 +63,18 @@ class FileStorageViewSet(viewsets.ViewSet):
                 {"error": "No file provided."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        # Сохранение файла на диск с уникальным именем
+        # Conservation a one file in serverby a path 'card/<year>/<month>/<day>/< file name >'
         time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
-        file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
-
+        await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
+        # CHECK the file by double
         result_bool = await asyncio.create_task(
             FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
         )
-        # Создание записи в БД
+        # Create a line in db
         if not result_bool:
             await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
             time_path = time_path.replace("card/", "uploads/")
+            # Re-conservation a file ( from over) in server by a path 'uploads/<year>/<month>/<day>/< file name >'
             file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
             user_list = await sync_to_async(list)(UserRegister.objects.filter(id=int(user_ind)))
             file_record = await sync_to_async(FileStorage.objects.acreate())(
@@ -88,6 +89,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             #
             await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
         time_path = time_path.replace("card/", "uploads/")
+        # Get the old file by a path 'uploads/<year>/<month>/<day>/< file name >'
         file_old_list = await sync_to_async(list)(FileStorage.objects.filter(file_path=f"{time_path}/{file_obj.name}"))
         if len(file_old_list) > 0:
             serializer = self.serializer_class(file_old_list[0])
@@ -143,7 +145,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             file_record.file_path.name = new_file_path
             file_record.save()
             
-            return Response(FileStorageSerializer(file_record).data)
+            return Response(self.serializer_class(file_record).data)
         except FileStorage.DoesNotExist:
             return Response(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
@@ -162,7 +164,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             
             file_record.comment = comment
             file_record.save()
-            return Response(FileStorageSerializer(file_record).data)
+            return Response(self.serializer_class(file_record).data)
         except FileStorage.DoesNotExist:
             return Response(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
