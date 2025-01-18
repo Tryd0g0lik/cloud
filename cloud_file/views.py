@@ -136,7 +136,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             file_record_list =\
                 await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
             
-            if len(file_record_list) or\
+            if len(file_record_list) == 0 or\
               file_record_list[0].user != request.user and not request.user.is_staff:
                 return JsonResponse(
                     {"error": "Permission denied."},
@@ -168,7 +168,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         try:
             file_record_list = \
                 await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
-            if len(file_record_list) or \
+            if len(file_record_list) == 0or \
               file_record_list[0].user != request.user and \
               not request.user.is_staff:
                 return JsonResponse(
@@ -185,44 +185,50 @@ class FileStorageViewSet(viewsets.ViewSet):
             )
     
     @action(detail=True, methods=['get'])
-    def download(self, request, pk=None):
+    async def download(self, request, pk=None):
         from datetime import timezone
         try:
-            file_record = FileStorage.objects.get(pk=pk)
-            if file_record.user != request.user and not request.user.is_staff:
-                return Response(
+            file_record_list = \
+                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
+            if len(file_record_list) == 0 or \
+                file_record_list[0].user != request.user and\
+              not request.user.is_staff:
+                return JsonResponse(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
         
             # Обновляем дату последнего скачивания
-            file_record.last_downloaded = timezone.now()
-            file_record.save()
+            file_record_list[0].last_downloaded = timezone.now()
+            file_record_list[0].asave()
         
             response = HttpResponse(
-                default_storage.open(file_record.file_path.name),
+                default_storage.open(file_record_list[0].file_path.name),
                 content_type='application/octet-stream'
             )
-            response[
-                'Content-Disposition'] = f'attachment; filename="{file_record.original_name}"'
+            response['Content-Disposition'] = \
+                f'attachment; filename="{file_record_list[0].original_name}"'
         
             return response
         except FileStorage.DoesNotExist:
-            return Response(
+            return JsonResponse(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
     @action(detail=True, methods=['get'])
-    def generate_link(self, request, pk=None):
+    async def generate_link(self, request, pk=None):
         try:
-            file_record = FileStorage.objects.get(pk=pk)
+            
+            file_record_list = \
+                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
             
             # Генерация специальной ссылки (например, UUID или токен)
-            special_link = f"{request.build_absolute_uri('/api/files/download/')}/{file_record.special_link}"
+            special_link = \
+            f"{request.build_absolute_uri('/api/files/download/')}/{file_record_list[0].special_link}"
             
-            return Response({"special_link": special_link})
+            return JsonResponse({"special_link": special_link})
         except FileStorage.DoesNotExist:
-            return Response(
+            return JsonResponse(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
