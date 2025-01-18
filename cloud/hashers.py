@@ -2,12 +2,14 @@
 cloud_user/hashers.py
 """
 # https://docs.djangoproject.com/en/4.2/topics/auth/passwords/#password-upgrading-without-requiring-a-login
-from django.contrib.auth.hashers import (
+from django.contrib.auth.hashers import ( md5,
     PBKDF2PasswordHasher,
     MD5PasswordHasher,
 )
 import bcrypt
 
+from project.settings import MEDIA_ROOT
+from cloud_file.models import UserRegister
 
 class PBKDF2WrappedMD5PasswordHasher(PBKDF2PasswordHasher):
     algorithm = "pbkdf2_wrapped_md5"
@@ -27,3 +29,23 @@ def hash_password(secret_key, encode='utf-8'):
     
     return hashed_password
 # PBKDF2$20000b'$2b$12$GIEoOMidkccZ1EJnO3oXf.uael00Q3BdOkewu3MfWBlrdTMpJG.5K'
+
+def md5_chacker(link:str) -> str:
+    """
+	 TODO:This function is the double file's checker\
+ First - do the hashing a file from db and new file.\
+ 'md5' will be hashing both files.\
+ After - check to the equality of files. If hash from files is equal, \
+means they (files) is equally.
+	 :link: Relative link to the file
+	 :return: str It is a hash of a single file.
+    """
+ 
+    hasher = md5()
+    new_link = f'{MEDIA_ROOT}{link}'.replace("/", '\\')
+    with open(new_link, 'rb') as open_file:
+        content = open_file.read()
+        hasher.update(content)
+        control_summ = hasher.hexdigest()
+    return control_summ
+

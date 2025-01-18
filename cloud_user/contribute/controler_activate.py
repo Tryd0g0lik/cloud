@@ -73,7 +73,6 @@ variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README
             _text = f"{_text} the object 'user' has 'True' value \
 from 'is_activated'. Redirect. 301"
             response = HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}")
-            # response = HttpResponseRedirect(URL_REDIRECT_IF_NOTGET_AUTHENTICATION)
             return response
         _text = f"{_text} the object 'user' can not have 'True' value \
 from 'is_activated'."
@@ -83,21 +82,18 @@ from 'is_activated'."
         user.is_active = True
         user.is_activated = True
         user.save()
-#         _text = f"{_text} the object 'user' can not have 'True' value \
-# from 'is_activated'."
+        # /* --------------------- _text = f"{_text} the object 'user' can
+        # not have 'True' value from 'is_activated'." --------------------- */
         # CREATE SIGNER
         user_session = create_signer(user)
-        cache.set(f"user_session_{user.id}", user_session)
-        cache.set(f"is_superuser_{user.id}", user.is_superuser)
+        cache.set(f"user_session_{user.id}", user_session, 86400)
+        cache.set(f"is_superuser_{user.id}", user.is_superuser, 86400)
         """ New object has tha `user_session_{id}` variable"""
         data = {}
         # SESSION KEY unique for user identification
         data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
         # COOCLIE SUPERUSER
         data[f'is_superuser_{user.id}'] = cache.get(f"is_superuser_{user.id}")
-        # for k, v in {**data}.items():
-        #     HttpResponseRedirect.set_cookie(key=k, value=v)
-       
         return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION, {**data})
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"

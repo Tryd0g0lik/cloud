@@ -3,6 +3,7 @@ cloud_user/models.py
 """
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.core import validators as val
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
 
@@ -39,7 +40,7 @@ class UserRegister(AbstractUser):
                                   blank=True)
     email = models.EmailField(help_text=_("email address"),
                               blank=False,
-                              unique=True)
+                              unique=True,)
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='%(class)s_groups',
