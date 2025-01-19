@@ -72,7 +72,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     async def retrieve(self, request, *args, **kwargs: Kwargs):
         """
-        Method GET for receive the single position
+        Method GET for receive a single position
         :param request:
         :param args:
         :param kwargs: dict. {'pk': 21}

@@ -17,7 +17,7 @@ servers:
   - url: http://localhost:8000/api/v1/
     description: "Basis server"
 paths:
-  users/patch/{pk}/:
+  /users/patch/{pk}/:
     get:
       tags:
         - user
@@ -161,7 +161,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  users/choice/{pk}/:
+  /users/choice/{pk}/:
     get:
       tags:
         - user
@@ -363,7 +363,7 @@ paths:
                         $ref: '#/components/schemas/ErrorUsedId'
               example:
                 detail: No UserRegister matches the given query.
-  users/choice/:
+  /users/choice/:
     get:
       tags:
         - user
@@ -436,7 +436,7 @@ paths:
         content:
             application/json:
                 schema:
-                    $ref: '#/components/schemas/UserProperties/oneOf/1'
+                    $ref: '#/components/schemas/UserProperties/oneOf/1/properties'
 
       responses:
         200:
@@ -506,18 +506,76 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  files/:
+  /files/:
     get:
       tags:
         - file
       summary: For gat a file's list.
-      discription: |-
+      description: |-
         Supeuser can get ф list from everyone of files. (Propoerty 'is_staff'
          must have the 'True' value.)
         USer caт get ф list all files fron his collection.
       operationId: FileStorageViewSet
       parameters:
-        - name
+        - name: user_session_<user_id>
+          description: |-
+            This. the user receives from registration.
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser_<user_id>
+          description: |-
+            This. the user receives from registration.
+          in: cookie
+          required: true
+          schema:
+            type: boolean
+            example: false
+      responses:
+        200:
+            description: If all the very well
+            headers:
+                Set-Cookie:
+                    schema:
+                        allOf:
+                            - type: string
+                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              description: Cookie for user session
+                            - type: string
+                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              description: Cookie for user session
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/FileProperties/oneOf/1'
+                    example:
+                        original_name: "README.docx"
+                        size: 27981
+                        upload_date: "2025-01-18T17:18:03.154301+07:00"
+                        last_downloaded: null
+                        comment: null
+                        file_path: "/uploads/2025/1/18/README.docx"
+                        special_link: "dda8958e-1711-464e-9d47-acd292241149"
+        400:
+          description: If not all very well
+          headers:
+            Set-Cookie:
+              schema:
+                allOf:
+                  - type: string
+                    example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                    description: Cookie for user session
+                  - type: string
+                    example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                    description: Cookie for user session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorFile'
+              example:
+                error: "Mistake => < text from error >"
     post:
       tags:
         - file
@@ -546,27 +604,24 @@ paths:
           schema:
             type: boolean
             example: false
-
       responses:
         200:
+          description: |-
+            If is all very well
+          headers:
+            Set-Cookies:
+                schema:
+                    allOf:
+                        - type: string
+                          example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                          description: Cookie for user session
+                        - type: string
+                          example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                          description: Cookie for user session
           content:
             application/json:
               schema:
-                $ref: '#/componnts/schemas/FileProperties'
-              example:
-                id: 30
-                original_name: "README.docx"
-                size: 27981
-                upload_date: "2025-01-18T17:18:03.154301+07:00"
-                last_downloaded: null
-                comment: null
-                file_path: "/uploads/2025/1/18/README.docx"
-                special_link: "dda8958e-1711-464e-9d47-acd292241149"
-        208:
-          content:
-            application/json:
-              schema:
-                $ref: '#/componnts/schemas/FileProperties'
+                $ref: '#/components/schemas/FileProperties/oneOf/0'
               example:
                 id: 30
                 original_name: "README.docx"
@@ -577,6 +632,18 @@ paths:
                 file_path: "/uploads/2025/1/18/README.docx"
                 special_link: "dda8958e-1711-464e-9d47-acd292241149"
         400:
+          description: |-
+            If is not very well
+          headers:
+            Set-Cookies:
+                schema:
+                    allOf:
+                        - type: string
+                          example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                          description: Cookie for user session
+                        - type: string
+                          example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                          description: Cookie for user session
           content:
             application/json:
               schema:
@@ -586,6 +653,18 @@ paths:
               example:
                 error: No file provided
         404:
+          description: |-
+            If is not very well
+          headers:
+            Set-Cookies:
+                schema:
+                    allOf:
+                        - type: string
+                          example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                          description: Cookie for user session
+                        - type: string
+                          example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                          description: Cookie for user session
           content:
             application/json:
               schema:
@@ -594,6 +673,61 @@ paths:
                         $ref: '#/components/schemas/ErrorFile'
               example:
                 error: File not found.
+  /files/{pk}/:
+    get:
+      tags:
+        - file
+      summary: The method recieve a single posiyion by 'pk'
+      discriptin: |-
+        User can get a single position by an id  of position if hi is the owner (this id from his a collaction).
+        Superuser can get a one position of everyone user.
+      operationId: FileStorageViewSet
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UserId'
+          example: 12
+        - name: user_session_<user_id>
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: true
+          schema:
+            type: boolean
+            example: false
+      responses:
+        200:
+          description: |-
+            When an all very well
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileProperties/oneOf/0"
+              example:
+                id: 30
+                original_name: "README.docx"
+                size: 27981
+                upload_date: "2025-01-18T17:18:03.154301+07:00"
+                last_downloaded: null
+                comment: null
+                file_path: "/uploads/2025/1/18/README.docx"
+                special_link: "dda8958e-1711-464e-9d47-acd292241149"
+        400:
+          description: |-
+            When an all very well
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorFile"
+              example:
+                error: "'pk' is invalid"
+
 components:
   schemas:
     UserId:
@@ -835,6 +969,42 @@ components:
               type: string
               description:  It is for a creating the link for the download
               example: dda8958e-1711-464e-9d47-acd292241149
+        - properties:
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                    id:
+                        $ref: '#/components/schemas/UserId'
+                    original_name:
+                        type: string
+                        example: "README.docx"
+                    size:
+                        type: integer
+                        example: 27981
+                        description: |-
+                            This is the weight of files.
+                    upload_date:
+                        type: string
+                        format: date-time
+                        example: "2025-01-18T17:18:03.154301+07:00"
+                    last_downloaded:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: "2025-01-18T17:18:03.154301+07:00"
+                    comment:
+                        type: string
+                        nullable: true
+                        example: his is the my first file
+                    file_path:
+                        type: string
+                        example: "/uploads/2025/1/18/README.docx"
+                    special_link:
+                        type: string
+                        description:  It is for a creating the link for the download
+                        example: dda8958e-1711-464e-9d47-acd292241149
     FileOfForm:
       type: object
       properties:
