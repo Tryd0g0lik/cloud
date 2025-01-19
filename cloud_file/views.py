@@ -2,7 +2,7 @@
 cloud_file/views.py
 """
 import asyncio
-import json
+from typing import TypedDict
 import os
 
 from asgiref.sync import sync_to_async
@@ -25,8 +25,8 @@ from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime
 
-# instance = get_data_authenticate(request)
-
+class Kwargs(TypedDict):
+    pk: int
 
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
@@ -35,7 +35,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     # @action(detail=True, url_path="", methods=["get"])
     # @action(detail=True, url_path="{pk}/", methods=["get"])
-    async def list(self, request, *args, **kwargs) -> JsonResponse:
+    async def list(self, request, *args, **kwargs: Kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
         files = []
@@ -70,28 +70,48 @@ class FileStorageViewSet(viewsets.ViewSet):
             return JsonResponse(status_data,
                 status=status_code)
     
-    async def retrieve(self, request, *args, **kwargs):
-        status_data = []
+    async def retrieve(self, request, *args, **kwargs: Kwargs):
+        """
+        Method GET for receive the single position
+        :param request:
+        :param args:
+        :param kwargs: dict. {'pk': 21}
+        :return:
+        """
         status_code = status.HTTP_200_OK
         files = []
         try:
-            instance = await  sync_to_async(get_data_authenticate)(request)
-            if kwargs["pk"] and int(kwargs["pk"]) == int(instance.id):
+            # GET  data of COOKIE (is_superuser_* & user_session_*)
+            instance = await sync_to_async(get_data_authenticate)(request)
+            if kwargs["pk"]:
                 files = await sync_to_async(list)(
                     FileStorage.objects.filter(id=int(kwargs["pk"]))
                 )
+                #  await sync_to_async(lambda: files[0].user.is_staff)()
                 if len(files) == 0:
                     return JsonResponse({"error": "'pk' is invalid"},
                                         status=status.HTTP_400_BAD_REQUEST)
+                # Get data of line from db
+                # /* -----------  lambda  ----------- */
+                user_id_fromFile =\
+                    await sync_to_async(lambda: files[0].user.id)()
+                user_is_staff_fromFile = \
+                    await sync_to_async(lambda: files[0].user.is_staff)()
+                # Check id - authentification
+                if (int(instance.id) != user_id_fromFile) and \
+                  not user_is_staff_fromFile:
+                    return JsonResponse(
+                        {"error": "There is no access"},
+                        status=status.HTTP_400_BAD_REQUEST
+                        )
+                
             else:
                 status_data = {"error": "'pk' is invalid"}
                 return JsonResponse(status_data,
                     status=status.HTTP_400_BAD_REQUEST
                     )
-            serializer = self.serializer_class(files)
+            serializer = self.serializer_class(files[0])
             status_data = serializer.data
-            # if "[" in str(serializer.data):
-            #     status_data = {"data": list(serializer.data)}
             return JsonResponse(
                 status_data,
                 status=status_code
