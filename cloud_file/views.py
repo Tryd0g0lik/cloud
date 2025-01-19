@@ -155,6 +155,8 @@ class FileStorageViewSet(viewsets.ViewSet):
         
         """
         time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
+        cookie_data = await sync_to_async(get_data_authenticate)(request)
+        
         # SAVE file
         await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
         # CHECK the file to file's duplication
@@ -168,8 +170,8 @@ class FileStorageViewSet(viewsets.ViewSet):
             # Re-save a file ( from over) in server by a path 'uploads/<year>/<month>/<day>/< file name >'
             file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
             user_list = await sync_to_async(list)(UserRegister.objects.filter(id=int(user_ind)))
-            file_record = await sync_to_async(FileStorage.objects.acreate())(
-                user= user_list.afirst(),
+            file_record = await sync_to_async(FileStorage.objects.create)(
+                user= user_list[0],
                 original_name=file_obj.name,
                 size=file_obj.size,
                 file_path="%s" % file_path,
@@ -196,24 +198,33 @@ class FileStorageViewSet(viewsets.ViewSet):
     async def destroy(self, request, pk=None):
         status_data = {}
         status_code =status.HTTP_204_NO_CONTENT
+        # GET the user ID from COOKIE
+        cookie_data = await sync_to_async(get_data_authenticate)(request)
+        user_ind = getattr(cookie_data, "id")
         try:
-            file_record = await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
-            if len(file_record) == 0:
+            
+            file_list = await sync_to_async(list)(FileStorage.objects.filter(id=pk))
+            if len(file_list) == 0:
                 return JsonResponse({"error": "'pk' invalid"},
                                     status=status.HTTP_400_BAD_REQUEST)
-            
+            # Get data of line from db
+            # /* -----------  lambda  ----------- */
+            user_id_fromFile = \
+                await sync_to_async(lambda: file_list[0].user.id)()
+            user_is_staff_fromFile = \
+                await sync_to_async(lambda:  file_list[0].user.is_staff)()
+  
             if  \
-              file_record[0].user.id != int(pk) or \
-              (file_record[0].user.id == int(pk) and
-               not file_record[0].user.is_staff):
+              user_id_fromFile != int(pk) and \
+              not user_is_staff_fromFile:
                 return Response(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
             # DELETE a single file from db
-            await sync_to_async(default_storage.delete(file_record[0].file_path))
-            await sync_to_async(file_record[0].adelete())
+            await sync_to_async(default_storage.delete)(f"{file_list[0].file_path}")
+            await sync_to_async(file_list[0].delete)()
             status_code=status.HTTP_204_NO_CONTENT
         except FileStorage.DoesNotExist:
             status_data = {"error": "File not found."}

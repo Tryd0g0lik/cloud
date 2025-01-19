@@ -727,7 +727,46 @@ paths:
                 $ref: "#/components/schemas/ErrorFile"
               example:
                 error: "'pk' is invalid"
-
+    delete:
+      tags:
+        - file
+      summary: The method for delete a single position by 'pk'
+      description: |-
+        User can delete a single position by an id  of position if hi is the owner (this id from his a collaction).
+        Superuser can get a one position of everyone user.
+      operationId: FileStorageViewSet
+      parameters:
+        - name: pk
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UserId'
+          example: 12
+        - name: user_session_<user_id>
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+        - name: is_superuser
+          in: cookie
+          required: true
+          schema:
+            type: boolean
+            example: false
+      responses:
+        204:
+            description: |-
+              When an all very well and a single position was removed
+        404:
+            description: |-
+                When an all not very well and a single position not removed
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/ErrorFile"
+                    example:
+                        error: "'pk' is invalid"
 components:
   schemas:
     UserId:
