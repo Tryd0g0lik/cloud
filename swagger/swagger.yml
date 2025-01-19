@@ -507,6 +507,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   files/:
+    get:
+      tags:
+        - file
+      summary: For gat a file's list.
+      discription: |-
+        Supeuser can get ф list from everyone of files. (Propoerty 'is_staff'
+         must have the 'True' value.)
+        USer caт get ф list all files fron his collection.
+      operationId: FileStorageViewSet
+      parameters:
+        - name
     post:
       tags:
         - file
@@ -520,24 +531,38 @@ paths:
               $ref: '#/components/shemas/FileOfForm'
       parameters:
         - name: user_session_<user_id>
+          description: |-
+            This. the user receives from registration.
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-            description: |-
-              This. the user receives from registration.
         - name: is_superuser_<user_id>
+          description: |-
+            This. the user receives from registration.
           in: cookie
-          required: false
+          required: true
           schema:
             type: boolean
             example: false
-          example: true
-          description: |-
-              This. the user receives from registration.
+
       responses:
         200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/componnts/schemas/FileProperties'
+              example:
+                id: 30
+                original_name: "README.docx"
+                size: 27981
+                upload_date: "2025-01-18T17:18:03.154301+07:00"
+                last_downloaded: null
+                comment: null
+                file_path: "/uploads/2025/1/18/README.docx"
+                special_link: "dda8958e-1711-464e-9d47-acd292241149"
+        208:
           content:
             application/json:
               schema:

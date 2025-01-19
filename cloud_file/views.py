@@ -31,24 +31,86 @@ from datetime import datetime
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
-    serializer_class  = FileStorageSerializer
-    async def list(self, request):
-        
-        if request.user.is_staff:
-            # Если администратор, получаем файлы всех пользователей
-            files = sync_to_async(list)(FileStorage.objects.all())
-        else:
-            # Получаем файлы только текущего пользователя
-            files = sync_to_async(list)(FileStorage.objects.filter(user=request.user))
-        
-        serializer = self.serializer_class(files, many=True)
-        return Response(serializer.data)
+    serializer_class = FileStorageSerializer
     
+    # @action(detail=True, url_path="", methods=["get"])
+    # @action(detail=True, url_path="{pk}/", methods=["get"])
+    async def list(self, request, *args, **kwargs) -> JsonResponse:
+        status_data: [dict, list] = []
+        status_code = status.HTTP_200_OK
+        files = []
+        try:
+            instance = await sync_to_async(get_data_authenticate)(request)
+            files = await sync_to_async(list)(
+                FileStorage.objects.filter(
+                    user_id=int(instance.id)
+                    ))
+            if len(files) == 0:
+                return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
+            # /* -----------  lambda  ----------- */
+            user_is_staff = await sync_to_async(lambda: files[0].user.is_staff)()
+            if user_is_staff :
+                # Если администратор, получаем файлы всех пользователей
+                files = await sync_to_async(list)(FileStorage.objects.all())
+            elif not user_is_staff and int(kwargs["pk"]) == int(instance.id) :
+                # Получаем файлы только текущего пользователя
+                files = await sync_to_async(list)(FileStorage.objects\
+                                            .filter(user_id=int(instance.id)))
+            else:
+                files = []
+            serializer = self.serializer_class(files, many=True)
+            status_data = serializer.data
+            if "[" in str(serializer.data):
+                status_data = {"data": list(serializer.data)}
+        except Exception as e:
+            status_data = {"error": f"[{FileStorageViewSet.__class__.list.__name__}]: \
+            Mistake => {e.__str__()}"}
+            status_code = status.HTTP_400_BAD_REQUEST
+        finally:
+            return JsonResponse(status_data,
+                status=status_code)
+    
+    async def retrieve(self, request, *args, **kwargs):
+        status_data = []
+        status_code = status.HTTP_200_OK
+        files = []
+        try:
+            instance = await  sync_to_async(get_data_authenticate)(request)
+            if kwargs["pk"] and int(kwargs["pk"]) == int(instance.id):
+                files = await sync_to_async(list)(
+                    FileStorage.objects.filter(id=int(kwargs["pk"]))
+                )
+                if len(files) == 0:
+                    return JsonResponse({"error": "'pk' is invalid"},
+                                        status=status.HTTP_400_BAD_REQUEST)
+            else:
+                status_data = {"error": "'pk' is invalid"}
+                return JsonResponse(status_data,
+                    status=status.HTTP_400_BAD_REQUEST
+                    )
+            serializer = self.serializer_class(files)
+            status_data = serializer.data
+            # if "[" in str(serializer.data):
+            #     status_data = {"data": list(serializer.data)}
+            return JsonResponse(
+                status_data,
+                status=status_code
+            )
+        except Exception as e:
+            status_data = {
+                "error": f"[{FileStorageViewSet.__class__.retrieve.__name__}]: \
+                       Mistake => {e.__str__()}"}
+            status_code = status.HTTP_400_BAD_REQUEST
+        
+            return JsonResponse(
+                status_data,
+                status=status_code
+                )
+        
+
     async def create(self, request):
         # https://docs.djangoproject.com/en/4.2/topics/http/file-uploads/
-        class DataCoockie:
-            pass
-        
+       
         # GET the user ID from COOKIE
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
@@ -65,18 +127,25 @@ class FileStorageViewSet(viewsets.ViewSet):
                 {"error": "No file provided."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        # Conservation a one file in serverby a path 'card/<year>/<month>/<day>/< file name >'
+        """
+        Conservation a one file in serverby by path \
+        'card/<year>/<month>/<day>/< file name >'
+        First, we need to check the duplication file.  For this, we save the file \
+        by path 'card/...'.
+        
+        """
         time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
+        # SAVE file
         await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
-        # CHECK the file by double
+        # CHECK the file to file's duplication
         result_bool = await asyncio.create_task(
             FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
         )
-        # Create a line in db
+        # CREATE A LINE in db if NOT duplication
         if not result_bool:
             await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
             time_path = time_path.replace("card/", "uploads/")
-            # Re-conservation a file ( from over) in server by a path 'uploads/<year>/<month>/<day>/< file name >'
+            # Re-save a file ( from over) in server by a path 'uploads/<year>/<month>/<day>/< file name >'
             file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
             user_list = await sync_to_async(list)(UserRegister.objects.filter(id=int(user_ind)))
             file_record = await sync_to_async(FileStorage.objects.acreate())(
@@ -88,18 +157,25 @@ class FileStorageViewSet(viewsets.ViewSet):
             serializer = self.serializer_class(file_record)
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            #
+            # If, we found the file's dupolication
             await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
         time_path = time_path.replace("card/", "uploads/")
-        # Get the old file by a path 'uploads/<year>/<month>/<day>/< file name >'
-        file_old_list = await sync_to_async(list)(FileStorage.objects.filter(file_path=f"{time_path}/{file_obj.name}"))
+        # Get the old file by path 'uploads/<year>/<month>/<day>/< file name >'
+        # /* --------------- А если файл переименован?? --------------- */
+        file_old_list = \
+            await sync_to_async(list)(FileStorage.objects\
+                                      .filter(original_name=f"{file_obj.name}"))
         if len(file_old_list) > 0:
             serializer = self.serializer_class(file_old_list[0])
             return JsonResponse(serializer.data,
                             status=status.HTTP_208_ALREADY_REPORTED)
-        return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
+        # If something what wrong
+        return JsonResponse({"error": "The wrong, incorrect request"},
+                            status=status.HTTP_400_BAD_REQUEST)
     
     async def destroy(self, request, pk=None):
+        status_data = {}
+        status_code =status.HTTP_204_NO_CONTENT
         try:
             file_record = await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
             if len(file_record) == 0:
@@ -107,23 +183,26 @@ class FileStorageViewSet(viewsets.ViewSet):
                                     status=status.HTTP_400_BAD_REQUEST)
             
             if  \
-              file_record.user != request.user and \
-              not request.user.is_staff:
+              file_record[0].user.id != int(pk) or \
+              (file_record[0].user.id == int(pk) and
+               not file_record[0].user.is_staff):
                 return Response(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            # Удаляем файл из хранилища и запись из БД
-            await sync_to_async(default_storage.delete(file_record.file_path))
-            await sync_to_async(file_record.delete())
-            return JsonResponse(status=status.HTTP_204_NO_CONTENT)
+            # DELETE a single file from db
+            await sync_to_async(default_storage.delete(file_record[0].file_path))
+            await sync_to_async(file_record[0].adelete())
+            status_code=status.HTTP_204_NO_CONTENT
         except FileStorage.DoesNotExist:
-            return JsonResponse(
-                {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
-            )
-    
-    @action(detail=True, methods=['post'])
+            status_data = {"error": "File not found."}
+            status_code = status.HTTP_404_NOT_FOUND
+        finally:
+            return JsonResponse(status_data, status=status_code)
+
+    @action(detail=True, url_path="api/v1/files/rename/<int:pk>",
+            methods=['post'])
     async def rename(self, request, pk=None):
         new_name = request.data.get('new_name')
         if not new_name:
@@ -162,7 +241,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['POST'])
     async def update_comment(self, request, pk=None):
         comment = request.data.get('comment')
         try:
@@ -184,7 +263,9 @@ class FileStorageViewSet(viewsets.ViewSet):
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
-    @action(detail=True, methods=['get'])
+    # @action(detail=True, url_path="download/<int:pk>/", methods=['get'])
+    @action(detail=True, url_name="api/v1/files/file_download/<int:pk>",
+            methods=['GET'])
     async def download(self, request, pk=None):
         from datetime import timezone
         try:
@@ -215,7 +296,8 @@ class FileStorageViewSet(viewsets.ViewSet):
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
-    @action(detail=True, methods=['get'])
+    @action(detail=True, url_path="api/v1/files/referral_link/<int:pk>",
+            methods=['GET'])
     async def generate_link(self, request, pk=None):
         try:
             
@@ -247,7 +329,7 @@ If we will be  check the one file with itself (and both files will be unchanged)
         :return: True if file was equally  and the False when it can't be the equally
         """
         try:
-        
+            
             files_list = await sync_to_async(list)(db_model.objects.filter(user_id=user_id))
             if len(list(files_list)) == 0:
                 return False

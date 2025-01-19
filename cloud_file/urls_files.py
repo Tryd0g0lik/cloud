@@ -21,6 +21,11 @@ from .views import FileStorageViewSet
 
 router = DefaultRouter()
 router.register(r'', FileStorageViewSet, basename='file-storage')
+# router.register("download/<int:pk>/", FileStorageViewSet,
+#                 basename='file_download')
+# router.register("rename/<int:pk>", FileStorageViewSet, basename='file_rename')
+# router.register("referral_link/<int:pk>", FileStorageViewSet,
+#                 basename='referral_link')
 
 urlpatterns_files = [
     path('', include(router.urls)),
