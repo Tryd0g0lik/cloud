@@ -1,5 +1,6 @@
 """
 cloud_file/views.py
+Here, interface of file storage.
 """
 import asyncio
 from typing import TypedDict
@@ -23,14 +24,13 @@ from datetime import datetime, timezone
 
 class Kwargs(TypedDict):
     pk: int
-
+class PKStr(TypedDict):
+    pk: str
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
     
-    # @action(detail=True, url_path="", methods=["get"])
-    # @action(detail=True, url_path="{pk}/", methods=["get"])
     async def list(self, request, *args, **kwargs: Kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -151,11 +151,10 @@ class FileStorageViewSet(viewsets.ViewSet):
         
         """
         time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
-        cookie_data = await sync_to_async(get_data_authenticate)(request)
         
         # SAVE file
         await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
-        # CHECK the file to file's duplication
+        # CHECK the file on a file's duplication
         result_bool = await asyncio.create_task(
             FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
         )
@@ -191,7 +190,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         return JsonResponse({"error": "The wrong, incorrect request"},
                             status=status.HTTP_400_BAD_REQUEST)
     
-    async def destroy(self, request, pk=None):
+    async def destroy(self, request, pk: Kwargs = None):
         """
         TODO: This is for delete a single file's line from db. .
         :param request:
@@ -236,7 +235,7 @@ class FileStorageViewSet(viewsets.ViewSet):
 
     @action(detail=True, url_name="rename",
             methods=['post'])
-    async def rename(self, request, pk=None):
+    async def rename(self, request, pk: Kwargs = None):
         """
         TODO: This is for rename a single file's line from db. .
         :param request:
@@ -305,7 +304,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     # @csrf_exempt
     @action(detail=True,
             url_name="comment", methods=['POST'])
-    async def update_comment(self, request, pk=None):
+    async def update_comment(self, request, pk: Kwargs = None):
         new_comment = request.data.get('comment')
         # http://127.0.0.1:8000/api/v1/files/31/update_comment/
         try:
@@ -341,7 +340,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     # @action(detail=True, url_path="download/<int:pk>/", methods=['get'])
     @action(detail=True, url_name="download",
             methods=['GET'])
-    async def download(self, request, pk=None):
+    async def download(self, request, pk: PKStr = None):
         from datetime import timezone
         try:
             # GET the user ID from COOKIE
@@ -380,7 +379,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     @action(detail=True, url_name="generate_link",
             methods=['GET'])
-    async def generate_link(self, request, pk=None):
+    async def generate_link(self, request, pk: Kwargs = None):
         try:
             # GET the user ID from COOKIE
             cookie_data = await sync_to_async(get_data_authenticate)(request)
@@ -448,4 +447,4 @@ If we will be  check the one file with itself (and both files will be unchanged)
             return False
         finally:
             pass
-# Важно: Не забудьте добавить маршруты для вашего ViewSet в urls.py.
+
