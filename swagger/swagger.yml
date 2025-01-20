@@ -14,7 +14,7 @@ info:
     email: work80@mail.ru
     url: https://github.com/Tryd0g0lik
 servers:
-  - url: http://localhost:8000/api/v1/
+  - url: http://localhost:8000/api/v1
     description: "Basis server"
 paths:
   /users/patch/{pk}/:
@@ -427,7 +427,7 @@ paths:
     post:
       tags:
         - user
-      summary: Read a user data
+      summary: Create a new user data
       description: |-
         For update data of single cell or more cells.
       operationId: UserPatchViews
@@ -437,7 +437,6 @@ paths:
             application/json:
                 schema:
                     $ref: '#/components/schemas/UserProperties/oneOf/1/properties'
-
       responses:
         200:
           description: Get the json of object from db
@@ -500,12 +499,6 @@ paths:
                  example:
                     - detail: "Учетные данные не были предоставлены."
 
-        500:
-          description: Unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /files/:
     get:
       tags:
