@@ -16,7 +16,7 @@ from adrf import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
-
+from django.views.decorators.csrf import csrf_exempt
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
 from cloud_user.models import UserRegister
@@ -236,6 +236,11 @@ class FileStorageViewSet(viewsets.ViewSet):
             methods=['post'])
     async def rename(self, request, pk=None):
         new_name = request.data.get('new_name')
+        status_data = {}
+        status_code = status.HTTP_204_NO_CONTENT
+        # GET the user ID from COOKIE
+        cookie_data = await sync_to_async(get_data_authenticate)(request)
+        user_ind = getattr(cookie_data, "id")
         if not new_name:
             return JsonResponse(
                 {"error": "New name is required."},
@@ -246,8 +251,22 @@ class FileStorageViewSet(viewsets.ViewSet):
             file_record_list =\
                 await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
             
-            if len(file_record_list) == 0 or\
-              file_record_list[0].user != request.user and not request.user.is_staff:
+            if len(file_record_list) == 0 :
+                # Get data of line from db
+                # /* -----------  lambda  ----------- */
+                return JsonResponse(
+                    {"error": "Permission denied."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user_id_fromFile = \
+                await sync_to_async(lambda: file_record_list[0].user.id)()
+            user_is_staff_fromFile = \
+                await sync_to_async(
+                    lambda: file_record_list[0].user.is_staff
+                    )()
+            
+            if user_id_fromFile != int(user_ind) and \
+              not user_is_staff_fromFile:
                 return JsonResponse(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
@@ -257,37 +276,51 @@ class FileStorageViewSet(viewsets.ViewSet):
             new_file_path = os.path.join(
                 os.path.dirname(file_record_list[0].file_path.name), new_name
             )
-            default_storage.asave(
+            default_storage.save(
                 new_file_path, default_storage.open(
                     file_record_list[0].file_path.name
                 )
             )
             file_record_list[0].original_name = new_name
             file_record_list[0].file_path.name = new_file_path
-            file_record_list[0].asave()
+            file_record_list[0].save()
             
             return JsonResponse(self.serializer_class(file_record_list).data)
         except FileStorage.DoesNotExist:
             return JsonResponse(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
-    
-    @action(detail=True, methods=['POST'])
+
+    # @csrf_exempt
+    @action(detail=True,
+            url_name="comment", methods=['POST'])
     async def update_comment(self, request, pk=None):
-        comment = request.data.get('comment')
+        new_comment = request.data.get('comment')
+        # http://127.0.0.1:8000/api/v1/files/31/update_comment/
         try:
             file_record_list = \
                 await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
-            if len(file_record_list) == 0 or \
-              file_record_list[0].user != request.user and \
-              not request.user.is_staff:
+            if len(file_record_list) == 0:
+                return JsonResponse(
+                    {"error": "File not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            # GET the user ID from COOKIE
+            cookie_data = await sync_to_async(get_data_authenticate)(
+                request
+                )
+            user_ind = getattr(cookie_data, "id")
+            user_id_fromFile = \
+                await sync_to_async(lambda: file_record_list[0].user.id)()
+            if user_id_fromFile != int(user_ind):
                 return JsonResponse(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
+        
+            file_record_list[0].comment = new_comment
+            await sync_to_async(file_record_list[0].save)()
             
-            file_record_list[0].comment = comment
-            file_record_list[0].asave()
             return JsonResponse(self.serializer_class(file_record_list[0]).data)
         except FileStorage.DoesNotExist:
             return JsonResponse(

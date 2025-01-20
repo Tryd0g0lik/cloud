@@ -673,12 +673,12 @@ paths:
                         $ref: '#/components/schemas/ErrorFile'
               example:
                 error: File not found.
-  /files/{pk}/:
+  /files/{pk}/update_comment/:
     get:
       tags:
         - file
       summary: The method recieve a single posiyion by 'pk'
-      discriptin: |-
+      description: |-
         User can get a single position by an id  of position if hi is the owner (this id from his a collaction).
         Superuser can get a one position of everyone user.
       operationId: FileStorageViewSet
@@ -727,6 +727,117 @@ paths:
                 $ref: "#/components/schemas/ErrorFile"
               example:
                 error: "'pk' is invalid"
+    post:
+        tags:
+          - file
+        summary: This for change (rewrite) a comment to a single file
+        operationId: FileStorageViewSet
+        requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                    type: object
+                    example: "my first comment"
+                    # properties:
+                    #     comment:
+                    #         type: string
+                    #         example: "my first comment"
+        parameters:
+            - name: pk
+              description: |-
+                This is an individual nuber of single file from db.
+              in: path
+              required: true
+              schema:
+                type: integer
+                example: 32
+            - name: user_session_<user_id>
+              description: |-
+                This. the user receives from registration.
+              in: cookie
+              required: true
+              schema:
+                type: string
+                example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+            - name: is_superuser_<user_id>
+              description: |-
+                This. the user receives from registration.
+              in: cookie
+              required: true
+              schema:
+                type: boolean
+                example: false
+        responses:
+            200:
+                description: |-
+                    The comment was changed.
+                headers:
+                    Set-Cookie:
+                        schema:
+                            allOf:
+                                - type: string
+                                  example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                                  description: Cookie for user session
+                                - type: string
+                                  example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                                  description: Cookie for user session
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FileProperties/oneOf/0'
+                        example:
+                            id: 30
+                            original_name: "README.docx"
+                            size: 27981
+                            upload_date: "2025-01-18T17:18:03.154301+07:00"
+                            last_downloaded: null
+                            comment: "my first comment"
+                            file_path: "/uploads/2025/1/18/README.docx"
+                            special_link: "dda8958e-1711-464e-9d47-acd292241149"
+            403:
+                description: Permission denied
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                            - type: string
+                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              description: Cookie for user session
+                            - type: string
+                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              description: Cookie for user session
+                content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                    example:
+                      error: "Permission denied."
+            404:
+                description: File not found.
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                          - type: string
+                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            description: Cookie for user session
+                          - type: string
+                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            description: Cookie for user session
+                content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                      example:
+                        error: "File not found."
+
+
+
+
+
+
+
     delete:
       tags:
         - file
