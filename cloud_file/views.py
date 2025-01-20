@@ -150,7 +150,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         by path 'card/...'.
         
         """
-        time_path = f"card/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
+        time_path = f"card/{user_ind}/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
         
         # SAVE file
         await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
@@ -216,7 +216,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 await sync_to_async(lambda:  file_list[0].user.is_staff)()
   
             if  \
-              user_id_fromFile != int(pk) and \
+              user_id_fromFile != user_ind and \
               not user_is_staff_fromFile:
                 return Response(
                     {"error": "Permission denied."},
