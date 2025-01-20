@@ -673,7 +673,7 @@ paths:
                         $ref: '#/components/schemas/ErrorFile'
               example:
                 error: File not found.
-  /files/{pk}/update_comment/:
+  /files/{pk}:
     get:
       tags:
         - file
@@ -727,6 +727,8 @@ paths:
                 $ref: "#/components/schemas/ErrorFile"
               example:
                 error: "'pk' is invalid"
+
+  /files/{pk}/update_comment/:
     post:
         tags:
           - file
@@ -738,11 +740,11 @@ paths:
               application/json:
                 schema:
                     type: object
-                    example: "my first comment"
-                    # properties:
-                    #     comment:
-                    #         type: string
-                    #         example: "my first comment"
+                    properties:
+                      comment:
+                        type: string
+                        example: "my first comment"
+
         parameters:
             - name: pk
               description: |-
@@ -795,6 +797,129 @@ paths:
                             comment: "my first comment"
                             file_path: "/uploads/2025/1/18/README.docx"
                             special_link: "dda8958e-1711-464e-9d47-acd292241149"
+            403:
+                description: Permission denied
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                            - type: string
+                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              description: Cookie for user session
+                            - type: string
+                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              description: Cookie for user session
+                content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                    example:
+                      error: "Permission denied."
+            404:
+                description: File not found.
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                          - type: string
+                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            description: Cookie for user session
+                          - type: string
+                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            description: Cookie for user session
+                content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                      example:
+                        error: "File not found."
+  /files/{pk}/rename/:
+    post:
+        tags:
+          - file
+        summary: This is for rename file (name changes)
+        operationId: FileStorageViewSet
+        requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                    type: object
+                    properties:
+                      new_name:
+                        type: string
+                        example: "My new-name_for_old_file"
+
+        parameters:
+            - name: pk
+              description: |-
+                This is an individual nuber of single file from db.
+              in: path
+              required: true
+              schema:
+                type: integer
+                example: 32
+            - name: user_session_<user_id>
+              description: |-
+                This. the user receives from registration.
+              in: cookie
+              required: true
+              schema:
+                type: string
+                example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+            - name: is_superuser_<user_id>
+              description: |-
+                This. the user receives from registration.
+              in: cookie
+              required: true
+              schema:
+                type: boolean
+                example: false
+        responses:
+            200:
+                description: |-
+                    The name of file was changed.
+                headers:
+                    Set-Cookie:
+                        schema:
+                            allOf:
+                                - type: string
+                                  example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                                  description: Cookie for user session
+                                - type: string
+                                  example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                                  description: Cookie for user session
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/FileProperties/oneOf/0'
+                        example:
+                            id: 30
+                            original_name: "My new-name_for_old_file.docx"
+                            size: 27981
+                            upload_date: "2025-01-18T17:18:03.154301+07:00"
+                            last_downloaded: null
+                            comment: "my first comment"
+                            file_path: "/uploads/2025/1/18/My new-name_for_old_file.docx"
+                            special_link: "dda8958e-1711-464e-9d47-acd292241149"
+            400:
+                description: Permission denied
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                            - type: string
+                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              description: Cookie for user session
+                            - type: string
+                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              description: Cookie for user session
+                content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                    example:
+                      error: "New name is required."
             403:
                 description: Permission denied
                 headers:

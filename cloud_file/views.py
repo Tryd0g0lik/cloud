@@ -196,6 +196,12 @@ class FileStorageViewSet(viewsets.ViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
     
     async def destroy(self, request, pk=None):
+        """
+        TODO: This is for delete a single file's line from db. .
+        :param request:
+        :param pk: integer from single line of db, for changing
+        :return:
+        """
         status_data = {}
         status_code =status.HTTP_204_NO_CONTENT
         # GET the user ID from COOKIE
@@ -232,9 +238,15 @@ class FileStorageViewSet(viewsets.ViewSet):
         finally:
             return JsonResponse(status_data, status=status_code)
 
-    @action(detail=True, url_path="api/v1/files/rename/<int:pk>",
+    @action(detail=True, url_name="rename",
             methods=['post'])
     async def rename(self, request, pk=None):
+        """
+        TODO: This is for rename a single file's line from db. .
+        :param request:
+        :param pk: integer from single line of db, for changing
+        :return:
+        """
         new_name = request.data.get('new_name')
         status_data = {}
         status_code = status.HTTP_204_NO_CONTENT
@@ -255,16 +267,20 @@ class FileStorageViewSet(viewsets.ViewSet):
                 # Get data of line from db
                 # /* -----------  lambda  ----------- */
                 return JsonResponse(
-                    {"error": "Permission denied."},
+                    {"error": "Check the 'pk"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            # GET old data from db
             user_id_fromFile = \
                 await sync_to_async(lambda: file_record_list[0].user.id)()
             user_is_staff_fromFile = \
                 await sync_to_async(
                     lambda: file_record_list[0].user.is_staff
                     )()
-            
+            user_original_name_fromFile =\
+                await sync_to_async(lambda: file_record_list[0].original_name)()
+            file_extencion = str(user_original_name_fromFile).split(".")[-1]
+            # CHECK of user
             if user_id_fromFile != int(user_ind) and \
               not user_is_staff_fromFile:
                 return JsonResponse(
@@ -272,23 +288,24 @@ class FileStorageViewSet(viewsets.ViewSet):
                     status=status.HTTP_403_FORBIDDEN
                 )
             
-            # Переименование файла на диске и обновление записи в БД
-            new_file_path = os.path.join(
-                os.path.dirname(file_record_list[0].file_path.name), new_name
-            )
-            default_storage.save(
-                new_file_path, default_storage.open(
-                    file_record_list[0].file_path.name
-                )
-            )
-            file_record_list[0].original_name = new_name
-            file_record_list[0].file_path.name = new_file_path
-            file_record_list[0].save()
+            # RENAME file
+            new_file_path = (file_record_list[0].file_path.path).replace(
+                          file_record_list[0].file_path.name.split("/")[-1],
+                          f"{new_name}.{file_extencion}")
+            os.rename(file_record_list[0].file_path.path, new_file_path)
             
-            return JsonResponse(self.serializer_class(file_record_list).data)
-        except FileStorage.DoesNotExist:
+            # GET path for the db
+            file_record_list[0].original_name = f"{new_name}.{file_extencion}"
+            file_record_list[0].file_path.name = \
+                "uploads" + new_file_path.replace("\\", "/").replace(r"//", "/")\
+                    .split("uploads")[-1]
+            await sync_to_async(file_record_list[0].save)()
+            
+            return JsonResponse(self.serializer_class(file_record_list[0]).data)
+        except Exception as e:
             return JsonResponse(
-                {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
+                {"error": f"Mistake => {e.__str__()}"},
+                status=status.HTTP_404_NOT_FOUND
             )
 
     # @csrf_exempt
@@ -355,9 +372,10 @@ class FileStorageViewSet(viewsets.ViewSet):
                 f'attachment; filename="{file_record_list[0].original_name}"'
         
             return response
-        except FileStorage.DoesNotExist:
+        except Exception as e:
             return JsonResponse(
-                {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
+                {"error": f"Mistake => {e.__str__()}"},
+                status=status.HTTP_404_NOT_FOUND
             )
     
     @action(detail=True, url_path="api/v1/files/referral_link/<int:pk>",
