@@ -6,24 +6,20 @@ from typing import TypedDict
 import os
 
 from asgiref.sync import sync_to_async
-# from datetime import timezone
-
-from django.core.files.base import ContentFile
 from django.http import HttpResponse, JsonResponse
-# from rest_framework import viewsets, permissions, status
 from rest_framework import status
 from adrf import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
-from django.views.decorators.csrf import csrf_exempt
+# from django.views.decorators.csrf import csrf_exempt
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
 from cloud_user.models import UserRegister
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Kwargs(TypedDict):
     pk: int
@@ -343,25 +339,31 @@ class FileStorageViewSet(viewsets.ViewSet):
             )
     
     # @action(detail=True, url_path="download/<int:pk>/", methods=['get'])
-    @action(detail=True, url_name="api/v1/files/file_download/<int:pk>",
+    @action(detail=True, url_name="download",
             methods=['GET'])
     async def download(self, request, pk=None):
         from datetime import timezone
         try:
+            # GET the user ID from COOKIE
+            cookie_data = await sync_to_async(get_data_authenticate)(request)
+            user_ind = getattr(cookie_data, "id")
+            # GET line from db
             file_record_list = \
-                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
-            if len(file_record_list) == 0 or \
-                file_record_list[0].user != request.user and\
-              not request.user.is_staff:
+                await sync_to_async(list)(FileStorage.objects\
+                                          .filter(special_link=pk))
+            if len(file_record_list) == 0:
+                # Get data of line from db
+                # /* -----------  lambda  ----------- */
                 return JsonResponse(
-                    {"error": "Permission denied."},
-                    status=status.HTTP_403_FORBIDDEN
+                    {"error": "Check the 'pk"},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-        
-            # Обновляем дату последнего скачивания
-            file_record_list[0].last_downloaded = timezone.now()
-            file_record_list[0].asave()
-        
+            # Here is not a check of user
+            
+            # Update the 'last_downloaded' from line
+            file_record_list[0].last_downloaded = datetime.utcnow()
+            await sync_to_async(file_record_list[0].save)()
+            # DOWNLOAD file
             response = HttpResponse(
                 default_storage.open(file_record_list[0].file_path.name),
                 content_type='application/octet-stream'
@@ -406,9 +408,10 @@ class FileStorageViewSet(viewsets.ViewSet):
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
-            # Генерация специальной ссылки (например, UUID или токен)
+            # GENERATE a spacial link
+            download_path = f"/api/files/{file_record_list[0].special_link}/download/"
             special_link = \
-            f"{request.build_absolute_uri('/api/files/download/')}/{file_record_list[0].special_link}"
+            f"{request.build_absolute_uri(download_path)}"
             
             return JsonResponse({"special_link": special_link})
         except (FileStorage.DoesNotExist, Exception) as e:

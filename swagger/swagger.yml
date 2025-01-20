@@ -1055,9 +1055,9 @@ paths:
                             properties:
                                 special_link:
                                     type: string
-                                    example: "http://127.0.0.1:8000/api/files/download//a37167c7-3fe9-4eb4-9c17-f38e0db265c2"
+                                    example: "http://127.0.0.1:8000/api/files/a37167c7-3fe9-4eb4-9c17-f38e0db265c2/download"
                         example:
-                            "special_link": "http://127.0.0.1:8000/api/files/download//a37167c7-3fe9-4eb4-9c17-f38e0db265c2"
+                            "special_link": "http://127.0.0.1:8000/api/files/a37167c7-3fe9-4eb4-9c17-f38e0db265c2/download"
             400:
                 description: Permission denied
                 headers:
@@ -1112,6 +1112,60 @@ paths:
                         $ref: '#/components/schemas/ErrorFile'
                       example:
                         error: "File not found."
+  /files/{pk}/download/:
+    get:
+        tags:
+          - file
+        summary: This is for download a file
+        operationId: FileStorageViewSet
+        parameters:
+            - name: pk
+              description: |-
+                For download a file
+              in: path
+              required: true
+              schema:
+                type: string
+                example: a37167c7-3fe9-4eb4-9c17-f38e0db265c2
+        responses:
+            200:
+                description: |-
+                    Special link was sent, for file.
+
+                content:
+                    aplllication/octet-stream:
+                        schema:
+                            type: object
+                            format: binary
+                        example: |
+                            # Дипломный проект по профессии «Fullstack-разработчик на Python»
+
+                            ## Облачное хранилище My Cloud
+
+                            ### Цель проекта
+
+                            Цель дипломного проекта — создать веб-приложение, которое будет работать как облачное хранилище. 
+                            Приложение позволит пользователям отображать, загружать, отправлять, скачивать и переименовывать файлы. 
+
+            404:
+                description: File not found.
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                          - type: string
+                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            description: Cookie for user session
+                          - type: string
+                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            description: Cookie for user session
+                content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                      example:
+                        error: "File not found."
+
 components:
   schemas:
     UserId:
