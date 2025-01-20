@@ -248,8 +248,6 @@ class FileStorageViewSet(viewsets.ViewSet):
         :return:
         """
         new_name = request.data.get('new_name')
-        status_data = {}
-        status_code = status.HTTP_204_NO_CONTENT
         # GET the user ID from COOKIE
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
@@ -302,7 +300,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             await sync_to_async(file_record_list[0].save)()
             
             return JsonResponse(self.serializer_class(file_record_list[0]).data)
-        except Exception as e:
+        except (FileStorage.DoesNotExist, Exception) as e:
             return JsonResponse(
                 {"error": f"Mistake => {e.__str__()}"},
                 status=status.HTTP_404_NOT_FOUND
@@ -378,22 +376,45 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
     
-    @action(detail=True, url_path="api/v1/files/referral_link/<int:pk>",
+    @action(detail=True, url_name="generate_link",
             methods=['GET'])
     async def generate_link(self, request, pk=None):
         try:
-            
+            # GET the user ID from COOKIE
+            cookie_data = await sync_to_async(get_data_authenticate)(request)
+            user_ind = getattr(cookie_data, "id")
             file_record_list = \
                 await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
-            
+            if len(file_record_list) == 0 :
+                # Get data of line from db
+                # /* -----------  lambda  ----------- */
+                return JsonResponse(
+                    {"error": "Check the 'pk"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            # GET old data from db
+            user_id_fromFile = \
+                await sync_to_async(lambda: file_record_list[0].user.id)()
+            user_is_staff_fromFile = \
+                await sync_to_async(
+                    lambda: file_record_list[0].user.is_staff
+                )()
+            # CHECK of user
+            if user_id_fromFile != int(user_ind) and \
+              not user_is_staff_fromFile:
+                return JsonResponse(
+                    {"error": "Permission denied."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             # Генерация специальной ссылки (например, UUID или токен)
             special_link = \
             f"{request.build_absolute_uri('/api/files/download/')}/{file_record_list[0].special_link}"
             
             return JsonResponse({"special_link": special_link})
-        except FileStorage.DoesNotExist:
+        except (FileStorage.DoesNotExist, Exception) as e:
             return JsonResponse(
-                {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
+                {"error": f"Mistake => {e.__str__()}"},
+                status=status.HTTP_404_NOT_FOUND
             )
 
     @staticmethod

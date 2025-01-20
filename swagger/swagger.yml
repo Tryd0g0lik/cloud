@@ -1003,6 +1003,115 @@ paths:
                         $ref: "#/components/schemas/ErrorFile"
                     example:
                         error: "'pk' is invalid"
+  /files/{pk}/generate_link/:
+    post:
+        tags:
+          - file
+        summary: This is for get the special link for file
+        operationId: FileStorageViewSet
+        parameters:
+            - name: pk
+              description: |-
+                This is an individual nuber of single file from db.
+              in: path
+              required: true
+              schema:
+                type: integer
+                example: 32
+            - name: user_session_<user_id>
+              description: |-
+                This. the user receives from registration.
+              in: cookie
+              required: true
+              schema:
+                type: string
+                example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
+            - name: is_superuser_<user_id>
+              description: |-
+                This. the user receives from registration.
+              in: cookie
+              required: true
+              schema:
+                type: boolean
+                example: false
+        responses:
+            200:
+                description: |-
+                    Special link was sent, for file.
+                headers:
+                    Set-Cookie:
+                        schema:
+                            allOf:
+                                - type: string
+                                  example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                                  description: Cookie for user session
+                                - type: string
+                                  example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                                  description: Cookie for user session
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                special_link:
+                                    type: string
+                                    example: "http://127.0.0.1:8000/api/files/download//a37167c7-3fe9-4eb4-9c17-f38e0db265c2"
+                        example:
+                            "special_link": "http://127.0.0.1:8000/api/files/download//a37167c7-3fe9-4eb4-9c17-f38e0db265c2"
+            400:
+                description: Permission denied
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                            - type: string
+                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              description: Cookie for user session
+                            - type: string
+                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              description: Cookie for user session
+                content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                    example:
+                      error: "New name is required."
+            403:
+                description: Permission denied
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                            - type: string
+                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              description: Cookie for user session
+                            - type: string
+                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              description: Cookie for user session
+                content:
+                  application/json:
+                    schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                    example:
+                      error: "Permission denied."
+            404:
+                description: File not found.
+                headers:
+                  Set-Cookie:
+                    schema:
+                        allOf:
+                          - type: string
+                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            description: Cookie for user session
+                          - type: string
+                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            description: Cookie for user session
+                content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ErrorFile'
+                      example:
+                        error: "File not found."
 components:
   schemas:
     UserId:
