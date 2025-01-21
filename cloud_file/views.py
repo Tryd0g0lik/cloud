@@ -153,7 +153,8 @@ class FileStorageViewSet(viewsets.ViewSet):
         time_path = f"card/{user_ind}/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
         
         # SAVE file
-        await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
+        await sync_to_async(default_storage.save)\
+            (f"{time_path}/{file_obj.name}", file_obj)
         # CHECK the file on a file's duplication
         result_bool = await asyncio.create_task(
             FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
@@ -163,8 +164,14 @@ class FileStorageViewSet(viewsets.ViewSet):
             await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
             time_path = time_path.replace("card/", "uploads/")
             # Re-save a file ( from over) in server by a path 'uploads/<year>/<month>/<day>/< file name >'
-            file_path = await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
-            user_list = await sync_to_async(list)(UserRegister.objects.filter(id=int(user_ind)))
+            file_path = await asyncio.create_task(
+                sync_to_async(default_storage.save)\
+                    (f"{time_path}/{file_obj.name}", file_obj)
+            )
+            user_list = await asyncio.create_task(
+                sync_to_async(list)\
+                    (UserRegister.objects.filter(id=int(user_ind)))
+            )
             file_record = await sync_to_async(FileStorage.objects.create)(
                 user= user_list[0],
                 original_name=file_obj.name,
@@ -200,21 +207,29 @@ class FileStorageViewSet(viewsets.ViewSet):
         status_data = {}
         status_code =status.HTTP_204_NO_CONTENT
         # GET the user ID from COOKIE
-        cookie_data = await sync_to_async(get_data_authenticate)(request)
-        user_ind = getattr(cookie_data, "id")
+        cookie_data = await asyncio.create_task(
+            sync_to_async(get_data_authenticate)(request)
+        )
         try:
             
-            file_list = await sync_to_async(list)(FileStorage.objects.filter(id=pk))
+            file_list = await asyncio.create_task(
+                sync_to_async(list)(FileStorage.objects.filter(id=pk))
+            )
             if len(file_list) == 0:
                 return JsonResponse({"error": "'pk' invalid"},
                                     status=status.HTTP_400_BAD_REQUEST)
             # Get data of line from db
             # /* -----------  lambda  ----------- */
             user_id_fromFile = \
-                await sync_to_async(lambda: file_list[0].user.id)()
+                await asyncio.create_task(
+                    sync_to_async(lambda: file_list[0].user.id)()
+                )
             user_is_staff_fromFile = \
-                await sync_to_async(lambda:  file_list[0].user.is_staff)()
+                await asyncio.create_task(
+                    sync_to_async(lambda:  file_list[0].user.is_staff)()
+                )
   
+            user_ind = getattr(cookie_data, "id")
             if  \
               user_id_fromFile != user_ind and \
               not user_is_staff_fromFile:
@@ -224,8 +239,11 @@ class FileStorageViewSet(viewsets.ViewSet):
                 )
             
             # DELETE a single file from db
-            await sync_to_async(default_storage.delete)(f"{file_list[0].file_path}")
-            await sync_to_async(file_list[0].delete)()
+            await asyncio.gather(
+                sync_to_async(default_storage.delete)\
+                    (f"{file_list[0].file_path}"),
+                sync_to_async(file_list[0].delete)()
+            )
             status_code=status.HTTP_204_NO_CONTENT
         except FileStorage.DoesNotExist:
             status_data = {"error": "File not found."}
@@ -265,13 +283,19 @@ class FileStorageViewSet(viewsets.ViewSet):
                 )
             # GET old data from db
             user_id_fromFile = \
-                await sync_to_async(lambda: file_record_list[0].user.id)()
+                await asyncio.create_task(
+                    sync_to_async(lambda: file_record_list[0].user.id)()
+                )
             user_is_staff_fromFile = \
-                await sync_to_async(
+                await asyncio.create_task(
+                    sync_to_async(
                     lambda: file_record_list[0].user.is_staff
                     )()
+                )
             user_original_name_fromFile =\
-                await sync_to_async(lambda: file_record_list[0].original_name)()
+                await asyncio.create_task(
+                    sync_to_async(lambda: file_record_list[0].original_name)()
+                )
             file_extencion = str(user_original_name_fromFile).split(".")[-1]
             # CHECK of user
             if user_id_fromFile != int(user_ind) and \
@@ -288,6 +312,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             os.rename(file_record_list[0].file_path.path, new_file_path)
             
             # GET path for the db
+            
             file_record_list[0].original_name = f"{new_name}.{file_extencion}"
             file_record_list[0].file_path.name = \
                 "uploads" + new_file_path.replace("\\", "/").replace(r"//", "/")\
@@ -316,12 +341,16 @@ class FileStorageViewSet(viewsets.ViewSet):
                     status=status.HTTP_404_NOT_FOUND
                 )
             # GET the user ID from COOKIE
-            cookie_data = await sync_to_async(get_data_authenticate)(
+            cookie_data = await asyncio.create_task(
+                sync_to_async(get_data_authenticate)(
                 request
                 )
+            )
             user_ind = getattr(cookie_data, "id")
             user_id_fromFile = \
-                await sync_to_async(lambda: file_record_list[0].user.id)()
+                await asyncio.create_task(
+                    sync_to_async(lambda: file_record_list[0].user.id)()
+                )
             if user_id_fromFile != int(user_ind):
                 return JsonResponse(
                     {"error": "Permission denied."},
@@ -344,12 +373,15 @@ class FileStorageViewSet(viewsets.ViewSet):
         from datetime import timezone
         try:
             # GET the user ID from COOKIE
-            cookie_data = await sync_to_async(get_data_authenticate)(request)
-            user_ind = getattr(cookie_data, "id")
+            # cookie_data = await asyncio.create_task(
+            #     sync_to_async(get_data_authenticate)(request)
+            # )
+            # user_ind = getattr(cookie_data, "id")
             # GET line from db
             file_record_list = \
                 await sync_to_async(list)(FileStorage.objects\
                                           .filter(special_link=pk))
+                
             if len(file_record_list) == 0:
                 # Get data of line from db
                 # /* -----------  lambda  ----------- */
@@ -395,11 +427,15 @@ class FileStorageViewSet(viewsets.ViewSet):
                 )
             # GET old data from db
             user_id_fromFile = \
-                await sync_to_async(lambda: file_record_list[0].user.id)()
+                await asyncio.create_task(
+                    sync_to_async(lambda: file_record_list[0].user.id)()
+                )
             user_is_staff_fromFile = \
-                await sync_to_async(
+                await asyncio.create_task(
+                    sync_to_async(
                     lambda: file_record_list[0].user.is_staff
                 )()
+                )
             # CHECK of user
             if user_id_fromFile != int(user_ind) and \
               not user_is_staff_fromFile:
