@@ -1,3 +1,7 @@
+D работе 
+
+[frontend](https://github.com/Tryd0g0lik/cloud_frontend)
+
 # CLOUD_USER
 1. Настраивая файл `settings.py` меняем базовую модель `User` на `UserRegister`. \
 `UserRegister` наследуется от `User`.
