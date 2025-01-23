@@ -2,7 +2,7 @@
 cloud_user/views.py
 """
 # Create your views here.
-
+import json
 from django.shortcuts import render
 from django.core.cache import (cache)
 from rest_framework import (viewsets, generics)
@@ -90,6 +90,16 @@ Your profile is not activate"}), 404
     return JsonResponse(instance)
     # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
   
+  def dispatch(self, request, *args, **kwargs):
+    try:
+      resp = super().dispatch( request, *args, **kwargs)
+      
+      # return JsonResponse(resp.data, status=resp.status_code)
+      return resp
+    except Exception as e:
+      return JsonResponse(resp.content, status=200)
+    
+  
   def update(self, request, *args, **kwargs):
     """
      We can not update the 'is_superuser' property.
@@ -103,8 +113,8 @@ Your profile is not activate"}), 404
     check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
     
     # We does can not update the 'is_superuser' property
-    if request.data["is_superuser"]:
-      request.data["is_superuser"] = False
+    if json.loads(request.body)["is_superuser"]:
+      json.loads(request.body)["is_superuser"] = False
 
     if not check_bool:
       return Response(
@@ -112,15 +122,16 @@ Your profile is not activate"}), 404
           "message": f"[{__name__}::{self.__class__.retrieve.__name__}]: \
 Your profile is not activate"}
         ), 404
-    if request.data["is_superuser"]:
-      del request.data["is_superuser"]
+    if json.loads(request.body)["is_superuser"]:
+      del json.loads(request.body)["is_superuser"]
       
         # data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
-    request.data["password"] = \
-      f'pbkdf2${str(20000)}{hash_password(request.data["password"]).decode("utf-8")}'
+    json.loads(request.body)["password"] = \
+      f'pbkdf2${str(20000)}{hash_password(json.loads(request.body)["password"]).decode("utf-8")}'
     
     instance = super().update(request, *args, **kwargs)
     return Response(instance.data, status=200) # Проверить
+  
   def create(self, request, *args, **kwargs):
     """
     TODO: Entrypoint for the POST method of request \
@@ -157,7 +168,7 @@ Your profile is not activate"}
     :param kwargs:
     :return:
     """
-    data = request.data
+    data = json.loads(request.body)
     # /* -----------------временно HASH----------------- */
     hash = hash_password(data["password"])
     data["password"] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
@@ -237,7 +248,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView):
   def patch(self, request, *args, **kwargs):
     """
     Возвращает данные для COOKIE ('user_session_{id}')  если\
-request.data["is_active"] == True, and 'is_active'
+json.loads(request.body)["is_active"] == True, and 'is_active'
      We does can not update the 'is_superuser' property
 
     :param request:
@@ -259,7 +270,7 @@ request.data["is_active"] == True, and 'is_active'
       
       if cacher.user_session == cacher.user_session and \
         request.method.lower() == "patch":
-        data = request.data
+        data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
         # CHECK a COOKIE KEY
         check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
@@ -311,8 +322,8 @@ Something what wrong"}, status=400)
       cache.close()
 
   def put(self, request, *args, **kwargs):
-    request.data["Message"] = "Not Ok"
-    return Response(request.data, status=400)
+    json.loads(request.body)["Message"] = "Not Ok"
+    return Response(json.loads(request.body), status=400)
 
 def main(request):
   if request.method.lower() == "get":
@@ -331,7 +342,7 @@ def main(request):
     return render(request, template, {})
 
 def send_message(request):
-  data = request.data
+  data = json.loads(request.body)
   def _clean_password(request):
       password = _clean(request)
       if password:
@@ -339,7 +350,7 @@ def send_message(request):
       return password
 #
   def _clean(request):
-      data = request.data
+      data = json.loads(request.body)
       password = data['password']
       if password_validation and password:
       

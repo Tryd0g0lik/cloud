@@ -3,6 +3,7 @@ cloud_file/views.py
 Here, interface of file storage.
 """
 import asyncio
+import json
 from typing import TypedDict
 import os
 
@@ -262,7 +263,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         :param pk: integer from single line of db, for changing
         :return:
         """
-        new_name = request.data.get('new_name')
+        new_name = json.loads(request.body).get('new_name')
         # GET the user ID from COOKIE
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
@@ -332,7 +333,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     @action(detail=True,
             url_name="comment", methods=['POST'])
     async def update_comment(self, request, pk: Kwargs = None):
-        new_comment = request.data.get('comment')
+        new_comment = json.loads(request.body).get('comment')
         # http://127.0.0.1:8000/api/v1/files/31/update_comment/
         try:
             file_record_list = \
