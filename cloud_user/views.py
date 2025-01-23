@@ -327,7 +327,8 @@ def main(request):
     #   title = "Активизация"
     #   form = LoginForm()
     #   context_ = {"form": form, "page_name": title}
-    return render(request, template, context_)
+    # return render(request, template, context_)
+    return render(request, template, {})
 
 def send_message(request):
   data = request.data

@@ -93,8 +93,8 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            os.path.join(BASE_DIR, 'cloud_user/templates/'),
-            os.path.join(BASE_DIR, 'cloud_file/templates/'),
+            os.path.join(BASE_DIR, 'templates/'),
+            # os.path.join(BASE_DIR, 'cloud_file/templates/'),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
