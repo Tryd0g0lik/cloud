@@ -5,6 +5,7 @@ Here is a serializer fot user registration
 import logging
 from rest_framework import serializers
 
+from cloud.hashers import hash_password
 from cloud_user.apps import signal_user_registered
 from cloud_user.models import UserRegister
 from cloud_user.contribute.services import find_superuser, get_fields_response
@@ -39,6 +40,11 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             # Cot czn registrate the superuser of user
             _user.is_superuser = False
             _user.is_staff = False
+
+            # /* -----------------временно HASH----------------- */
+            hash = hash_password(validated_data["password"])
+            _user.password = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+            
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)

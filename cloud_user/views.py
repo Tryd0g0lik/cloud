@@ -168,10 +168,10 @@ Your profile is not activate"}
     :param kwargs:
     :return:
     """
-    data = json.loads(request.body)
-    # /* -----------------временно HASH----------------- */
-    hash = hash_password(data["password"])
-    data["password"] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+    # data = json.loads(request.body)
+    # # /* -----------------временно HASH---------------Перенес в cloud_user/serializers.py-- */
+    # hash = hash_password(data["password"])
+    # data["password"] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
     
     instance = super().create(request, *args, **kwargs)
     instance = get_fields_response(instance)
