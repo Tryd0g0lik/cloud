@@ -2,11 +2,13 @@
 cloud_user/contribute/utilites.py
 """
 import logging
+import scrypt
 from django.core.signing import Signer
 from django.template.loader import render_to_string
-from project.settings import ALLOWED_HOSTS
+
 from dotenv_ import (APP_SERVER_HOST,
                      APP_PROTOKOL, APP_PORT)
+from project.settings import SECRET_KEY
 from logs import configure_logging
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
@@ -25,6 +27,7 @@ def send_activation_notificcation(user) -> bool:
      Note: Look up the 'user_registered_dispatcher' from 'apps.py'
     :param user: object
     """
+    from project.settings import ALLOWED_HOSTS
     _host: [str, None] = None
     _resp_bool = False
     __text = f"[{send_activation_notificcation.__name__}]: "
@@ -49,10 +52,13 @@ def send_activation_notificcation(user) -> bool:
                         for view_url in [url]]
             _host = url_list[0]
         # Create the letter
+        # sign = scrypt.encrypt(SECRET_KEY, signer.sign(user.username)
+        #                       .replace(":", "_"),
+        #                      maxtime=120)
         _context: dict = {
             "user": user,
             "host": _host,
-             "sign": signer.sign(user.username)}
+             "sign": signer.sign(user.username).replace(":", "_")}
         # letter 1
         subject = render_to_string(template_name= \
                                        'email/activation_letter_subject.txt',

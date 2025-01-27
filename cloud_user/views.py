@@ -46,12 +46,12 @@ METHOD: GET, CREATE, PUT, DELETE.
     # numb = user_session_key_list[0].split("_")[-1]
     # user_session = request.COOKIES.get(f"user_session_{numb}")
     # is_superuser = request.COOKIES.get(f"is_superuser_{numb}")
-    class DataCoockie:
+    class DataCookie:
       pass
 
     # GET user ID
     cookie_data = get_data_authenticate(request)
-    cacher = DataCoockie()
+    cacher = DataCookie()
     cacher.user_session = cache.get(f"user_session_{cookie_data.id}")
     cacher.is_superuser = cache.get(f"is_superuser_{cookie_data.id}")
     try:
@@ -183,7 +183,6 @@ Your profile is not activate"}
     instance = get_fields_response(instance)
     response = JsonResponse(data=instance, status=200)
     
-    
     return response
   
   def destroy(self, request, *args, **kwargs):
@@ -199,12 +198,12 @@ Your profile is not activate"}
     check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
 
     # CHECK to USER
-    class DataCoockie:
+    class DataCookie:
       pass
 
     # GET user ID
     cookie_data = get_data_authenticate(request)
-    cacher = DataCoockie()
+    cacher = DataCookie()
     cacher.user_session = cache.get(f"user_session_{cookie_data.id}")
     cacher.is_superuser = cache.get(f"is_superuser_{cookie_data.id}")
     
@@ -265,12 +264,12 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     """
     
     # CHECK to USER
-    class DataCoockie:
+    class DataCookie:
       pass
 
     # GET user ID
     cookie_data = get_data_authenticate(request)
-    cacher = DataCoockie()
+    cacher = DataCookie()
     cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
     cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:

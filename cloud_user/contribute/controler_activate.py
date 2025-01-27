@@ -8,6 +8,8 @@ Email contains the tokken-link. When user presses by the token-link, this run \
 the function (below).
 """
 import logging
+import os
+
 from django.core.signing import BadSignature
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -19,8 +21,11 @@ from dotenv_ import (
     URL_REDIRECT_IF_NOTGET_AUTHENTICATION,
     URL_REDIRECT_IF_GET_AUTHENTICATION
 )
+import scrypt
 from logs import configure_logging
-
+from project.settings import (SESSION_COOKIE_HTTPONLY, SESSION_COOKIE_SECURE,
+                              SESSION_COOKIE_SAMESITE, SESSION_COOKIE_AGE,
+                              SECRET_KEY)
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 
@@ -47,7 +52,7 @@ variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README
     username = None
     try:
         log.info(f"{_text} START")
-        username = signer.unsign(sign)
+        username = signer.unsign(str(sign).replace("_", ":"))
         log.info(f"{_text} Get '_first_name': {username.__str__()} ")
     except BadSignature as e:
         _text = f"{_text} Mistake => 'BadSignature': {e.__str__()}"
@@ -87,23 +92,46 @@ from 'is_activated'."
         # not have 'True' value from 'is_activated'." --------------------- */
         # CREATE SIGNER
         user_session = create_signer(user)
-        cache.set(f"user_session_{user.id}", user_session, 86400)
-        cache.set(f"is_superuser_{user.id}", user.is_superuser, 86400)
+        cache.set(f"user_session_{user.id}", user_session, SESSION_COOKIE_AGE)
+        cache.set(f"is_superuser_{user.id}", user.is_superuser, SESSION_COOKIE_AGE) # ????????????????????
         """ New object has tha `user_session_{id}` variable"""
-        data = {}
-        # data["is_active"] = user.is_active
-        # SESSION KEY unique for user identification
-        # data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
-        user_session_value= cache.get(f"user_session_{user.id}")
-        # COOCLIE SUPERUSER
-        # data[f'is_superuser_{user.id}'] = cache.get(f"is_superuser_{user.id}")
-        is_superuser_value = cache.get(f"is_superuser_{user.id}")
         redirect_url = f"{request.scheme}://{request.get_host()}" \
-f"{URL_REDIRECT_IF_GET_AUTHENTICATION}?user_session_{user.id}={user_session_value}&"\
-f"is_superuser_{user.id}={is_superuser_value}&is_active={user.is_active}"
-        return HttpResponseRedirect(redirect_url)
+f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
+        response =  HttpResponseRedirect(redirect_url)
+        response.set_cookie(f"user_session_{user.id}",
+                             scrypt.hash(cache.get(
+                                f"user_session_{user.id}"
+                            ), SECRET_KEY),
+                            max_age=SESSION_COOKIE_AGE,
+                            httponly=SESSION_COOKIE_HTTPONLY,
+                            secure=SESSION_COOKIE_SECURE,
+                            samesite=SESSION_COOKIE_SAMESITE
+                            )
+        response.set_cookie(f"is_superuser_{user.id}",
+                            user.is_superuser,
+                            max_age=SESSION_COOKIE_AGE,
+                            httponly=SESSION_COOKIE_HTTPONLY,
+                            secure=SESSION_COOKIE_SECURE,
+                            samesite=SESSION_COOKIE_SAMESITE)
+        response.set_cookie(f"is_active",user.is_active,
+                            max_age=SESSION_COOKIE_AGE,
+                            httponly=SESSION_COOKIE_HTTPONLY,
+                            secure=SESSION_COOKIE_SECURE,
+                            samesite=SESSION_COOKIE_SAMESITE)
+        response.set_cookie(
+            f"index", scrypt.hash(str(user.id), SECRET_KEY),
+            max_age=SESSION_COOKIE_AGE,
+            httponly=SESSION_COOKIE_HTTPONLY,
+            secure=SESSION_COOKIE_SECURE,
+            samesite=SESSION_COOKIE_SAMESITE
+            )
+        return response
+
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
+        return  HttpResponseRedirect(
+            redirect_url=f"{request.scheme}://{request.get_host()}",
+            status=400)
     finally:
         if "Mistake" in _text:
             log.error(_text)
