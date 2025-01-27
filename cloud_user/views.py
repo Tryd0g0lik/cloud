@@ -5,11 +5,14 @@ cloud_user/views.py
 import json
 from django.shortcuts import render
 from django.core.cache import (cache)
-from rest_framework import (viewsets, generics)
+from rest_framework import (viewsets, generics, status)
 from rest_framework.response import Response
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
+# from django.middleware.csrf import get_token
+
+from django.views.decorators.csrf import get_token, csrf_exempt
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (check,
@@ -21,7 +24,10 @@ from cloud_user.serializers import UserSerializer
 
 from cloud_user.contribute.services import get_fields_response
 
-
+async def csrftoken(request):
+  if (request.method != "GET"):
+    return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
+  return JsonResponse({"csrftoken": get_token(request)}, status=status.HTTP_200_OK)
 class UserView(viewsets.ModelViewSet):
   """
   TODO: This is complete of REST API, only here is not contain the PATCH method.\
@@ -244,7 +250,8 @@ class UserPatchViews(generics.RetrieveUpdateAPIView):
   queryset = UserRegister.objects.all()
   serializer_class = UserPatchSerializer
   #
-  
+
+  @csrf_exempt
   def patch(self, request, *args, **kwargs):
     """
     Возвращает данные для COOKIE ('user_session_{id}')  если\
@@ -264,11 +271,11 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     # GET user ID
     cookie_data = get_data_authenticate(request)
     cacher = DataCoockie()
-    cacher.user_session = cache.get(f"user_session_{cookie_data.id}")
-    cacher.is_superuser = cache.get(f"is_superuser_{cookie_data.id}")
+    cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
+    cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
       
-      if cacher.user_session == cacher.user_session and \
+      if cookie_data.user_session == cacher.user_session and \
         request.method.lower() == "patch":
         data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")

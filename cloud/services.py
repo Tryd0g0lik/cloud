@@ -17,6 +17,11 @@ the authenticate of user.
     
     try:
         key_list = request.COOKIES.keys()
+        if len(list(key_list)) == 0:
+            raise ValueError(
+                f"[{__name__}::{get_data_authenticate.__name__}]: \
+            Mistake => 'request.COOKIE' is invalid."
+                )
         user_session_key_list = \
             [key for key in list(key_list) if r"user_session_" in key]
         if len(user_session_key_list) != 0:

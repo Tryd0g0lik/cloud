@@ -91,11 +91,17 @@ from 'is_activated'."
         cache.set(f"is_superuser_{user.id}", user.is_superuser, 86400)
         """ New object has tha `user_session_{id}` variable"""
         data = {}
+        # data["is_active"] = user.is_active
         # SESSION KEY unique for user identification
-        data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
+        # data[f"user_session_{user.id}"] = cache.get(f"user_session_{user.id}")
+        user_session_value= cache.get(f"user_session_{user.id}")
         # COOCLIE SUPERUSER
-        data[f'is_superuser_{user.id}'] = cache.get(f"is_superuser_{user.id}")
-        return HttpResponseRedirect(URL_REDIRECT_IF_GET_AUTHENTICATION, {**data})
+        # data[f'is_superuser_{user.id}'] = cache.get(f"is_superuser_{user.id}")
+        is_superuser_value = cache.get(f"is_superuser_{user.id}")
+        redirect_url = f"{request.scheme}://{request.get_host()}" \
+f"{URL_REDIRECT_IF_GET_AUTHENTICATION}?user_session_{user.id}={user_session_value}&"\
+f"is_superuser_{user.id}={is_superuser_value}&is_active={user.is_active}"
+        return HttpResponseRedirect(redirect_url)
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
     finally:

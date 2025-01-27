@@ -167,9 +167,7 @@ DEFAULT_CHARSET = 'utf-8'
 
 AUTH_USER_MODEL = 'cloud_user.UserRegister'
 
-# True, сервер будет принимать запросы из любого источника. Это означает, что
-# ваш API будет доступен для всех доменов без ограничений
-CORS_ORIGIN_ALLOW_ALL = True
+
 
 # WEBPACK
 # WEBPACK_LOADER ={
@@ -237,15 +235,23 @@ EMAIL_SUBJECT_PREFIX = "activation_from_cloud"
 
 
 # '''Cookie'''
+SESSION_COOKIE_HTTPONLY = True # CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False # изменить на True !!!!!!!!!!! CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'Lax' # CSRF_COOKIE_SAMESITE = 'Lax'  # или 'Strict'
+SESSION_COOKIE_AGE = 86400
 # CSRF_COOKIE_DOMAIN = ALLOWED_HOSTS
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:8080",
-#     "http://127.0.0.1:8000",
-#     "http://127.0.0.1:59337"
-# ]
+# True, сервер будет принимать запросы из любого источника. Это означает, что
+# ваш API будет доступен для всех доменов без ограничений
+# CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "http://localhost:8000",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:59337"
+]
 
 CORS_ALLOW_METHODS = [
     'DELETE',
