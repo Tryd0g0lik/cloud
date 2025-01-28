@@ -281,19 +281,19 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     cookie_data = get_data_authenticate(request)
     cacher = DataCookie()
     cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
-    cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
+    # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
       user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
-      if cookie_data.user_session == user_session and \
+      if cookie_data.user_session == str(user_session) and \
         request.method.lower() == "patch":
         data = json.loads(request.body)
-        user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
+        user_session = request.COOKIES.get(f"user_session")
         # CHECK a COOKIE KEY
         check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
         if not check_bool:
             return Response(
               {"message": f"[{__name__}]: \
-    Something what wrong. Check the 'pk'."}
+Something what wrong. Check the 'pk'."}
               )
         
         # /* -------------- Remove 'is_superuser' -------------- */
@@ -317,18 +317,22 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
       
           response = Response(instance.data, status=200)
           # CHANGE IS_ACTIVE
-          if data["is_active"]:
+          if "is_active" in data:
             hash_create_user_session(kwargs['pk'],
                                      f"user_session_{kwargs['pk']}")
             # (user_list.first()).is_active = True
             # GET NEW value for the cookie's user_session_{id}.
-            response.set_cookie(f"user_session_{kwargs['pk']}", True)
+            # response.set_cookie(f"user_session_{kwargs['pk']}", True)
           # elif not data["is_active"]:
           #   (user_list.first()).is_active = False
           user_list.first().save()
         
           return response
-        return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({"detail": "Something what wrong!"},
+                            status=status.HTTP_400_BAD_REQUEST)
+      return JsonResponse({"detail": "Something what wrong! \
+Check the 'user_session' or 'pk'"},
+                          status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
       return Response({
         "message": "Not Ok",
