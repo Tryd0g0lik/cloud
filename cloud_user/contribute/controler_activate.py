@@ -98,6 +98,7 @@ from 'is_activated'."
         redirect_url = f"{request.scheme}://{request.get_host()}" \
 f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
         response =  HttpResponseRedirect(redirect_url)
+        
         response.set_cookie(f"user_session_{user.id}",
                              scrypt.hash(cache.get(
                                 f"user_session_{user.id}"

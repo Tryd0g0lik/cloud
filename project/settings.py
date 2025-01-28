@@ -66,7 +66,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -239,12 +238,20 @@ SESSION_COOKIE_HTTPONLY = False # CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False # изменить на True !!!!!!!!!!! CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'Lax' # CSRF_COOKIE_SAMESITE = 'Lax'  # или 'Strict'
 SESSION_COOKIE_AGE = 86400
-# CSRF_COOKIE_DOMAIN = ALLOWED_HOSTS
 
+# '''CSRF'''
+CSRF_COOKIE_DOMAIN = ALLOWED_HOSTS
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+    "http://localhost:8000"
+]
 # CORS
 # True, сервер будет принимать запросы из любого источника. Это означает, что
 # ваш API будет доступен для всех доменов без ограничений
-# CORS_ORIGIN_ALLOW_ALL = True
+# Should be False when using specific origins
+CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://localhost:8000",
@@ -252,6 +259,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://127.0.0.1:59337"
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -264,7 +272,7 @@ CORS_ALLOW_METHODS = [
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
-    'authorization',
+    'Authorization',
     'content-type',
     'dnt',
     'origin',
@@ -272,11 +280,6 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
-# CSRF_TRUSTED_ORIGINS = [
-#     "127.0.0.1:8000",
-#     "127.0.0.1:60404"
-# ]
-
 
 # SESSION/CACHES
 # https://docs.djangoproject.com/en/4.2/topics/cache/#database-caching

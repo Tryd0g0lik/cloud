@@ -2,6 +2,7 @@
 cloud_user/views.py
 """
 # Create your views here.
+import scrypt;
 import json
 from django.shortcuts import render
 from django.core.cache import (cache)
@@ -11,7 +12,7 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 # from django.middleware.csrf import get_token
-
+from project.settings import SECRET_KEY
 from django.views.decorators.csrf import get_token, csrf_exempt
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
@@ -38,6 +39,10 @@ METHOD: GET, CREATE, PUT, DELETE.
   serializer_class = UserSerializer
   # permission_classes = [permissions.IsAuthenticated]
   # permission_classes = [IsAdminUser]
+  
+  def options(self, request, *args, **kwargs):
+    response = super().options(request, *args, **kwargs)
+    return response
   
   def list(self, request, *args, **kwargs):
     # key_list = request.COOKIES.keys()
@@ -249,8 +254,13 @@ class UserPatchViews(generics.RetrieveUpdateAPIView):
   queryset = UserRegister.objects.all()
   serializer_class = UserPatchSerializer
   #
-
-  @csrf_exempt
+  
+  
+  def options(self, request, *args, **kwargs):
+    response = super().options(request, *args, **kwargs)
+    return response
+  
+  # @csrf_exempt
   def patch(self, request, *args, **kwargs):
     """
     Возвращает данные для COOKIE ('user_session_{id}')  если\
@@ -262,7 +272,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     :param kwargs:
     :return: the data of body and 'user_session_{id}' from cookie
     """
-    
+ 
     # CHECK to USER
     class DataCookie:
       pass
@@ -273,8 +283,8 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
     cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
-      
-      if cookie_data.user_session == cacher.user_session and \
+      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
+      if cookie_data.user_session == user_session and \
         request.method.lower() == "patch":
         data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
@@ -318,6 +328,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
           user_list.first().save()
         
           return response
+        return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
       return Response({
         "message": "Not Ok",
