@@ -12,7 +12,8 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 # from django.middleware.csrf import get_token
-from project.settings import SECRET_KEY
+from project.settings import SECRET_KEY, SESSION_COOKIE_AGE, \
+  SESSION_COOKIE_HTTPONLY, SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE
 from django.views.decorators.csrf import get_token, csrf_exempt
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
@@ -22,7 +23,7 @@ from cloud.hashers import hash_password
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
-
+from cloud_user.contribute.sessions import signer
 from cloud_user.contribute.services import get_fields_response
 
 async def csrftoken(request):
@@ -283,7 +284,8 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
-      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
+      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)\
+        .decode('ISO-8859-1')
       if cookie_data.user_session == str(user_session) and \
         request.method.lower() == "patch":
         data = json.loads(request.body)
@@ -310,7 +312,7 @@ Something what wrong. Check the 'pk'."}
           # CHANGE PASSWORD
           if "password" == item:
             hash = hash_password(data[item])
-            data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+            data[item] = f"pbkdf2${str(20000)}{hash.decode('ISO-8859-1')}"
           kwargs[item] = data[item]
           # CHANGE
           instance = super().patch(request, args, kwargs)
@@ -320,6 +322,13 @@ Something what wrong. Check the 'pk'."}
           if "is_active" in data:
             hash_create_user_session(kwargs['pk'],
                                      f"user_session_{kwargs['pk']}")
+            
+            response.response.set_cookie(f"is_active", data.is_active,
+                            max_age= -100 if data.is_active == False else SESSION_COOKIE_AGE,
+                            httponly=SESSION_COOKIE_HTTPONLY,
+                            secure=SESSION_COOKIE_SECURE,
+                            samesite=SESSION_COOKIE_SAMESITE)
+            
             # (user_list.first()).is_active = True
             # GET NEW value for the cookie's user_session_{id}.
             # response.set_cookie(f"user_session_{kwargs['pk']}", True)
