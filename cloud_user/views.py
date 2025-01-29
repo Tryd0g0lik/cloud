@@ -359,6 +359,46 @@ def main(request):
     template = "users/index.html"
     title = "Главная"
     context_ = {"page_name": title}
+    response = render(request, template, {})
+    user_list = []
+    if request.COOKIES.get("index") != None:
+      index = request.COOKIES.get("index")
+      user_list = UserRegister.objects.filter(id=int(index))
+    if len(user_list) > 0:
+      index = request.COOKIES.get('index')
+      # Check the "user_session_{index}", it is in the cacher table or not.
+      user_session = cache.get(f"user_session_{index}")
+      if user_session == None:
+        hash_create_user_session(int(index), f"user_session_{index}")
+        
+      response.set_cookie(
+        f"user_session",
+        scrypt.hash(
+          cache.get(
+            f"user_session_{index}"
+          ), SECRET_KEY
+        ),
+        max_age=SESSION_COOKIE_AGE,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite=SESSION_COOKIE_SAMESITE
+        )
+      # response.set_cookie(f"is_superuser_{user.id}",
+      response.set_cookie(
+        f"is_superuser",
+        user_list[0].is_superuser,
+        max_age=SESSION_COOKIE_AGE,
+        httponly=SESSION_COOKIE_HTTPONLY,
+        secure=SESSION_COOKIE_SECURE,
+        samesite=SESSION_COOKIE_SAMESITE
+        )
+      response.set_cookie(
+        f"is_active", user_list[0].is_active,
+        max_age=SESSION_COOKIE_AGE,
+        httponly=SESSION_COOKIE_HTTPONLY,
+        secure=SESSION_COOKIE_SECURE,
+        samesite=SESSION_COOKIE_SAMESITE
+        )
     # if request.path == "register/":
     #   title = "Регистрация"
     #   form = RegisterUserForm()
@@ -368,7 +408,7 @@ def main(request):
     #   form = LoginForm()
     #   context_ = {"form": form, "page_name": title}
     # return render(request, template, context_)
-    return render(request, template, {})
+    return response
 
 def send_message(request):
   data = json.loads(request.body)
