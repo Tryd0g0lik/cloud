@@ -58,7 +58,7 @@ def send_activation_notificcation(user) -> bool:
         _context: dict = {
             "user": user,
             "host": _host,
-             "sign": signer.sign(user.username).replace(":", "_NULL_")}
+             "sign": signer.sign(user.username).replace(":", "_null_")}
         # letter 1
         subject = render_to_string(template_name= \
                                        'email/activation_letter_subject.txt',
