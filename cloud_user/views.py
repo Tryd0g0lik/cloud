@@ -257,11 +257,11 @@ class UserPatchViews(generics.RetrieveUpdateAPIView):
   #
   
   
-  def get(self, request, *args, **kwargs):
-    response = super().get(request, *args, **kwargs)
-    # GET user ID
-    # cookie_data = get_data_authenticate(request)
-    return response
+  # def get(self, request, *args, **kwargs):
+  #   response = super().get(request, *args, **kwargs)
+  #   # GET user ID
+  #   # cookie_data = get_data_authenticate(request)
+  #   return response
   
   # @csrf_exempt
   def patch(self, request, *args, **kwargs):
