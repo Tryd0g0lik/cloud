@@ -12,7 +12,8 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 # from django.middleware.csrf import get_token
-from project.settings import SECRET_KEY
+from project.settings import SECRET_KEY, SESSION_COOKIE_AGE, \
+  SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY
 from django.views.decorators.csrf import get_token, csrf_exempt
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
@@ -320,6 +321,13 @@ Something what wrong. Check the 'pk'."}
           if "is_active" in data:
             hash_create_user_session(kwargs['pk'],
                                      f"user_session_{kwargs['pk']}")
+            response.set_cookie(
+              f"is_active", data.is_active,
+              max_age=SESSION_COOKIE_AGE,
+              httponly=SESSION_COOKIE_HTTPONLY,
+              secure=SESSION_COOKIE_SECURE,
+              samesite=SESSION_COOKIE_SAMESITE
+              )
             # (user_list.first()).is_active = True
             # GET NEW value for the cookie's user_session_{id}.
             # response.set_cookie(f"user_session_{kwargs['pk']}", True)
