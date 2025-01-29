@@ -143,16 +143,17 @@ MIGRATION_MODULES = {
     # 'cloud': 'cloud.migrations',
     
 }
-
-# STATIC_ROOT = os.path.join(BASE_DIR, "static")
-STATIC_URL = os.environ.get("STATIC_URL", "static/")
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
-
 STATICFILES_DIRS = [
     # os.path.join(BASE_DIR, 'cloud\\static'),
     ("cloud_user_static", os.path.join(BASE_DIR, 'cloud_user\\static')),
     # os.path.join(BASE_DIR, 'cloud_file\\static'),
 ]
+
+# STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_URL = os.environ.get("STATIC_URL", "static/")
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
+
 
 
 # MEDIA_URL = 'media/'
