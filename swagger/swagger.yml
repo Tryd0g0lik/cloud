@@ -1,5 +1,6 @@
 # https://docs.swagger.io/spec.html#511-object-example
 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.2.md#document-structure
+# https://www.speakeasy.com/openapi/
 openapi: '3.0.3'
 info:
   version: '1.0.0'
@@ -14,7 +15,7 @@ info:
     email: work80@mail.ru
     url: https://github.com/Tryd0g0lik
 servers:
-  - url: http://127.0.0.1:8000/api/v1
+  - url: http://localhost:8000/api/v1
     description: "Basis server"
 paths:
   /users/patch/{pk}/:
@@ -32,22 +33,39 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           in: cookie
-          required: false
+          required: true
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: true
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
 
       responses:
         200:
           description: Get the json's array of objects from db
+          headers:
+            Set-Cookie:
+                schema:
+                    description: Cookie, can containing session information.
+                    type: string
+                    example: |-
+                        "index=123; Path=/; SameSite"
+                        "is_active=False; Path=/; SameSite"
+                        "is_superuser=False; Path=/; SameSite"
+                        "user_session="\034\340\223W\244t'\323xw\325\326\030\2733#E\323t^G)\351]>:m\375\301\202\377O\233\331\342{g2\350\006\026\017\360QV\365o\323\300:\2415\361\267\352\233\211\"\2023S\342*\256"; Path=/; HttpOnly; SameSite"
           content:
             application/json:
               schema:
@@ -67,15 +85,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorUsedId'
     patch:
       tags:
         - user
       summary: Update of data from user db
       description: |-
         Update the single cell or more cells from user's data of db.
-        When changing one the your cell, other cells will have not can change.
-        Hera changes the user's 'is_active' == True (profile is online) of False (profile is ofline)
+        hen changing one the your cell, other cells will have not can change.
+        
+        /* ----- Prymaty login ----- */ \
+        This an API, is changes the user's 'is_active' == True (profile is online) of False (profile is ofline). \
+        For, a primary logging of user in web-site , an API, do not requre the variables 'user_session' and 'is_superuser' for the authorisation.\
+
+        The variables 'user_session' and 'is_superuser', the user will  recieves fromthe api's respose.
+
+
       operationId: UserPatchViews
       parameters:
         - name: pk
@@ -84,18 +109,25 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           in: cookie
           required: false
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       security:
         - CookieAuth: []
           value: ["gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"]
@@ -160,7 +192,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorUsedId'
   /users/choice/{pk}/:
     get:
       tags:
@@ -176,19 +208,25 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           in: cookie
           required: false
           schema:
             type: boolean
             example: false
-
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       responses:
         200:
           description: Get the json of object from db
@@ -228,7 +266,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorUsedId'
     put:
       tags:
         - user
@@ -245,18 +283,25 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           in: cookie
           required: false
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       requestBody:
         required: true
         content:
@@ -303,7 +348,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorUsedId'
     delete:
       tags:
         - user
@@ -319,18 +364,25 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           in: cookie
           required: false
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       responses:
         204:
           description: It is successful operation. Position was removed.
@@ -372,21 +424,38 @@ paths:
         For update data of single cell or more cells.
       operationId: UserView
       parameters:
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           in: cookie
-          required: false
+          required: true
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: true
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       responses:
         200:
           description: Get the json's array of objects from db
+          headers:
+            Set-Cookie:
+                schema:
+                    description: Cookie, can containing session information.
+                    type: string
+                    example: |-
+                        "index=123; Path=/; SameSite"
+                        "is_active=False; Path=/; SameSite"
+                        "is_superuser=False; Path=/; SameSite"
+                        "user_session="\034\340\223W\244t'\323xw\325\326\030\2733#E\323t^G)\351]>:m\375\301\202\377O\233\331\342{g2\350\006\026\017\360QV\365o\323\300:\2415\361\267\352\233\211\"\2023S\342*\256"; Path=/; HttpOnly; SameSite"
           content:
             application/json:
               schema:
@@ -423,7 +492,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorUsedId'
     post:
       tags:
         - user
@@ -436,16 +505,20 @@ paths:
         content:
             application/json:
                 schema:
-                    $ref: '#/components/schemas/UserProperties/oneOf/1/properties'
+                    $ref: '#/components/schemas/UserProperties/oneOf/1'
       responses:
         200:
           description: Get the json of object from db
           headers:
             Set-Cookie:
                 schema:
+                    description: Cookie, can containing session information.
                     type: string
-                    example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
-                    description: Cookie for user session
+                    example: |-
+                        "index=123; Path=/; SameSite"
+                        "is_active=False; Path=/; SameSite"
+                        "is_superuser=False; Path=/; SameSite"
+                        "user_session="\034\340\223W\244t'\323xw\325\326\030\2733#E\323t^G)\351]>:m\375\301\202\377O\233\331\342{g2\350\006\026\017\360QV\365o\323\300:\2415\361\267\352\233\211\"\2023S\342*\256"; Path=/; HttpOnly; SameSite"
           content:
             application/json:
               schema:
@@ -510,7 +583,7 @@ paths:
         USer caт get ф list all files fron his collection.
       operationId: FileStorageViewSet
       parameters:
-        - name: user_session_<user_id>
+        - name: user_session
           description: |-
             This. the user receives from registration.
           in: cookie
@@ -518,7 +591,7 @@ paths:
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           description: |-
             This. the user receives from registration.
           in: cookie
@@ -526,6 +599,13 @@ paths:
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       responses:
         200:
             description: If all the very well
@@ -534,10 +614,10 @@ paths:
                     schema:
                         allOf:
                             - type: string
-                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                               description: Cookie for user session
                             - type: string
-                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              example: is_superuser=false; Path=/; HttpOnly
                               description: Cookie for user session
             content:
                 application/json:
@@ -558,10 +638,10 @@ paths:
               schema:
                 allOf:
                   - type: string
-                    example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                    example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                     description: Cookie for user session
                   - type: string
-                    example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                    example: is_superuser=false; Path=/; HttpOnly
                     description: Cookie for user session
           content:
             application/json:
@@ -581,7 +661,7 @@ paths:
             schema:
               $ref: '#/components/shemas/FileOfForm'
       parameters:
-        - name: user_session_<user_id>
+        - name: user_session
           description: |-
             This. the user receives from registration.
           in: cookie
@@ -589,7 +669,7 @@ paths:
           schema:
             type: string
             example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-        - name: is_superuser_<user_id>
+        - name: is_superuser
           description: |-
             This. the user receives from registration.
           in: cookie
@@ -597,6 +677,13 @@ paths:
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       responses:
         200:
           description: |-
@@ -606,10 +693,10 @@ paths:
                 schema:
                     allOf:
                         - type: string
-                          example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                          example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                           description: Cookie for user session
                         - type: string
-                          example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                          example: is_superuser=false; Path=/; HttpOnly
                           description: Cookie for user session
           content:
             application/json:
@@ -632,10 +719,10 @@ paths:
                 schema:
                     allOf:
                         - type: string
-                          example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                          example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                           description: Cookie for user session
                         - type: string
-                          example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                          example: is_superuser=false; Path=/; HttpOnly
                           description: Cookie for user session
           content:
             application/json:
@@ -653,10 +740,10 @@ paths:
                 schema:
                     allOf:
                         - type: string
-                          example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                          example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                           description: Cookie for user session
                         - type: string
-                          example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                          example: is_superuser=false; Path=/; HttpOnly
                           description: Cookie for user session
           content:
             application/json:
@@ -682,7 +769,7 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
@@ -694,6 +781,13 @@ paths:
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       responses:
         200:
           description: |-
@@ -747,7 +841,7 @@ paths:
               schema:
                 type: integer
                 example: 32
-            - name: user_session_<user_id>
+            - name: user_session
               description: |-
                 This. the user receives from registration.
               in: cookie
@@ -755,7 +849,7 @@ paths:
               schema:
                 type: string
                 example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-            - name: is_superuser_<user_id>
+            - name: is_superuser
               description: |-
                 This. the user receives from registration.
               in: cookie
@@ -763,6 +857,13 @@ paths:
               schema:
                 type: boolean
                 example: false
+            - name: index
+              in: cookie
+              required: false
+              schema:
+                type: integer
+                example: 112
+                description: This is the user ID.
         responses:
             200:
                 description: |-
@@ -772,10 +873,10 @@ paths:
                         schema:
                             allOf:
                                 - type: string
-                                  example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                                  example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                                   description: Cookie for user session
                                 - type: string
-                                  example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                                  example: is_superuser=false; Path=/; HttpOnly
                                   description: Cookie for user session
                 content:
                     application/json:
@@ -797,10 +898,10 @@ paths:
                     schema:
                         allOf:
                             - type: string
-                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                               description: Cookie for user session
                             - type: string
-                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              example: is_superuser=false; Path=/; HttpOnly
                               description: Cookie for user session
                 content:
                   application/json:
@@ -815,10 +916,10 @@ paths:
                     schema:
                         allOf:
                           - type: string
-                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                             description: Cookie for user session
                           - type: string
-                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            example: is_superuser=false; Path=/; HttpOnly
                             description: Cookie for user session
                 content:
                     application/json:
@@ -852,7 +953,7 @@ paths:
               schema:
                 type: integer
                 example: 32
-            - name: user_session_<user_id>
+            - name: user_session
               description: |-
                 This. the user receives from registration.
               in: cookie
@@ -860,7 +961,7 @@ paths:
               schema:
                 type: string
                 example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-            - name: is_superuser_<user_id>
+            - name: is_superuser
               description: |-
                 This. the user receives from registration.
               in: cookie
@@ -868,6 +969,13 @@ paths:
               schema:
                 type: boolean
                 example: false
+            - name: index
+              in: cookie
+              required: false
+              schema:
+                type: integer
+                example: 112
+                description: This is the user ID.
         responses:
             200:
                 description: |-
@@ -877,10 +985,10 @@ paths:
                         schema:
                             allOf:
                                 - type: string
-                                  example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                                  example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                                   description: Cookie for user session
                                 - type: string
-                                  example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                                  example: is_superuser=false; Path=/; HttpOnly
                                   description: Cookie for user session
                 content:
                     application/json:
@@ -902,10 +1010,10 @@ paths:
                     schema:
                         allOf:
                             - type: string
-                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                               description: Cookie for user session
                             - type: string
-                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              example: is_superuser=false; Path=/; HttpOnly
                               description: Cookie for user session
                 content:
                   application/json:
@@ -920,10 +1028,10 @@ paths:
                     schema:
                         allOf:
                             - type: string
-                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                               description: Cookie for user session
                             - type: string
-                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              example: is_superuser=false; Path=/; HttpOnly
                               description: Cookie for user session
                 content:
                   application/json:
@@ -938,10 +1046,10 @@ paths:
                     schema:
                         allOf:
                           - type: string
-                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                             description: Cookie for user session
                           - type: string
-                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            example: is_superuser=false; Path=/; HttpOnly
                             description: Cookie for user session
                 content:
                     application/json:
@@ -971,7 +1079,7 @@ paths:
           schema:
             $ref: '#/components/schemas/UserId'
           example: 12
-        - name: user_session_<user_id>
+        - name: user_session
           in: cookie
           required: true
           schema:
@@ -983,6 +1091,13 @@ paths:
           schema:
             type: boolean
             example: false
+        - name: index
+          in: cookie
+          required: false
+          schema:
+            type: integer
+            example: 112
+            description: This is the user ID.
       responses:
         204:
             description: |-
@@ -1011,7 +1126,7 @@ paths:
               schema:
                 type: integer
                 example: 32
-            - name: user_session_<user_id>
+            - name: user_session
               description: |-
                 This. the user receives from registration.
               in: cookie
@@ -1019,7 +1134,7 @@ paths:
               schema:
                 type: string
                 example: "gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu"
-            - name: is_superuser_<user_id>
+            - name: is_superuser
               description: |-
                 This. the user receives from registration.
               in: cookie
@@ -1027,6 +1142,13 @@ paths:
               schema:
                 type: boolean
                 example: false
+            - name: index
+              in: cookie
+              required: false
+              schema:
+                type: integer
+                example: 112
+                description: This is the user ID.
         responses:
             200:
                 description: |-
@@ -1036,10 +1158,10 @@ paths:
                         schema:
                             allOf:
                                 - type: string
-                                  example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                                  example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                                   description: Cookie for user session
                                 - type: string
-                                  example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                                  example: is_superuser=false; Path=/; HttpOnly
                                   description: Cookie for user session
                 content:
                     application/json:
@@ -1058,10 +1180,10 @@ paths:
                     schema:
                         allOf:
                             - type: string
-                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                               description: Cookie for user session
                             - type: string
-                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              example: is_superuser=false; Path=/; HttpOnly
                               description: Cookie for user session
                 content:
                   application/json:
@@ -1076,10 +1198,10 @@ paths:
                     schema:
                         allOf:
                             - type: string
-                              example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                              example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                               description: Cookie for user session
                             - type: string
-                              example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                              example: is_superuser=false; Path=/; HttpOnly
                               description: Cookie for user session
                 content:
                   application/json:
@@ -1094,10 +1216,10 @@ paths:
                     schema:
                         allOf:
                           - type: string
-                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                             description: Cookie for user session
                           - type: string
-                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            example: is_superuser=false; Path=/; HttpOnly
                             description: Cookie for user session
                 content:
                     application/json:
@@ -1147,10 +1269,10 @@ paths:
                     schema:
                         allOf:
                           - type: string
-                            example: user_session_<user_id>=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
+                            example: user_session=gAWVQAAAAAAAAACMPCQyYiQxMiRNZE5uT2s2bEROSjFRd2JWeXp5dDN1NkpReTg1eDRpLlVHVUJiTGpoZTM2WkxJZGhscXloT5Qu; Path=/; HttpOnly
                             description: Cookie for user session
                           - type: string
-                            example: is_superuser_<user_id>=false; Path=/; HttpOnly
+                            example: is_superuser=false; Path=/; HttpOnly
                             description: Cookie for user session
                 content:
                     application/json:
@@ -1166,30 +1288,23 @@ components:
       properties:
         pk:
           type: integer
-          nullable: false
+          nullable: true
           minimum: 0
           example: 1
     UserPassword:
-        type: string
-        properties:
-          password:
-            type: string
-            example: daaEW12%Ds
-    UserEmail:
-        type: object
-        properties:
-          email:
-            type: string
-            format: email
-            example: user@email.here
+      type: object
+      properties:
+        password:
+          type: string
+          example: daaEW12%Ds
 
     Status:
       type: object
       properties:
         status:
-            oneOf:
-                - type: integer
-                  example: 204
+          oneOf:
+              - type: integer
+                example: 204
     UserProperties:
       type: object
       required:
@@ -1281,9 +1396,13 @@ components:
                             Max length is 150 characters.
                         example: 2024.01.01
             password:
-                $ref: "#/components/schemas/UserPassword"
+                type: string
+                format: password
+                example: daaEW12%Ds
             email:
-                $ref: "#/components/schemas/UserEmail"
+                type: string
+                format: email
+                example: user@email.here
             is_superuser:
                 type: boolean
                 example: false
