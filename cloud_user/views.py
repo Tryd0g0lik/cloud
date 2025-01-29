@@ -89,13 +89,13 @@ Mistake => f{e.__str__()}"})
   
   def retrieve(self, request, *args, **kwargs):
    
-    user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
+    user_session = request.COOKIES.get(f"user_session")
     check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
     
     if not check_bool:
       return Response({"message":
                          f"[{__name__}::{self.__class__.retrieve.__name__}]:\
-Your profile is not activate"}), 404
+Your profile is not activate"}, status=status.HTTP_400_BAD_REQUEST)
     # if 'pk' in kwargs.keys():
     instance = super().retrieve(request, *args, **kwargs)
     instance = get_fields_response(instance)
@@ -103,9 +103,9 @@ Your profile is not activate"}), 404
     # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
   
   def dispatch(self, request, *args, **kwargs):
+    resp = super().dispatch( request, *args, **kwargs)
     try:
-      resp = super().dispatch( request, *args, **kwargs)
-      
+    
       # return JsonResponse(resp.data, status=resp.status_code)
       return resp
     except Exception as e:
@@ -257,8 +257,10 @@ class UserPatchViews(generics.RetrieveUpdateAPIView):
   #
   
   
-  def options(self, request, *args, **kwargs):
-    response = super().options(request, *args, **kwargs)
+  def get(self, request, *args, **kwargs):
+    response = super().get(request, *args, **kwargs)
+    # GET user ID
+    # cookie_data = get_data_authenticate(request)
     return response
   
   # @csrf_exempt
@@ -284,9 +286,12 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
-      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)\
-        .decode('ISO-8859-1')
-      if cookie_data.user_session == str(user_session) and \
+      # user_session = scrypt.hash(cacher.user_session, SECRET_KEY)\
+      #   .decode('ISO-8859-1')
+      # if cookie_data.user_session == str(user_session) and \ ?!?!?!?!?!?!?!?
+      if (cookie_data.user_session ==
+          check(f"user_session_{kwargs['pk']}",
+                cacher.user_session, **kwargs)) and \
         request.method.lower() == "patch":
         data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session")

@@ -29,6 +29,7 @@ the authenticate of user.
         
         index = request.COOKIES.get("index")
         if ( not index):
+            
             raise ValueError(
                 f"[{__name__}::{get_data_authenticate.__name__}]: \
             Mistake => User index is invalid."

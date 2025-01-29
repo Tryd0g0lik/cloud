@@ -103,9 +103,12 @@ f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
         response =  HttpResponsePermanentRedirect(f"{request.scheme}://{request.get_host()}")
         
         # response.set_cookie(f"user_session_{user.id}",
+        """
+        scrypt.hash(cache.get(f"user_session_{user.id}"),
+                                         SECRET_KEY).decode('ISO-8859-1')
+                                         """
         response.set_cookie(f"user_session",
-                             scrypt.hash(cache.get(f"user_session_{user.id}"),
-                                         SECRET_KEY).decode('ISO-8859-1'),
+                            cache.get(f"user_session_{user.id}"),
                             max_age=SESSION_COOKIE_AGE,
                             httponly=True,
                             secure=SESSION_COOKIE_SECURE,
