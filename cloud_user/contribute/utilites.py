@@ -47,7 +47,7 @@ def send_activation_notificcation(user) -> bool:
             log.info(f"{__text} The 'APP_SERVER_HOST' was received.")
             url_list = [view_url.replace(
                 f"{APP_SERVER_HOST}",
-                f"{APP_SERVER_HOST}:{APP_PORT}")
+                f"{APP_SERVER_HOST}:{APP_PROTOKOL}")
                         if APP_PROTOKOL else view_url
                         for view_url in [url]]
             _host = url_list[0]
@@ -58,7 +58,7 @@ def send_activation_notificcation(user) -> bool:
         _context: dict = {
             "user": user,
             "host": _host,
-             "sign": signer.sign(user.username).replace(":", "_null_")}
+             "sign": signer.sign(user.username).replace(":", "_NULL_")}
         # letter 1
         subject = render_to_string(template_name= \
                                        'email/activation_letter_subject.txt',

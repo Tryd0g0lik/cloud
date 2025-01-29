@@ -71,10 +71,14 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'corsheaders.middleware.CorsMiddleware',
-'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
+    
 ]
+# From MIDDLEWARE = []
+# https://docs.djangoproject.com/en/4.2/ref/middleware/#django.middleware.cache.FetchFromCacheMiddleware
+# 'django.middleware.cache.FetchFromCacheMiddleware',
+
 # REST_FRAMEWORK = {
     # 'DEFAULT_PERMISSION_CLASSES': [
     #         'rest_framework.permissions.IsAuthenticated',
@@ -291,10 +295,13 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": "cacher",
+        # 'TIMEOUT': 300,
     },
 }
+# Значение None: Ключи кэша никогда не истекают.
+# Значение 0: Ключи истекают немедленно.
 # second a live time of session
-CACHE_MIDDLEWARE_SECONDS = 1900
+CACHE_MIDDLEWARE_SECONDS = 300
 # HASH
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",

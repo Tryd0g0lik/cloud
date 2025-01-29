@@ -11,7 +11,7 @@ import logging
 import os
 
 from django.core.signing import BadSignature
-from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 from cloud_user.contribute.sessions import create_signer
@@ -19,8 +19,8 @@ from cloud_user.contribute.utilites import signer
 from cloud_user.models import UserRegister
 from rest_framework import status
 from dotenv_ import (
-    URL_REDIRECT_IF_NOTGET_AUTHENTICATION, APP_PORT,
-    URL_REDIRECT_IF_GET_AUTHENTICATION, APP_SERVER_HOST, APP_PROTOKOL
+    URL_REDIRECT_IF_NOTGET_AUTHENTICATION,
+    URL_REDIRECT_IF_GET_AUTHENTICATION
 )
 import scrypt
 from logs import configure_logging
@@ -53,7 +53,7 @@ variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README
     username = None
     try:
         log.info(f"{_text} START")
-        sign = str(sign).replace("_null_", ":")
+        sign = str(sign).replace("_NULL_", ":")
         username = signer.unsign(sign)
         log.info(f"{_text} Get '_first_name': {username.__str__()} ")
     except BadSignature as e:
@@ -61,8 +61,7 @@ variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README
         # return redirect("/", permanent=True,)
         # https://docs.djangoproject.com/en/5.1/ref/request-response/#httpresponse-objects
         
-        # return HttpResponseRedirect(f"{request.scheme}://{request.get_host()}",
-        return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
+        return HttpResponseRedirect(redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
                                     status=status.HTTP_400_BAD_REQUEST)
     # https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/#get-object-or-404
     try:
@@ -79,9 +78,9 @@ variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README
         if user.is_activated:
             _text = f"{_text} the object 'user' has 'True' value \
 from 'is_activated'. Redirect. 301"
-            return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
+            response = HttpResponseRedirect(redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
                                             status=status.HTTP_400_BAD_REQUEST)
-             
+            return response
         _text = f"{_text} the object 'user' can not have 'True' value \
 from 'is_activated'."
         log.info(_text)
@@ -96,20 +95,17 @@ from 'is_activated'."
         # CREATE SIGNER
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session, SESSION_COOKIE_AGE)
-        cache.set(f"is_superuser_{user.id}", user.is_superuser,
-                  SESSION_COOKIE_AGE) # ????????????????????
+        cache.set(f"is_superuser_{user.id}", user.is_superuser, SESSION_COOKIE_AGE) # ????????????????????
         """ New object has tha `user_session_{id}` variable"""
         redirect_url = f"{request.scheme}://{request.get_host()}" \
 f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
-        response =  HttpResponseRedirect(f"{URL_REDIRECT_IF_GET_AUTHENTICATION}")
+        response =  HttpResponseRedirect(redirect_url)
         
         # response.set_cookie(f"user_session_{user.id}",
-        """
-        scrypt.hash(cache.get(f"user_session_{user.id}"),
-                                         SECRET_KEY).decode('ISO-8859-1')
-                                         """
         response.set_cookie(f"user_session",
-                            cache.get(f"user_session_{user.id}"),
+                             scrypt.hash(cache.get(
+                                f"user_session_{user.id}"
+                            ), SECRET_KEY),
                             max_age=SESSION_COOKIE_AGE,
                             httponly=True,
                             secure=SESSION_COOKIE_SECURE,
@@ -138,7 +134,8 @@ f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
 
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
-        return HttpResponseRedirect(f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
+        return  HttpResponseRedirect(
+            redirect_url=f"{request.scheme}://{request.get_host()}",
             status=400)
     finally:
         if "Mistake" in _text:

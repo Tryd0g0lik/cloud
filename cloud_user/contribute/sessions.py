@@ -1,6 +1,6 @@
 """
 cloud_user/contribute/sessions.py
-HASH for work with the cacher (cacher it is a name from session) table of db.
+    HASH for work with the cacher (from session) table of db.
     Look to the settings.py::CACHES
  """
 import bcrypt
@@ -11,7 +11,6 @@ from cloud_user.models import UserRegister
 signer = Signer()
 def create_signer(user: UserRegister) -> str:
     """
-    The signer for a session it is a key for the hash.
     Читать Readme.COOKIE
     :param user:
     :return:
@@ -24,7 +23,7 @@ def create_signer(user: UserRegister) -> str:
     except Exception as e:
         raise ValueError(f"Mistake => {e.__str__()}")
     finally:
-        hash_string = hash_bstring.decode("utf-8") # ISO-8859-1
+        hash_string = hash_bstring.decode("utf-8")
         return hash_string
 
 def hash_check_user_session(pk: int,
@@ -39,13 +38,13 @@ def hash_check_user_session(pk: int,
     status_bool = False
     try:
         # GET B-CODE
-        res = session_val.encode(encoding="utf-8") # ISO-8859-1
+        res = session_val.encode(encoding="utf-8")
         # Get signer
         user_list = UserRegister.objects.filter(id=pk)
         if len(user_list) != 0:
             s = signer.sign(user_list[0].email)
             # CHECK
-            status_bool = bcrypt.checkpw(s.encode("utf-8"), res ) # ISO-8859-1
+            status_bool = bcrypt.checkpw(s.encode("utf-8"), res )
         else:
             raise ValueError(
                 f"[{__name__}::{hash_check_user_session.__name__}]: \
@@ -65,7 +64,7 @@ def hash_create_user_session(pk: int, session_key: str,
     :param session_key: str By default is "user_session_{id}". It is the key name/
     :param live_time: int This is a time live for key of session. By the default \
 value is the 86400 hours/
-    :return: False means what, the updates have can not get or True,
+    :return: False means what the updates have can not get or Ture,
     """
     user_list = UserRegister.objects.filter(id=pk)
     if len(user_list) == 0:
