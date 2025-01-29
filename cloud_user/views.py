@@ -12,8 +12,8 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 # from django.middleware.csrf import get_token
-from project.settings import SECRET_KEY, SESSION_COOKIE_AGE, \
-  SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY
+from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
+  SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY)
 from django.views.decorators.csrf import get_token, csrf_exempt
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
@@ -24,7 +24,8 @@ from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
 
-from cloud_user.contribute.services import get_fields_response
+from cloud_user.contribute.services import get_fields_response, get_user_cookie
+
 
 async def csrftoken(request):
   if (request.method != "GET"):
@@ -334,7 +335,8 @@ Something what wrong. Check the 'pk'."}
           # elif not data["is_active"]:
           #   (user_list.first()).is_active = False
           user_list.first().save()
-        
+          # GET COOKIE
+          response = get_user_cookie(request, response)
           return response
         return JsonResponse({"detail": "Something what wrong!"},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -360,45 +362,9 @@ def main(request):
     title = "Главная"
     context_ = {"page_name": title}
     response = render(request, template, {})
-    user_list = []
-    if request.COOKIES.get("index") != None:
-      index = request.COOKIES.get("index")
-      user_list = UserRegister.objects.filter(id=int(index))
-    if len(user_list) > 0:
-      index = request.COOKIES.get('index')
-      # Check the "user_session_{index}", it is in the cacher table or not.
-      user_session = cache.get(f"user_session_{index}")
-      if user_session == None:
-        hash_create_user_session(int(index), f"user_session_{index}")
-        
-      response.set_cookie(
-        f"user_session",
-        scrypt.hash(
-          cache.get(
-            f"user_session_{index}"
-          ), SECRET_KEY
-        ).decode('ISO-8859-1'),
-        max_age=SESSION_COOKIE_AGE,
-        httponly=True,
-        secure=SESSION_COOKIE_SECURE,
-        samesite=SESSION_COOKIE_SAMESITE
-        )
-      # response.set_cookie(f"is_superuser_{user.id}",
-      response.set_cookie(
-        f"is_superuser",
-        user_list[0].is_superuser,
-        max_age=SESSION_COOKIE_AGE,
-        httponly=SESSION_COOKIE_HTTPONLY,
-        secure=SESSION_COOKIE_SECURE,
-        samesite=SESSION_COOKIE_SAMESITE
-        )
-      response.set_cookie(
-        f"is_active", user_list[0].is_active,
-        max_age=SESSION_COOKIE_AGE,
-        httponly=SESSION_COOKIE_HTTPONLY,
-        secure=SESSION_COOKIE_SECURE,
-        samesite=SESSION_COOKIE_SAMESITE
-        )
+    # GET COOKIE
+    response = get_user_cookie(request, response)
+    # 4444444
     # if request.path == "register/":
     #   title = "Регистрация"
     #   form = RegisterUserForm()
