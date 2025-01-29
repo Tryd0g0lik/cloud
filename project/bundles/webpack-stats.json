@@ -1,0 +1,59 @@
+{
+  "status": "done",
+  "assets": {
+    "../../templates/users/index.html": {
+      "name": "../../templates/users/index.html",
+      "path": "E:\\Netologe\\diplom\\backend\\templates\\users\\index.html",
+      "publicPath": "/../../templates/users/index.html"
+    },
+    "scripts/main-121-3ba912ae6acea2274a2d.js": {
+      "name": "scripts/main-121-3ba912ae6acea2274a2d.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-121-3ba912ae6acea2274a2d.js",
+      "publicPath": "/scripts/main-121-3ba912ae6acea2274a2d.js"
+    },
+    "scripts/main-332-3ba912ae6acea2274a2d.js": {
+      "name": "scripts/main-332-3ba912ae6acea2274a2d.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-332-3ba912ae6acea2274a2d.js",
+      "publicPath": "/scripts/main-332-3ba912ae6acea2274a2d.js"
+    },
+    "scripts/main-57-3ba912ae6acea2274a2d.js": {
+      "name": "scripts/main-57-3ba912ae6acea2274a2d.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-57-3ba912ae6acea2274a2d.js",
+      "publicPath": "/scripts/main-57-3ba912ae6acea2274a2d.js"
+    },
+    "scripts/main-57-3ba912ae6acea2274a2d.js.LICENSE.txt": {
+      "name": "scripts/main-57-3ba912ae6acea2274a2d.js.LICENSE.txt",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-57-3ba912ae6acea2274a2d.js.LICENSE.txt",
+      "publicPath": "/scripts/main-57-3ba912ae6acea2274a2d.js.LICENSE.txt"
+    },
+    "scripts/main-804-3ba912ae6acea2274a2d.js": {
+      "name": "scripts/main-804-3ba912ae6acea2274a2d.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-804-3ba912ae6acea2274a2d.js",
+      "publicPath": "/scripts/main-804-3ba912ae6acea2274a2d.js"
+    },
+    "scripts/main-804-3ba912ae6acea2274a2d.js.LICENSE.txt": {
+      "name": "scripts/main-804-3ba912ae6acea2274a2d.js.LICENSE.txt",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-804-3ba912ae6acea2274a2d.js.LICENSE.txt",
+      "publicPath": "/scripts/main-804-3ba912ae6acea2274a2d.js.LICENSE.txt"
+    },
+    "styles/style.css": {
+      "name": "styles/style.css",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\styles\\style.css",
+      "publicPath": "/styles/style.css"
+    }
+  },
+  "chunks": {
+    "another": [
+      "scripts/main-332-3ba912ae6acea2274a2d.js"
+    ],
+    "index": [
+      "styles/style.css",
+      "scripts/main-57-3ba912ae6acea2274a2d.js"
+    ],
+    "shared": [
+      "scripts/main-121-3ba912ae6acea2274a2d.js",
+      "scripts/main-804-3ba912ae6acea2274a2d.js"
+    ]
+  },
+  "publicPath": "/"
+}
