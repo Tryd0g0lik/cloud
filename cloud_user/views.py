@@ -14,7 +14,7 @@ from django.http import JsonResponse
 # from django.middleware.csrf import get_token
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
   SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY)
-from django.views.decorators.csrf import get_token, csrf_exempt
+from django.views.decorators.csrf import get_token
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (check,
@@ -47,12 +47,6 @@ METHOD: GET, CREATE, PUT, DELETE.
     return response
   
   def list(self, request, *args, **kwargs):
-    # key_list = request.COOKIES.keys()
-    # user_session_key_list = \
-    #   [key for key in list(key_list) if r"user_session_*" in key]
-    # numb = user_session_key_list[0].split("_")[-1]
-    # user_session = request.COOKIES.get(f"user_session_{numb}")
-    # is_superuser = request.COOKIES.get(f"is_superuser_{numb}")
     class DataCookie:
       pass
 
@@ -400,16 +394,6 @@ def main(request):
     response = render(request, template, {})
     # GET COOKIE
     response = get_user_cookie(request, response)
-    # 4444444
-    # if request.path == "register/":
-    #   title = "Регистрация"
-    #   form = RegisterUserForm()
-    #   context_ = {"form": form, "page_name": title}
-    # elif request.path == "login/":
-    #   title = "Активизация"
-    #   form = LoginForm()
-    #   context_ = {"form": form, "page_name": title}
-    # return render(request, template, context_)
     return response
 
 def send_message(request):
