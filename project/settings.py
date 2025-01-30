@@ -175,25 +175,26 @@ AUTH_USER_MODEL = 'cloud_user.UserRegister'
 
 # WEBPACK
 WEBPACK_LOADER ={
-    'DEFAULT':{
-        'CACHE':not DEBUG,
-        'BUNDLE_DIR_NAME': 'project\\bundles\\',
-        'STATS_FILE': os.path.join(BASE_DIR, 'project\\bundles\\webpack-stats.json'),
-        'POLL_INTERVAL':0.1,
-        'TIMEOUT': None,
-        'TEST': {
-            'NAME': 'test_cloud',
-        },
+    'DEFAULT': {
+        # 'BUNDLE_DIR_NAME': '\\',
+        'CACHE': not DEBUG,
+        'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
+        'POLL_INTERVAL': 0.1,
+        # 'TIMEOUT': None,
+        # 'TEST': {
+        #     'NAME': 'test_cloud',
+        # },
         'IGNORE': [
-            '.+\.map$'
+            # '.+\.map$'
+            r'.+\.hot-update.js', r'.+\.map',
         ],
-        'LOADER_CLASS': 'webpack_loader.loader.WebpackLoader',
+        # 'LOADER_CLASS': 'webpack_loader.loader.WebpackLoader',
     }
 }
 # if not DEBUG:
 #     WEBPACK_LOADER['DEFAULT'].update({
-#         'BUNDLE_DIR_NAME': 'dist/',
-#         'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats-prod.json')
+#         'BUNDLE_DIR_NAME': 'bundles\\',
+#         'STATS_FILE': os.path.join(BASE_DIR, 'bundles\\webpack-stats.json')
 #     })
 #
 
