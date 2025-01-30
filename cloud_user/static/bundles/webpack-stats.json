@@ -1,58 +1,48 @@
 {
   "status": "done",
   "assets": {
-    "../templates/users/index.html": {
-      "name": "../templates/users/index.html",
+    "../../templates/users/index.html": {
+      "name": "../../templates/users/index.html",
       "path": "E:\\Netologe\\diplom\\backend\\templates\\users\\index.html",
-      "publicPath": "/../templates/users/index.html"
+      "publicPath": "/../../templates/users/index.html"
     },
-    "static/scripts/main-121-68074b899b7332d72eda.js": {
-      "name": "static/scripts/main-121-68074b899b7332d72eda.js",
-      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-121-68074b899b7332d72eda.js",
-      "publicPath": "/static/scripts/main-121-68074b899b7332d72eda.js"
+    "../static/scripts/main-another-2e2bea3d251dff90de26.js": {
+      "name": "../static/scripts/main-another-2e2bea3d251dff90de26.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-another-2e2bea3d251dff90de26.js",
+      "publicPath": "/../static/scripts/main-another-2e2bea3d251dff90de26.js"
     },
-    "static/scripts/main-332-68074b899b7332d72eda.js": {
-      "name": "static/scripts/main-332-68074b899b7332d72eda.js",
-      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-332-68074b899b7332d72eda.js",
-      "publicPath": "/static/scripts/main-332-68074b899b7332d72eda.js"
+    "../static/scripts/main-index-2e2bea3d251dff90de26.js": {
+      "name": "../static/scripts/main-index-2e2bea3d251dff90de26.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-index-2e2bea3d251dff90de26.js",
+      "publicPath": "/../static/scripts/main-index-2e2bea3d251dff90de26.js"
     },
-    "static/scripts/main-57-68074b899b7332d72eda.js": {
-      "name": "static/scripts/main-57-68074b899b7332d72eda.js",
-      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-57-68074b899b7332d72eda.js",
-      "publicPath": "/static/scripts/main-57-68074b899b7332d72eda.js"
+    "../static/scripts/main-runtime-2e2bea3d251dff90de26.js": {
+      "name": "../static/scripts/main-runtime-2e2bea3d251dff90de26.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-runtime-2e2bea3d251dff90de26.js",
+      "publicPath": "/../static/scripts/main-runtime-2e2bea3d251dff90de26.js"
     },
-    "static/scripts/main-57-68074b899b7332d72eda.js.LICENSE.txt": {
-      "name": "static/scripts/main-57-68074b899b7332d72eda.js.LICENSE.txt",
-      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-57-68074b899b7332d72eda.js.LICENSE.txt",
-      "publicPath": "/static/scripts/main-57-68074b899b7332d72eda.js.LICENSE.txt"
+    "../static/scripts/main-shared-2e2bea3d251dff90de26.js": {
+      "name": "../static/scripts/main-shared-2e2bea3d251dff90de26.js",
+      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-shared-2e2bea3d251dff90de26.js",
+      "publicPath": "/../static/scripts/main-shared-2e2bea3d251dff90de26.js"
     },
-    "static/scripts/main-804-68074b899b7332d72eda.js": {
-      "name": "static/scripts/main-804-68074b899b7332d72eda.js",
-      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-804-68074b899b7332d72eda.js",
-      "publicPath": "/static/scripts/main-804-68074b899b7332d72eda.js"
-    },
-    "static/scripts/main-804-68074b899b7332d72eda.js.LICENSE.txt": {
-      "name": "static/scripts/main-804-68074b899b7332d72eda.js.LICENSE.txt",
-      "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\scripts\\main-804-68074b899b7332d72eda.js.LICENSE.txt",
-      "publicPath": "/static/scripts/main-804-68074b899b7332d72eda.js.LICENSE.txt"
-    },
-    "static/styles/output.css": {
-      "name": "static/styles/output.css",
+    "../static/styles/output.css": {
+      "name": "../static/styles/output.css",
       "path": "E:\\Netologe\\diplom\\backend\\cloud_user\\static\\styles\\output.css",
-      "publicPath": "/static/styles/output.css"
+      "publicPath": "/../static/styles/output.css"
     }
   },
   "chunks": {
     "another": [
-      "static/scripts/main-332-68074b899b7332d72eda.js"
+      "../static/scripts/main-another-2e2bea3d251dff90de26.js"
     ],
     "index": [
-      "static/styles/output.css",
-      "static/scripts/main-57-68074b899b7332d72eda.js"
+      "../static/styles/output.css",
+      "../static/scripts/main-index-2e2bea3d251dff90de26.js"
     ],
     "shared": [
-      "static/scripts/main-121-68074b899b7332d72eda.js",
-      "static/scripts/main-804-68074b899b7332d72eda.js"
+      "../static/scripts/main-runtime-2e2bea3d251dff90de26.js",
+      "../static/scripts/main-shared-2e2bea3d251dff90de26.js"
     ]
   },
   "publicPath": "/"
