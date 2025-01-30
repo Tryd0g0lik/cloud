@@ -176,8 +176,8 @@ AUTH_USER_MODEL = 'cloud_user.UserRegister'
 # WEBPACK
 WEBPACK_LOADER ={
     'DEFAULT': {
-        'BUNDLE_DIR_NAME': 'cloud_user\\static\\bundles\\',
-        'CACHE': not DEBUG,
+        'CACHE': DEBUG,
+        # 'BUNDLE_DIR_NAME': 'cloud_user\\static\\bundles',
         'STATS_FILE': os.path.join(BASE_DIR, 'cloud_user\\static\\bundles\\webpack-stats.json'),
         'POLL_INTERVAL': 0.1,
         'TIMEOUT': None,
