@@ -61,7 +61,7 @@ METHOD: GET, CREATE, PUT, DELETE.
         cacher.user_session is not None and \
         cacher.user_session == cache.get(f"user_session_{cookie_data.id}"):
         # Below, check, It is the superuser or not.
-        # Check, 'user_settion_{id}' secret key from COOCKIE is aquils to
+        # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
         # 'user_settion_{id}' from cacher table of db
         # /* ---------------- cacher.is_superuser = True Удалить ---------------- */
         if  cacher.is_superuser == True:
