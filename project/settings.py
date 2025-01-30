@@ -48,7 +48,6 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'webpack_loader',
     'corsheaders',
     'bootstrap4',
     'rest_framework',
@@ -58,6 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'webpack_loader',
     "cloud_user",
     "cloud_file",
     "cloud",
@@ -150,6 +150,7 @@ MIGRATION_MODULES = {
 STATICFILES_DIRS = [
     # os.path.join(BASE_DIR, 'cloud\\static'),
     ("cloud_user_static", os.path.join(BASE_DIR, 'cloud_user\\static')),
+    # ("cloud_user_static", os.path.join(BASE_DIR, '..\\frontend\\dist\\static')),
     # os.path.join(BASE_DIR, 'cloud_file\\static'),
 ]
 
@@ -176,14 +177,16 @@ AUTH_USER_MODEL = 'cloud_user.UserRegister'
 # WEBPACK
 WEBPACK_LOADER ={
     'DEFAULT': {
-        'CACHE': DEBUG,
-        # 'BUNDLE_DIR_NAME': 'cloud_user\\static\\bundles',
+        'CACHE': not DEBUG,
+        # 'BUNDLE_DIR_NAME': '..\\frontend\\src\\bundles',
+        'BUNDLE_DIR_NAME': 'cloud_user\\static\\bundles',
         'STATS_FILE': os.path.join(BASE_DIR, 'cloud_user\\static\\bundles\\webpack-stats.json'),
+        # 'STATS_FILE': os.path.join(BASE_DIR, '..\\frontend\\src\\bundles\\webpack-stats.json'),
         'POLL_INTERVAL': 0.1,
         'TIMEOUT': None,
-        # 'TEST': {
-        #     'NAME': 'test_cloud',
-        # },
+        'TEST': {
+            'NAME': 'test_cloud',
+        },
         'IGNORE': [
             # '.+\.map$'
             r'.+\.hot-update.js', r'.+\.map',
