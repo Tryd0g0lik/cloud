@@ -12,7 +12,8 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 # from django.middleware.csrf import get_token
-from project.settings import SECRET_KEY
+from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
+  SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY)
 from django.views.decorators.csrf import get_token, csrf_exempt
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
@@ -23,7 +24,8 @@ from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
 
-from cloud_user.contribute.services import get_fields_response
+from cloud_user.contribute.services import get_fields_response, get_user_cookie
+
 
 async def csrftoken(request):
   if (request.method != "GET"):
@@ -284,7 +286,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
       user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
-      if cookie_data.user_session == str(user_session) and \
+      if cookie_data.user_session == (user_session).decode('ISO-8859-1') and \
         request.method.lower() == "patch":
         data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session")
@@ -320,13 +322,21 @@ Something what wrong. Check the 'pk'."}
           if "is_active" in data:
             hash_create_user_session(kwargs['pk'],
                                      f"user_session_{kwargs['pk']}")
+            response.set_cookie(
+              f"is_active", data.is_active,
+              max_age=SESSION_COOKIE_AGE,
+              httponly=SESSION_COOKIE_HTTPONLY,
+              secure=SESSION_COOKIE_SECURE,
+              samesite=SESSION_COOKIE_SAMESITE
+              )
             # (user_list.first()).is_active = True
             # GET NEW value for the cookie's user_session_{id}.
             # response.set_cookie(f"user_session_{kwargs['pk']}", True)
           # elif not data["is_active"]:
           #   (user_list.first()).is_active = False
           user_list.first().save()
-        
+          # GET COOKIE
+          response = get_user_cookie(request, response)
           return response
         return JsonResponse({"detail": "Something what wrong!"},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -351,6 +361,10 @@ def main(request):
     template = "users/index.html"
     title = "Главная"
     context_ = {"page_name": title}
+    response = render(request, template, {})
+    # GET COOKIE
+    response = get_user_cookie(request, response)
+    # 4444444
     # if request.path == "register/":
     #   title = "Регистрация"
     #   form = RegisterUserForm()
@@ -360,7 +374,7 @@ def main(request):
     #   form = LoginForm()
     #   context_ = {"form": form, "page_name": title}
     # return render(request, template, context_)
-    return render(request, template, {})
+    return response
 
 def send_message(request):
   data = json.loads(request.body)

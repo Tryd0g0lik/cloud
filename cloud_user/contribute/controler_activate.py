@@ -53,7 +53,7 @@ variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README
     username = None
     try:
         log.info(f"{_text} START")
-        sign = str(sign).replace("_NULL_", ":")
+        sign = str(sign).replace("_null_", ":")
         username = signer.unsign(sign)
         log.info(f"{_text} Get '_first_name': {username.__str__()} ")
     except BadSignature as e:
@@ -105,7 +105,7 @@ f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
         response.set_cookie(f"user_session",
                              scrypt.hash(cache.get(
                                 f"user_session_{user.id}"
-                            ), SECRET_KEY),
+                            ), SECRET_KEY).decode('ISO-8859-1'),
                             max_age=SESSION_COOKIE_AGE,
                             httponly=True,
                             secure=SESSION_COOKIE_SECURE,
