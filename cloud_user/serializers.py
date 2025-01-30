@@ -3,6 +3,7 @@ cloud_user/serializers.py
 Here is a serializer fot user registration
 """
 import logging
+import scrypt
 from rest_framework import serializers
 
 from cloud.hashers import hash_password
@@ -10,6 +11,7 @@ from cloud_user.apps import signal_user_registered
 from cloud_user.models import UserRegister
 from cloud_user.contribute.services import find_superuser, get_fields_response
 from logs import configure_logging, Logger
+from project.settings import SECRET_KEY
 
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
@@ -42,8 +44,10 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             _user.is_staff = False
 
             # /* -----------------временно HASH----------------- */
-            hash = hash_password(validated_data["password"])
-            _user.password = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+            # hash = hash_password(validated_data["password"])
+            # _user.password = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+            _user.password = \
+                str(scrypt.hash(validated_data['password'], SECRET_KEY).decode('windows-1251'))
             
             _user.save()
             _text = f"{_text} Saved the new user."

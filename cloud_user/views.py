@@ -2,7 +2,7 @@
 cloud_user/views.py
 """
 # Create your views here.
-import scrypt;
+import scrypt
 import json
 from django.shortcuts import render
 from django.core.cache import (cache)
@@ -104,13 +104,14 @@ Your profile is not activate"}), 404
     # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
   
   def dispatch(self, request, *args, **kwargs):
+    resp = None
     try:
       resp = super().dispatch( request, *args, **kwargs)
       
       # return JsonResponse(resp.data, status=resp.status_code)
       return resp
     except Exception as e:
-      return JsonResponse(resp.content, status=200)
+      return JsonResponse({}, status=400)
     
   
   def update(self, request, *args, **kwargs):
@@ -309,12 +310,47 @@ Something what wrong. Check the 'pk'."}
           for item in data.keys():
             if item == "id":
               continue
-          # CHANGE PASSWORD
-          if "password" == item:
-            hash = hash_password(data[item])
-            data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
-          kwargs[item] = data[item]
-          # CHANGE
+            # CHANGE PASSWORD
+            if "password" == item and "is_active" not in data.keys():
+              hash = hash_password(data[item])
+              data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+              
+            elif "password" == item and "email" in data.keys() and \
+              "is_active" in data.keys():
+              # PASSWORD and EMAIL CHECK for checking the authenticity
+              """
+              Checks the password, the email address to the authenticity.\
+              If , the code below returns the False, this method/code returns\
+              the status code 400. \
+              Or, passes next. It changes the property 'is_active' \
+              from 'False' to the 'True' in db.
+              """
+              # hash = hash_password(data[item])
+              password = str(scrypt.hash(data[item], SECRET_KEY).decode('windows-1251'))
+              authenticity = True if password == user_list[0].password and \
+                data["email"] == user_list[0].email else False
+              del request.data["password"]
+
+              if not authenticity:
+                # status code 400
+                response = JsonResponse(
+                  {"detail": "Password or email is invalid!"},
+                  status=status.HTTP_400_BAD_REQUEST
+                  )
+                # GET COOKIE
+                response = get_user_cookie(request, response)
+                return response
+
+              # body_data = request.data
+              # del body_data["password"]
+              
+              # data.pop("password")
+              continue
+              
+            # next
+            kwargs[item] = data[item]
+          
+          # CHANGEs cells of db
           instance = super().patch(request, args, kwargs)
       
           response = Response(instance.data, status=200)
