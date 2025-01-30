@@ -33,6 +33,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("", vws.main, name="main"),
     path("users/registration/", vws.main, name="main"),
+    path("users/login/", vws.main, name="main"),
     path("api/v1/users/", include((urlpatterns_user, "user"), namespace="user")),
     path("api/v1/files/", include((urlpatterns_files, "files"), namespace="file")),
     path("api/v1/session/increase/time/", user_update_sessionTime, name="session"),

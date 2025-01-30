@@ -2,8 +2,13 @@
 cloud_user/serializers.py
 Not more functions
 """
-from cloud_user.models import UserRegister
+import scrypt
+import requests
 
+from cloud_user.models import UserRegister
+from django.core.cache import (cache)
+from cloud_user.contribute.sessions import (check,
+                                            hash_create_user_session)
 def find_superuser()-> [object, None]:
     """
     TODO: Checker. It checks, we have a superuser in db or not/
@@ -52,3 +57,65 @@ in response for the client.
     # obj.data = new_instance
     return new_instance
 
+
+def get_user_cookie(request: type(requests),
+                    response: type(requests.models.Response),
+                    **kwargs) -> type(requests.models.Response):
+    """
+    From the request we receive an index of user. Then, to the response add the\
+    cookie data:
+     -'user_session_{index}' from the cacher table's db;
+     - 'is_superuser' from the users table's db;
+     - 'is_active' from the users table's db.
+     The variables above, these data for COOKIES.
+    :param request: protocol 'http(s)' methods: 'GET' ... 'PATCH'.
+    :param response: for the web client.
+    :return:
+    """
+    from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
+                                  SESSION_COOKIE_SECURE,
+                                  SESSION_COOKIE_SAMESITE,
+                                  SESSION_COOKIE_HTTPONLY)
+    user_list = []
+    index = request.COOKIES.get("index") if \
+        request.COOKIES.get("index") else \
+        (kwargs["pk"] if 'pk' in kwargs else None)
+        # index = request.COOKIES.get("index")
+    if index != None:
+        user_list = UserRegister.objects.filter(id=int(index))
+    if len(user_list) > 0:
+        index = request.COOKIES.get('index')
+        # Check the "user_session_{index}", it is in the cacher table or not.
+        user_session = cache.get(f"user_session_{index}")
+        if user_session == None:
+            hash_create_user_session(int(index), f"user_session_{index}")
+    
+        response.set_cookie(
+            f"user_session",
+            scrypt.hash(
+                cache.get(
+                    f"user_session_{index}"
+                ), SECRET_KEY
+            ).decode('ISO-8859-1'),
+            max_age=SESSION_COOKIE_AGE,
+            httponly=True,
+            secure=SESSION_COOKIE_SECURE,
+            samesite=SESSION_COOKIE_SAMESITE
+        )
+        # response.set_cookie(f"is_superuser_{user.id}",
+        response.set_cookie(
+            f"is_superuser",
+            user_list[0].is_superuser,
+            max_age=SESSION_COOKIE_AGE,
+            httponly=SESSION_COOKIE_HTTPONLY,
+            secure=SESSION_COOKIE_SECURE,
+            samesite=SESSION_COOKIE_SAMESITE
+        )
+        response.set_cookie(
+            f"is_active", user_list[0].is_active,
+            max_age=SESSION_COOKIE_AGE,
+            httponly=SESSION_COOKIE_HTTPONLY,
+            secure=SESSION_COOKIE_SECURE,
+            samesite=SESSION_COOKIE_SAMESITE
+        )
+    return response

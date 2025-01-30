@@ -48,7 +48,6 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
-    'webpack_loader',
     'corsheaders',
     'bootstrap4',
     'rest_framework',
@@ -58,6 +57,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'webpack_loader',
     "cloud_user",
     "cloud_file",
     "cloud",
@@ -71,10 +71,14 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'corsheaders.middleware.CorsMiddleware',
-'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
+    
 ]
+# From MIDDLEWARE = []
+# https://docs.djangoproject.com/en/4.2/ref/middleware/#django.middleware.cache.FetchFromCacheMiddleware
+# 'django.middleware.cache.FetchFromCacheMiddleware',
+
 # REST_FRAMEWORK = {
     # 'DEFAULT_PERMISSION_CLASSES': [
     #         'rest_framework.permissions.IsAuthenticated',
@@ -143,16 +147,18 @@ MIGRATION_MODULES = {
     # 'cloud': 'cloud.migrations',
     
 }
+STATICFILES_DIRS = [
+    # os.path.join(BASE_DIR, 'cloud\\static'),
+    ("cloud_user_static", os.path.join(BASE_DIR, 'cloud_user\\static')),
+    # ("cloud_user_static", os.path.join(BASE_DIR, '..\\frontend\\dist\\static')),
+    # os.path.join(BASE_DIR, 'cloud_file\\static'),
+]
 
 # STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = os.environ.get("STATIC_URL", "static/")
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-STATICFILES_DIRS = [
-    # os.path.join(BASE_DIR, 'cloud\\static'),
-    ("cloud_user_static", os.path.join(BASE_DIR, 'cloud_user\\static')),
-    # os.path.join(BASE_DIR, 'cloud_file\\static'),
-]
+
 
 
 # MEDIA_URL = 'media/'
@@ -169,26 +175,29 @@ AUTH_USER_MODEL = 'cloud_user.UserRegister'
 
 
 # WEBPACK
-# WEBPACK_LOADER ={
-#     'DEFAULT':{
-#         'CACHE':not DEBUG,
-#         'BUNDLE_DIR_NAME': 'spacex/interface/dist/',
-#         'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
-#         'POLL_INTERVAL':0.1,
-#         'TIMEOUT': None,
-#         'TEST': {
-#             'NAME': 'test_spacex',
-#         },
-#         'IGNORE': [
-#             '.+\.map$'
-#         ],
-#         'LOADER_CLASS': 'webpack_loader.loader.WebpackLoader',
-#     }
-# }
+WEBPACK_LOADER ={
+    'DEFAULT': {
+        'CACHE': not DEBUG,
+        # 'BUNDLE_DIR_NAME': '..\\frontend\\src\\bundles',
+        'BUNDLE_DIR_NAME': 'cloud_user\\static\\bundles',
+        'STATS_FILE': os.path.join(BASE_DIR, 'cloud_user\\static\\bundles\\webpack-stats.json'),
+        # 'STATS_FILE': os.path.join(BASE_DIR, '..\\frontend\\src\\bundles\\webpack-stats.json'),
+        'POLL_INTERVAL': 0.1,
+        'TIMEOUT': None,
+        'TEST': {
+            'NAME': 'test_cloud',
+        },
+        'IGNORE': [
+            # '.+\.map$'
+            r'.+\.hot-update.js', r'.+\.map',
+        ],
+        'LOADER_CLASS': 'webpack_loader.loader.WebpackLoader',
+    }
+}
 # if not DEBUG:
 #     WEBPACK_LOADER['DEFAULT'].update({
-#         'BUNDLE_DIR_NAME': 'dist/',
-#         'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats-prod.json')
+#         'BUNDLE_DIR_NAME': 'bundles\\',
+#         'STATS_FILE': os.path.join(BASE_DIR, 'bundles\\webpack-stats.json')
 #     })
 #
 
@@ -290,10 +299,13 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",
         "LOCATION": "cacher",
+        # 'TIMEOUT': 300,
     },
 }
+# Значение None: Ключи кэша никогда не истекают.
+# Значение 0: Ключи истекают немедленно.
 # second a live time of session
-CACHE_MIDDLEWARE_SECONDS = 1900
+CACHE_MIDDLEWARE_SECONDS = 300
 # HASH
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",

@@ -47,7 +47,7 @@ def send_activation_notificcation(user) -> bool:
             log.info(f"{__text} The 'APP_SERVER_HOST' was received.")
             url_list = [view_url.replace(
                 f"{APP_SERVER_HOST}",
-                f"{APP_SERVER_HOST}:{APP_PORT}")
+                f"{APP_SERVER_HOST}:{APP_PROTOKOL}")
                         if APP_PROTOKOL else view_url
                         for view_url in [url]]
             _host = url_list[0]

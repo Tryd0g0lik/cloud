@@ -2,7 +2,7 @@
 cloud_user/views.py
 """
 # Create your views here.
-import scrypt;
+import scrypt
 import json
 from django.shortcuts import render
 from django.core.cache import (cache)
@@ -12,9 +12,9 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 # from django.middleware.csrf import get_token
-from project.settings import SECRET_KEY, SESSION_COOKIE_AGE, \
-  SESSION_COOKIE_HTTPONLY, SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE
-from django.views.decorators.csrf import get_token, csrf_exempt
+from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
+  SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY)
+from django.views.decorators.csrf import get_token
 from cloud.services import get_data_authenticate
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (check,
@@ -23,8 +23,9 @@ from cloud.hashers import hash_password
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
-from cloud_user.contribute.sessions import signer
-from cloud_user.contribute.services import get_fields_response
+
+from cloud_user.contribute.services import get_fields_response, get_user_cookie
+
 
 async def csrftoken(request):
   if (request.method != "GET"):
@@ -46,12 +47,6 @@ METHOD: GET, CREATE, PUT, DELETE.
     return response
   
   def list(self, request, *args, **kwargs):
-    # key_list = request.COOKIES.keys()
-    # user_session_key_list = \
-    #   [key for key in list(key_list) if r"user_session_*" in key]
-    # numb = user_session_key_list[0].split("_")[-1]
-    # user_session = request.COOKIES.get(f"user_session_{numb}")
-    # is_superuser = request.COOKIES.get(f"is_superuser_{numb}")
     class DataCookie:
       pass
 
@@ -66,7 +61,7 @@ METHOD: GET, CREATE, PUT, DELETE.
         cacher.user_session is not None and \
         cacher.user_session == cache.get(f"user_session_{cookie_data.id}"):
         # Below, check, It is the superuser or not.
-        # Check, 'user_settion_{id}' secret key from COOCKIE is aquils to
+        # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
         # 'user_settion_{id}' from cacher table of db
         # /* ---------------- cacher.is_superuser = True Удалить ---------------- */
         if  cacher.is_superuser == True:
@@ -103,13 +98,14 @@ Your profile is not activate"}), 404
     # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
   
   def dispatch(self, request, *args, **kwargs):
+    resp = None
     try:
       resp = super().dispatch( request, *args, **kwargs)
       
       # return JsonResponse(resp.data, status=resp.status_code)
       return resp
     except Exception as e:
-      return JsonResponse(resp.content, status=200)
+      return JsonResponse({}, status=400)
     
   
   def update(self, request, *args, **kwargs):
@@ -284,9 +280,8 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
-      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)\
-        .decode('ISO-8859-1')
-      if cookie_data.user_session == str(user_session) and \
+      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
+      if cookie_data.user_session == (user_session).decode('ISO-8859-1') and \
         request.method.lower() == "patch":
         data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session")
@@ -309,12 +304,47 @@ Something what wrong. Check the 'pk'."}
           for item in data.keys():
             if item == "id":
               continue
-          # CHANGE PASSWORD
-          if "password" == item:
-            hash = hash_password(data[item])
-            data[item] = f"pbkdf2${str(20000)}{hash.decode('ISO-8859-1')}"
-          kwargs[item] = data[item]
-          # CHANGE
+            # CHANGE PASSWORD
+            if "password" == item and "is_active" not in data.keys():
+              hash = hash_password(data[item])
+              data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+              
+            elif "password" == item and "email" in data.keys() and \
+              "is_active" in data.keys():
+              # PASSWORD and EMAIL CHECK for checking the authenticity
+              """
+              Checks the password, the email address to the authenticity.\
+              If , the code below returns the False, this method/code returns\
+              the status code 400. \
+              Or, passes next. It changes the property 'is_active' \
+              from 'False' to the 'True' in db.
+              """
+              # hash = hash_password(data[item])
+              password = str(scrypt.hash(data[item], SECRET_KEY).decode('windows-1251'))
+              authenticity = True if password == user_list[0].password and \
+                data["email"] == user_list[0].email else False
+              del request.data["password"]
+
+              if not authenticity:
+                # status code 400
+                response = JsonResponse(
+                  {"detail": "Password or email is invalid!"},
+                  status=status.HTTP_400_BAD_REQUEST
+                  )
+                # GET COOKIE
+                response = get_user_cookie(request, response)
+                return response
+
+              # body_data = request.data
+              # del body_data["password"]
+              
+              # data.pop("password")
+              continue
+              
+            # next
+            kwargs[item] = data[item]
+          
+          # CHANGEs cells of db
           instance = super().patch(request, args, kwargs)
       
           response = Response(instance.data, status=200)
@@ -322,20 +352,21 @@ Something what wrong. Check the 'pk'."}
           if "is_active" in data:
             hash_create_user_session(kwargs['pk'],
                                      f"user_session_{kwargs['pk']}")
-            
-            response.response.set_cookie(f"is_active", data.is_active,
-                            max_age= -100 if data.is_active == False else SESSION_COOKIE_AGE,
-                            httponly=SESSION_COOKIE_HTTPONLY,
-                            secure=SESSION_COOKIE_SECURE,
-                            samesite=SESSION_COOKIE_SAMESITE)
-            
+            response.set_cookie(
+              f"is_active", data.is_active,
+              max_age=SESSION_COOKIE_AGE,
+              httponly=SESSION_COOKIE_HTTPONLY,
+              secure=SESSION_COOKIE_SECURE,
+              samesite=SESSION_COOKIE_SAMESITE
+              )
             # (user_list.first()).is_active = True
             # GET NEW value for the cookie's user_session_{id}.
             # response.set_cookie(f"user_session_{kwargs['pk']}", True)
           # elif not data["is_active"]:
           #   (user_list.first()).is_active = False
           user_list.first().save()
-        
+          # GET COOKIE
+          response = get_user_cookie(request, response)
           return response
         return JsonResponse({"detail": "Something what wrong!"},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -360,16 +391,10 @@ def main(request):
     template = "users/index.html"
     title = "Главная"
     context_ = {"page_name": title}
-    # if request.path == "register/":
-    #   title = "Регистрация"
-    #   form = RegisterUserForm()
-    #   context_ = {"form": form, "page_name": title}
-    # elif request.path == "login/":
-    #   title = "Активизация"
-    #   form = LoginForm()
-    #   context_ = {"form": form, "page_name": title}
-    # return render(request, template, context_)
-    return render(request, template, {})
+    response = render(request, template, {})
+    # GET COOKIE
+    response = get_user_cookie(request, response)
+    return response
 
 def send_message(request):
   data = json.loads(request.body)
