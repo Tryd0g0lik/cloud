@@ -271,5 +271,5 @@ pic/*
 archive
 */tests
 frontend
-
+**/bundles
 !.browserslistrc
