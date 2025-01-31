@@ -292,15 +292,13 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
               {"message": f"[{__name__}]: \
 Something what wrong. Check the 'pk'."}
               )
-        
-        # /* -------------- Remove 'is_superuser' -------------- */
         if "is_superuser" in data.keys():
           del data["is_superuser"]
           
         user_list = UserRegister.objects.filter(id=kwargs["pk"])
         # CREATE RESPONSE
         if len(data.keys()) > 0:
-          kwargs["id"] = int(kwargs["pk"])
+          kwargs["id"] = lambda: int(kwargs["pk"])
           for item in data.keys():
             if item == "id":
               continue
@@ -308,7 +306,7 @@ Something what wrong. Check the 'pk'."}
             if "password" == item and "is_active" not in data.keys():
               # hash = hash_password(data[item])
               hash = str(
-                scrypt.hash(data['password'], SECRET_KEY).decode(
+                scrypt.hash(lambda: data['password'], SECRET_KEY).decode(
                   'windows-1251'
                   )
                 )
@@ -316,7 +314,7 @@ Something what wrong. Check the 'pk'."}
               
             elif "password" == item and "email" in data.keys() and \
               "is_active" in data.keys():
-              # PASSWORD and EMAIL CHECK for checking the authenticity
+              # PASSWORD and EMAIL need to CHECK for checking the authenticity
               """
               Checks the password, the email address to the authenticity.\
               If , the code below returns the False, this method/code returns\
@@ -326,7 +324,8 @@ Something what wrong. Check the 'pk'."}
               """
               # hash = hash_password(data[item])
               # password = str(scrypt.hash(data[item], SECRET_KEY).decode('windows-1251'))
-              password = str(scrypt.hash(f"pbkdf2${str(20000)}${data[item]}", SECRET_KEY).decode('windows-1251'))
+              passw = lambda: data[item]
+              password = str(scrypt.hash(f"pbkdf2${str(20000)}${passw}", SECRET_KEY).decode('windows-1251'))
               
               authenticity = True if password == \
                                      user_list[0].password and \
@@ -350,7 +349,7 @@ Something what wrong. Check the 'pk'."}
               continue
               
             # next
-            kwargs[item] = data[item]
+            kwargs[item] = lambda: data[item]
           
           # CHANGEs cells of db
           instance = super().patch(request, args, kwargs)
