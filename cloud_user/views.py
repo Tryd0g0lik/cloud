@@ -285,7 +285,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
         request.method.lower() == "patch":
         data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session")
-        # CHECK a COOKIE KEY
+        # CHECK a COOKIE KEY ?????????????????
         check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
         if not check_bool:
             return Response(
@@ -306,8 +306,13 @@ Something what wrong. Check the 'pk'."}
               continue
             # CHANGE PASSWORD
             if "password" == item and "is_active" not in data.keys():
-              hash = hash_password(data[item])
-              data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+              # hash = hash_password(data[item])
+              hash = str(
+                scrypt.hash(data['password'], SECRET_KEY).decode(
+                  'windows-1251'
+                  )
+                )
+              data[item] = f"pbkdf2${str(20000)}${hash.decode('windows-1251')}"
               
             elif "password" == item and "email" in data.keys() and \
               "is_active" in data.keys():
@@ -320,8 +325,11 @@ Something what wrong. Check the 'pk'."}
               from 'False' to the 'True' in db.
               """
               # hash = hash_password(data[item])
-              password = str(scrypt.hash(data[item], SECRET_KEY).decode('windows-1251'))
-              authenticity = True if password == user_list[0].password and \
+              # password = str(scrypt.hash(data[item], SECRET_KEY).decode('windows-1251'))
+              password = str(scrypt.hash(f"pbkdf2${str(20000)}${data[item]}", SECRET_KEY).decode('windows-1251'))
+              
+              authenticity = True if password == \
+                                     user_list[0].password and \
                 data["email"] == user_list[0].email else False
               del request.data["password"]
 

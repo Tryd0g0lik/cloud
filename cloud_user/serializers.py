@@ -46,9 +46,13 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             # /* -----------------временно HASH----------------- */
             # hash = hash_password(validated_data["password"])
             # _user.password = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
-            _user.password = \
-                str(scrypt.hash(validated_data['password'], SECRET_KEY).decode('windows-1251'))
-            
+            # _user.password = \
+            #     f"pbkdf2${str(20000)}${str(scrypt.hash(validated_data['password'], SECRET_KEY).decode('windows-1251'))}"
+            _user.password = str(
+                scrypt.hash(
+                    f"pbkdf2${str(20000)}${validated_data['password']}", SECRET_KEY
+                    ).decode('windows-1251')
+                )
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)
