@@ -57,7 +57,7 @@ Mistake => {e.__str__()}")
         return status_bool
 def hash_create_user_session(pk: int, session_key: str,
                              live_time: int =86400):
-    """"
+    """
     TODO: Create the hash's value for 'session_key'. Time live is 86400 seconds\
 (or 24 hours) This is for the single object from user's db.
     :param pk: int. Index of single object from db.

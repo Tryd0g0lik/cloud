@@ -4,6 +4,8 @@ cloud_user/views.py
 # Create your views here.
 import scrypt
 import json
+
+from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
 from rest_framework import (viewsets, generics, status)
@@ -31,6 +33,7 @@ async def csrftoken(request):
   if (request.method != "GET"):
     return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
   return JsonResponse({"csrftoken": get_token(request)}, status=status.HTTP_200_OK)
+
 class UserView(viewsets.ModelViewSet):
   """
   TODO: This is complete of REST API, only here is not contain the PATCH method.\
@@ -70,7 +73,6 @@ METHOD: GET, CREATE, PUT, DELETE.
           serializer = UserSerializer(files, many=True)
           return Response(serializer.data)
         else:
-          # Получаем файлы только текущего пользователя
           files = UserRegister.objects.filter(id=int(cookie_data.id))
       
           serializer = UserSerializer(files, many=True)
@@ -134,8 +136,11 @@ Your profile is not activate"}
       del json.loads(request.body)["is_superuser"]
       
         # data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
-    json.loads(request.body)["password"] = \
-      f'pbkdf2${str(20000)}{hash_password(json.loads(request.body)["password"]).decode("utf-8")}'
+    password = json.loads(request.body)["password"]
+    password_validation(password)
+    hash = hash_password(f'pbkdf2${str(20000)}{password}').decode("utf-8") 
+    json.loads(request.body)["password"] = hash
+      
     
     instance = super().update(request, *args, **kwargs)
     return Response(instance.data, status=200) # Проверить
@@ -176,12 +181,9 @@ Your profile is not activate"}
     :param kwargs:
     :return:
     """
-    # data = json.loads(request.body)
-    # # /* -----------------временно HASH---------------Перенес в cloud_user/serializers.py-- */
-    # hash = hash_password(data["password"])
-    # data["password"] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
     
     instance = super().create(request, *args, **kwargs)
+    request.data['password'] = make_password(request.data['password'])
     instance = get_fields_response(instance)
     response = JsonResponse(data=instance, status=200)
     
@@ -205,15 +207,17 @@ Your profile is not activate"}
 
     # GET user ID
     cookie_data = get_data_authenticate(request)
-    cacher = DataCookie()
-    cacher.user_session = cache.get(f"user_session_{cookie_data.id}")
-    cacher.is_superuser = cache.get(f"is_superuser_{cookie_data.id}")
+    cacher = {
+        'user_session': cache.get(f"user_session_{cookie_data.id}"),
+        'is_superuser': cache.get(f"is_superuser_{cookie_data.id}")
+    }
+
     
     if not check_bool:
       return Response({"message": f"[{__name__}::{self.__class__.destroy.__name__}]: Not OK"})
     try:
-      if cacher.is_superuser and \
-        cacher.user_session == cache.get(f"user_session_{cookie_data.id}"):
+      if cacher["is_superuser"] and \
+        cacher["user_session"] == cache.get(f"user_session_{cookie_data.id}"):
         # Remove the user
         instance = super().destroy(request, *args, **kwargs)
         # Remove cache the user
@@ -269,21 +273,16 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     :param kwargs:
     :return: the data of body and 'user_session_{id}' from cookie
     """
- 
-    # CHECK to USER
-    class DataCookie:
-      pass
-
     # GET user ID
     cookie_data = get_data_authenticate(request)
-    cacher = DataCookie()
-    cacher.user_session = cache.get(f"user_session_{kwargs['pk']}")
+    cacher = {
+        'user_session': cache.get(f"user_session_{kwargs['pk']}"),
+    }
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
       user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
       if cookie_data.user_session == (user_session).decode('ISO-8859-1') and \
         request.method.lower() == "patch":
-        data = json.loads(request.body)
         user_session = request.COOKIES.get(f"user_session")
         # CHECK a COOKIE KEY ?????????????????
         check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
@@ -292,26 +291,23 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
               {"message": f"[{__name__}]: \
 Something what wrong. Check the 'pk'."}
               )
+        data = json.loads(request.body)
         if "is_superuser" in data.keys():
           del data["is_superuser"]
           
         user_list = UserRegister.objects.filter(id=kwargs["pk"])
         # CREATE RESPONSE
         if len(data.keys()) > 0:
-          kwargs["id"] = lambda: int(kwargs["pk"])
+          kwargs["id"] = (lambda: int(kwargs["pk"]))()
           for item in data.keys():
             if item == "id":
               continue
             # CHANGE PASSWORD
             if "password" == item and "is_active" not in data.keys():
               # hash = hash_password(data[item])
-              hash = str(
-                scrypt.hash(lambda: data['password'], SECRET_KEY).decode(
-                  'windows-1251'
-                  )
-                )
-              data[item] = f"pbkdf2${str(20000)}${hash.decode('windows-1251')}"
-              
+              __hash_password = self.__hash__((lambda: data['password'])())
+
+              data[item] = __hash_password
             elif "password" == item and "email" in data.keys() and \
               "is_active" in data.keys():
               # PASSWORD and EMAIL need to CHECK for checking the authenticity
@@ -322,13 +318,10 @@ Something what wrong. Check the 'pk'."}
               Or, passes next. It changes the property 'is_active' \
               from 'False' to the 'True' in db.
               """
-              # hash = hash_password(data[item])
-              # password = str(scrypt.hash(data[item], SECRET_KEY).decode('windows-1251'))
-              passw = lambda: data[item]
-              password = str(scrypt.hash(f"pbkdf2${str(20000)}${passw}", SECRET_KEY).decode('windows-1251'))
+              __hash_password = self.__hash__((lambda: data[item])())
               
-              authenticity = True if password == \
-                                     user_list[0].password and \
+              authenticity = True if __hash_password == \
+                                     (lambda: user_list[0].password)() and \
                 data["email"] == user_list[0].email else False
               del request.data["password"]
 
@@ -349,7 +342,7 @@ Something what wrong. Check the 'pk'."}
               continue
               
             # next
-            kwargs[item] = lambda: data[item]
+            kwargs[item] = (lambda: data[item])()
           
           # CHANGEs cells of db
           instance = super().patch(request, args, kwargs)
@@ -366,11 +359,6 @@ Something what wrong. Check the 'pk'."}
               secure=SESSION_COOKIE_SECURE,
               samesite=SESSION_COOKIE_SAMESITE
               )
-            # (user_list.first()).is_active = True
-            # GET NEW value for the cookie's user_session_{id}.
-            # response.set_cookie(f"user_session_{kwargs['pk']}", True)
-          # elif not data["is_active"]:
-          #   (user_list.first()).is_active = False
           user_list.first().save()
           # GET COOKIE
           response = get_user_cookie(request, response)
@@ -389,11 +377,15 @@ Something what wrong"}, status=400)
     finally:
       cache.close()
 
+  def __hash__(self, password: str):
+    __hash_password = str(scrypt.hash(f"pbkdf2${str(20000)}${password}", SECRET_KEY).decode('windows-1251'))
+    return __hash_password
+
   def put(self, request, *args, **kwargs):
     json.loads(request.body)["Message"] = "Not Ok"
     return Response(json.loads(request.body), status=400)
 
-def main(request):
+def main(request, pk=None):
   if request.method.lower() == "get":
     template = "users/index.html"
     title = "Главная"

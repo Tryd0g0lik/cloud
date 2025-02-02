@@ -5,16 +5,15 @@ Here is a serializer fot user registration
 import logging
 import scrypt
 from rest_framework import serializers
-
-from cloud.hashers import hash_password
 from cloud_user.apps import signal_user_registered
 from cloud_user.models import UserRegister
-from cloud_user.contribute.services import find_superuser, get_fields_response
+from cloud_user.contribute.services import find_superuser
 from logs import configure_logging, Logger
 from project.settings import SECRET_KEY
 
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
+
 
 class UserSerializer(serializers.ModelSerializer, Logger):
     log.info("START")
@@ -44,13 +43,9 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             _user.is_staff = False
 
             # /* -----------------временно HASH----------------- */
-            # hash = hash_password(validated_data["password"])
-            # _user.password = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
-            # _user.password = \
-            #     f"pbkdf2${str(20000)}${str(scrypt.hash(validated_data['password'], SECRET_KEY).decode('windows-1251'))}"
             _user.password = str(
                 scrypt.hash(
-                    f"pbkdf2${str(20000)}${validated_data['password']}", SECRET_KEY
+                    f"pbkdf2${str(20000)}${(lambda: validated_data['password'])()}", SECRET_KEY
                     ).decode('windows-1251')
                 )
             _user.save()
