@@ -1,11 +1,15 @@
 """
 cloud_user/contribute/controler_activate.py
-This a function for control an authentication. This is, when, the user \
+This a function for control an authentication (from registrasion). \
+This is, when, the user \
 makes registration on the site.\
-The 'send_activation_notificcation' from 'app.py' makes sending the email-message \
+The 'send_activation_notificcation' from 'app.py' makes sending \
+the email-message \
 to the user email. \
 Email contains the tokken-link. When user presses by the token-link, this run \
 the function (below).
+
+
 """
 import logging
 import os
@@ -45,8 +49,26 @@ the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
 \
 Response (of HttpResponseRedirect)  has data for the cookie. Data of \
 variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README::COOKIE.
-    :param request:
-    :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'
+1. The user is registered on the site.\
+2. The function is `send_activation_notification` from` app.py` sends an email with a tkene link to the user email address.\
+3. The user presses on a token link.\
+4. The function is `user_activate`.\
+5. The function `user_activate` processes the URL requests \
+containing a signature.\
+6. The function accepts two parameters: `request` and` sign`. The `sign` \
+parameter is a signature from the URL` Activate/<Str: Sign> `.\
+7. The function is trying to decipher the signature and get the user name.\
+8. If the decoding is successful, the function receives the user's object from\
+ the database.\
+9. If the user is already activated, the function returns a redirection with \
+code 301.\
+10. Otherwise, the function activates the user, sets the appropriate values
+ in the user object and creates a user session.\
+11. The function sets cuckoos for the user session and redirects the user to\
+ the activation page.\
+12. If an error occurs, the function returns redirecting with a code of 400.\
+    :param request:\
+    :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'\
     :return:
     """
     _text = f"[{user_activate.__name__}]:"

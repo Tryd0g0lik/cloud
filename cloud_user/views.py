@@ -86,7 +86,7 @@ Mistake => f{e.__str__()}"})
   
   def retrieve(self, request, *args, **kwargs):
    
-    user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
+    user_session = request.COOKIES.get(f"user_session")
     check_bool = check(f"user_session_{kwargs['pk']}", user_session, **kwargs)
     
     if not check_bool:

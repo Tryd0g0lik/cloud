@@ -83,6 +83,10 @@ def get_user_cookie(request: type(requests),
         # index = request.COOKIES.get("index")
     if index != None:
         user_list = UserRegister.objects.filter(id=int(index))
+    # elif request.COOKIES.get("user_session"):
+        # Если вдруг индекс в куки пропал - получаем значение сессиия, вытаскиваем
+        # его из ключа (от cache) номер индекса юзера.
+        pass
     if len(user_list) > 0:
         index = request.COOKIES.get('index')
         # Check the "user_session_{index}", it is in the cacher table or not.
