@@ -12,10 +12,10 @@ configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
 
-async def check_keys(quantity=0,
-                     number=60,
-                     range_=1800,
-                     hash_live_time=86400):
+async def task_check_keys(quantity=0,
+                          number=60,
+                          range_=1800,
+                          hash_live_time=86400):
     """
     This is the Task, for check the live time of the line from \
     the 'cache' (it is 'cacher' from 'settings.py').
@@ -52,7 +52,7 @@ async def check_keys(quantity=0,
                     id__lte=quantity + 60
                 ).filter(last_login__lte=(datetime.utcnow() + timedelta(seconds=range_) - timedelta(seconds=hash_live_time)))
             )
-            log.info(f'[{check_keys.__name__}]: Before update the database \
+            log.info(f'[{task_check_keys.__name__}]: Before update the database \
 table "caher" he is the cache')
             for user in users:
                 user_id = user.id
@@ -60,31 +60,31 @@ table "caher" he is the cache')
                 user_is_superuser_key = f"user_is_superuser_{user_id}"
                 cache.delete(user_session_key)
                 cache.delete(user_is_superuser_key)
-                if user.is_active == False:
+                if not user.is_active:
                     continue
                 
                 hash = Hash()
                 await hash.set_session_hash(user_session_key, user_id)
-            log.info(f'[{check_keys.__name__}]: The is completed the cycle.\
+            log.info(f'[{task_check_keys.__name__}]: The is completed the cycle.\
 Quantity: {quantity}')
             quantity += number
             print(quantity)
     except Exception as e:
         log.error(
-            f'[{check_keys.__name__}]:\
+            f'[{task_check_keys.__name__}]:\
 Mistake => {e.__str__()}'
         )
     finally:
         # self.__cache.close()
         await asyncio.sleep(range_)
-        await check_keys()
-        log.info(f'[{check_keys.__name__}]: The end of the cycle')
+        await task_check_keys()
+        log.info(f'[{task_check_keys.__name__}]: The end of the cycle')
 
 
 def _run_async():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.run_until_complete(check_keys())
+    loop.run_until_complete(task_check_keys())
 
 
 def ready():
