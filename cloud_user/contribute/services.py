@@ -4,11 +4,11 @@ Not more functions
 """
 import scrypt
 import requests
-
 from cloud_user.models import UserRegister
 from django.core.cache import (cache)
 from cloud_user.contribute.sessions import (check,
                                             hash_create_user_session)
+
 def find_superuser()-> [object, None]:
     """
     TODO: Checker. It checks, we have a superuser in db or not/
@@ -123,3 +123,4 @@ def get_user_cookie(request: type(requests),
             samesite=SESSION_COOKIE_SAMESITE
         )
     return response
+

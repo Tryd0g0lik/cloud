@@ -13,7 +13,7 @@ the function (below).
 """
 import logging
 import os
-
+from datetime import datetime, timedelta
 from django.core.signing import BadSignature
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -111,6 +111,7 @@ from 'is_activated'."
         user.is_active = True
         user.is_activated = True
         user.is_staff = True
+        user.last_login = datetime.utcnow()
         user.save()
         # /* --------------------- _text = f"{_text} the object 'user' can
         # not have 'True' value from 'is_activated'." --------------------- */

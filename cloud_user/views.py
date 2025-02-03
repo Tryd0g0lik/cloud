@@ -4,7 +4,7 @@ cloud_user/views.py
 # Create your views here.
 import scrypt
 import json
-
+from datetime import datetime
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
+from cloud_user.tasks import ready
 # from django.middleware.csrf import get_token
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
   SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY)
@@ -350,6 +351,8 @@ Something what wrong. Check the 'pk'."}
           response = Response(instance.data, status=200)
           # CHANGE IS_ACTIVE
           if "is_active" in data:
+            if data["is_active"]:
+              kwargs["last_login"] = datetime.utcnow()
             hash_create_user_session(kwargs['pk'],
                                      f"user_session_{kwargs['pk']}")
             response.set_cookie(
@@ -435,4 +438,6 @@ def send_message(request):
   del data["date_joined"]
   del data["password"]
   signal_user_registered.send(data, instance=user)
+
+ready()
   
