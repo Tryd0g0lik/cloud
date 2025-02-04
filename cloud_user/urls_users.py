@@ -23,6 +23,7 @@ from cloud_user.contribute.controler_activate import user_activate
 
 router = routers.DefaultRouter()
 router.register("", UserView, basename="fulluser")
+router.register("<int:pk>/", UserView, basename="profileuser")
 # router.register("login", UserPatchViews, basename="login")
 
 urlpatterns_user = [

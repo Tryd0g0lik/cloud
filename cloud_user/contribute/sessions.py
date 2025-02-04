@@ -55,9 +55,10 @@ def hash_check_user_session(pk: int,
 Mistake => {e.__str__()}")
     finally:
         return status_bool
+
 def hash_create_user_session(pk: int, session_key: str,
                              live_time: int =86400):
-    """"
+    """
     TODO: Create the hash's value for 'session_key'. Time live is 86400 seconds\
 (or 24 hours) This is for the single object from user's db.
     :param pk: int. Index of single object from db.
@@ -74,6 +75,7 @@ value is the 86400 hours/
         # GREAT SIGNER
         signer = create_signer(user_list[0])
         # SAVE in db the key of session and HASH's value for our key
+        session_key = session_key if session_key else f"user_session_{pk}"
         cache.set(session_key, signer, live_time)
         status_bool = True
     except Exception as e:
