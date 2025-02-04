@@ -350,17 +350,22 @@ Something what wrong. Check the 'pk'."}
           response = Response(instance.data, status=200)
           # CHANGE IS_ACTIVE
           if "is_active" in data:
+            hash_create_user_session(
+              kwargs['pk'],
+              f"user_session_{kwargs['pk']}"
+              )
+            if not data["is_active"]:
+              cache.delete(f"user_session_{kwargs['pk']}")
+              cache.delete(f"is_superuser_{kwargs['pk']}")
             if data["is_active"]:
               kwargs["last_login"] = datetime.utcnow()
-            hash_create_user_session(kwargs['pk'],
-                                     f"user_session_{kwargs['pk']}")
-            response.set_cookie(
-              f"is_active", data.is_active,
-              max_age=SESSION_COOKIE_AGE,
-              httponly=SESSION_COOKIE_HTTPONLY,
-              secure=SESSION_COOKIE_SECURE,
-              samesite=SESSION_COOKIE_SAMESITE
-              )
+              response.set_cookie(
+                f"is_active", data.is_active,
+                max_age=SESSION_COOKIE_AGE,
+                httponly=SESSION_COOKIE_HTTPONLY,
+                secure=SESSION_COOKIE_SECURE,
+                samesite=SESSION_COOKIE_SAMESITE
+                )
           user_list.first().save()
           # GET COOKIE
           response = get_user_cookie(request, response)
