@@ -1,7 +1,7 @@
 import asyncio
 import threading
 from copy import copy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from asgiref.sync import async_to_sync, sync_to_async
 from django.core.cache import (cache, caches)
 import logging
@@ -50,7 +50,7 @@ async def task_check_keys(quantity=0,
             users = await sync_to_async(list)(
                 UserRegister.objects.filter(id__gt=quantity).filter(
                     id__lte=quantity + 60
-                ).filter(last_login__lte=(datetime.utcnow() + timedelta(seconds=range_) - timedelta(seconds=hash_live_time)))
+                ).filter(last_login__lte=(timezone.now() + timedelta(seconds=range_) - timedelta(seconds=hash_live_time)))
             )
             log.info(f'[{task_check_keys.__name__}]: Before update the database \
 table "caher" he is the cache')

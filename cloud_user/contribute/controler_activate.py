@@ -110,7 +110,7 @@ from 'is_activated'."
         _text = (_text.split(":"))[0] + ":"
         user.is_active = True
         user.is_activated = True
-        user.is_staff = True
+        user.is_staff = False
         user.last_login = datetime.utcnow()
         user.save()
         # /* --------------------- _text = f"{_text} the object 'user' can

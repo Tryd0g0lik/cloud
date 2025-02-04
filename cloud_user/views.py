@@ -14,7 +14,6 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from cloud_user.tasks import ready
-# from django.middleware.csrf import get_token
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
   SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY)
 from django.views.decorators.csrf import get_token

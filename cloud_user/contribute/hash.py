@@ -75,51 +75,5 @@ database model.
 Mistake => {e.__str__()}')
 
 
-    # @sync_to_async
-    
-            #     users = UserRegister.objects.filter(
-            #         last_login__lte=datetime.utcnow() - timedelta(
-            #             seconds=copy(self.live_time - 1800)
-            #         )
-            #     )
-            #     if len(list(users)) == 0:
-            #         pass
-            #     for user_obj in users:
-            #         user_id = user_obj.id
-            #         user_session_key = f"user_session_{user_id}"
-            #         user_is_superuser_key = f"user_is_superuser_{user_id}"
-            #         self.__cache.delete(user_session_key)
-            #         self.__cache.delete(user_is_superuser_key)
-            #         if user_obj.is_active == False:
-            #             continue
-            #         loop = asyncio.new_event_loop()
-            #
-            #         # fut = loop.create_future()
-            #         # asyncio.set_event_loop(loop)
-            #         def corutin(user_session_key, user_id):
-            #             return self.set_session_hash(user_session_key, user_id)
-            #
-            #         async def update():
-            #             loop = asyncio.get_event_loop()
-            #             task1 = loop.create_task(corutin(user_session_key, user_id))
-            #             task2 = loop.create_task(corutin(user_is_superuser_key, user_id))
-            #             await asyncio.gather(task1, task2)
-            #
-            #         loop.run_until_complete(update())
-                    # self.set_session_hash(user_session_key, user_id)
-                    # self.set_session_hash(user_is_superuser_key, user_id)
-        
-                # quantity += number
-        except Exception as e:
-            print(f'[{Hash.check_keys.__name__}]:\
-Mistake => {e.__str__()}')
-        finally:
-            self.__cache.close()
-            # await asyncio.sleep(15)
-            # await self.check_keys()
-            print('The end of the cycle')
-  
 
-    
-        
     
