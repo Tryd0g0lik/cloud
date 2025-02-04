@@ -10,6 +10,7 @@ from django.shortcuts import render
 from django.core.cache import (cache)
 from rest_framework import (viewsets, generics, status)
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
@@ -231,7 +232,7 @@ Mistake => {e.__str__()}", }, status=400)
       return instance
       
 # class UserPatchViews(viewsets.ModelViewSet ):
-class UserPatchViews(generics.RetrieveUpdateAPIView):
+class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.ViewSet):
   """
   TODO: For update data of single cell or more cells.
     Method: PATCH.
@@ -254,13 +255,17 @@ class UserPatchViews(generics.RetrieveUpdateAPIView):
   """
   queryset = UserRegister.objects.all()
   serializer_class = UserPatchSerializer
-  #
+  
   
   
   def options(self, request, *args, **kwargs):
     response = super().options(request, *args, **kwargs)
     return response
   
+  def get(self, request, *args, **kwargs):
+    
+    response = super().get( request, *args, **kwargs)
+    return response
   # @csrf_exempt
   def patch(self, request, *args, **kwargs):
     """
@@ -391,7 +396,29 @@ Something what wrong"}, status=400)
   def put(self, request, *args, **kwargs):
     json.loads(request.body)["Message"] = "Not Ok"
     return Response(json.loads(request.body), status=400)
-
+  
+  # def get_extra_action(self):
+  #   return [self.send_index]
+  
+  @action(detail=True, url_path="parameters/", methods=["GET"])
+  async def send_index(self, request, pk=None,  *args, **kwargs):
+    
+    import re
+    import asyncio
+    from asgiref.sync import sync_to_async
+    # from Crypto.Cipher import AES
+    email_RegExc = r"/^[^\s@]+@[^\s@]+\.[^\s@]+$/"
+    pass
+    # if not pk or not re.match(email_RegExc, **kwarg):
+    #   return JsonResponse(
+    #     json.dumps(
+    #       {"encrypt":
+    #          "Parrametrs from URL is invalid"}
+    #       ),
+    #     status=status.HTTP_400_BAD_REQUEST
+    #     )
+    # email = data
+    return JsonResponse({"detail": "TEST"}, status=200)
 def main(request, pk=None):
   if request.method.lower() == "get":
     template = "users/index.html"
@@ -443,5 +470,8 @@ def send_message(request):
   del data["password"]
   signal_user_registered.send(data, instance=user)
 
+
+  # asyncio.create_task((lambda: sync_to_async(UserSerializer.objects.filter)(email=email)))
+    
 ready()
   

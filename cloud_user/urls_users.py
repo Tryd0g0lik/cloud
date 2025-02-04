@@ -17,21 +17,29 @@ Including another URLconf
 from django.urls import (path, include)
 from rest_framework import routers, urls
 
-from cloud_user.views import( UserView, UserPatchViews, send_message, csrftoken)
+from cloud_user.views import (UserView, UserPatchViews, send_message,
+                              csrftoken)
 
 from cloud_user.contribute.controler_activate import user_activate
 
 router = routers.DefaultRouter()
 router.register("", UserView, basename="fulluser")
 router.register("<int:pk>/", UserView, basename="profileuser")
+# router.register("/<str:data>/parameters/", UserPatchViews)
 # router.register("login", UserPatchViews, basename="login")
-
+router2 = routers.DefaultRouter()
+router2.register("", UserPatchViews, basename="login", )
 urlpatterns_user = [
     path("activate/<str:sign>/", user_activate, name="user_activate"),
     path("email/message/", send_message, name="emailmessage"),
-    path("patch/<int:pk>/", UserPatchViews.as_view(), name="login"),
+    # path("patch/<int:pk>/", UserPatchViews.as_view(), name="login"),
+    # path("patch/", include(router2.urls), name="login"),
+    # path("parameters/<str:pk>/", UserPatchViews.as_view(), name="parameters"),
+    # path("parameters/", UserPatchViews.as_view()),
+    # path("/api/v1/users/get/<str:data>/", send_index, name="parameters"),
     path("", csrftoken),
-    path("choice/", include(router.urls))
+    path("choice/", include(router.urls)),
+    # path("change/", include(router2.urls))
     
     
 ]
