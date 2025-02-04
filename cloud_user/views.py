@@ -280,7 +280,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     }
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
-      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
+      user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
       if cookie_data.user_session == (user_session).decode('ISO-8859-1') and \
         request.method.lower() == "patch":
         user_session = request.COOKIES.get(f"user_session")
