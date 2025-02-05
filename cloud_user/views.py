@@ -4,13 +4,21 @@ cloud_user/views.py
 # Create your views here.
 import scrypt
 import json
+import logging
 from datetime import datetime
+from array import array
+import base64
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+from base64 import b64encode
+from Crypto.Util.Padding import pad
+
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
 from rest_framework import (viewsets, generics, status)
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
@@ -28,7 +36,11 @@ from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
 
 from cloud_user.contribute.services import get_fields_response, get_user_cookie
+from logs import configure_logging
 
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
+log.info("START")
 
 async def csrftoken(request):
   if (request.method != "GET"):
@@ -232,7 +244,7 @@ Mistake => {e.__str__()}", }, status=400)
       return instance
       
 # class UserPatchViews(viewsets.ModelViewSet ):
-class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.ViewSet):
+class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
   """
   TODO: For update data of single cell or more cells.
     Method: PATCH.
@@ -255,11 +267,28 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.ViewSet):
   """
   queryset = UserRegister.objects.all()
   serializer_class = UserPatchSerializer
-  
-  
+  # lookup_field = 'pk'
+  # extra_actions =
+  # extra_actions = .get_extra_actions()
+  # def get_extra_actions(cls):
+  #   response = super().get_extra_actions(cls)
+  #   return  response
   
   def options(self, request, *args, **kwargs):
     response = super().options(request, *args, **kwargs)
+    return response
+  def update(self, request, *args, **kwargs):
+    response = super().update(request, *args, **kwargs)
+    # return Response(request.body)
+    return response
+  
+  def retrieve(self, request, *args, **kwargs):
+    response = super().retrieve(request, *args, **kwargs)
+    return response
+  
+  def partial_update(self, request, *args, **kwargs):
+    # response = super().partial_update(request, *args, **kwargs)
+    response = self.patch_change(request, *args, **kwargs)
     return response
   
   def get(self, request, *args, **kwargs):
@@ -267,7 +296,15 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.ViewSet):
     response = super().get( request, *args, **kwargs)
     return response
   # @csrf_exempt
+
+  # @action(detail=True, methods=['patch', 'option'])
+  
   def patch(self, request, *args, **kwargs):
+    response = self.patch_change(request, *args, **kwargs)
+    return response
+  
+  def patch_change(self, request, *args, **kwargs):
+    
     """
     Возвращает данные для COOKIE ('user_session_{id}')  если\
 json.loads(request.body)["is_active"] == True, and 'is_active'
@@ -283,6 +320,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     cacher = {
         'user_session': cache.get(f"user_session_{kwargs['pk']}"),
     }
+    
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
       user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
@@ -400,25 +438,65 @@ Something what wrong"}, status=400)
   # def get_extra_action(self):
   #   return [self.send_index]
   
-  @action(detail=True, url_path="parameters/", methods=["GET"])
-  async def send_index(self, request, pk=None,  *args, **kwargs):
+
+@api_view(['GET'])
+def api_get_index(request, **kwargs):
+  decrypt_data_str = ""
+  serializers = {}
+  def decrypt_data(encrypted_data: str, secret_key: str) -> str:
+    """
+    https://pycryptodome.readthedocs.io/en/latest/src/cipher/classic.html
+    Decodes an encrypted string
+    :param encrypted_data:
+    :param secret_key:
+    :return:
+    """
+    from array import array
+    from base64 import b64decode
+    status_data = ""
+    __text = f"{__name__}{decrypt_data.__name__}"
+    log.info(f"[{__text}] START")
+    try:
+      secret_key_int_array = array('B', secret_key.encode())
+      # print()
+      numb_str = "".join(map(str, list(secret_key_int_array)))
+      key = numb_str[:32].encode()  # 32
+      iv = numb_str[:16].encode()  # 16
+      cipher = AES.new(key, AES.MODE_CBC, iv)
+      # (unpad(cipher.decrypt(decrypted_data), AES.block_size)).decode()
+      ct = b64decode(encrypted_data)
+      pt = cipher.decrypt(ct)
+      # encrypted_data_bytes = base64.b64decode(ct)
+      status_data += pt.decode().strip("").strip("\\x01").strip("")
+    except Exception as e:
+      log.error(f"[{__text}] ERROR: {str(e)}")
+      raise ValueError(f"[{__text}] Mistake => to the decrypt: {str(e)}")
+    finally:
+      log.info(f"[{__name__}{decrypt_data.__name__}] END")
+    return status_data
+  try:
+    # Пример использования
+    secret_key = f"{SECRET_KEY}"  # Убедитесь, что длина ключа соответствует требованиям (16/24/32 байта)
+    crypto_data = request.GET.get('data')  # Замените на ваш зашифрованный email
+    decrypted_data: str = decrypt_data(crypto_data, secret_key)
+    decrypt_data_str += decrypted_data
     
-    import re
-    import asyncio
-    from asgiref.sync import sync_to_async
-    # from Crypto.Cipher import AES
-    email_RegExc = r"/^[^\s@]+@[^\s@]+\.[^\s@]+$/"
-    pass
-    # if not pk or not re.match(email_RegExc, **kwarg):
-    #   return JsonResponse(
-    #     json.dumps(
-    #       {"encrypt":
-    #          "Parrametrs from URL is invalid"}
-    #       ),
-    #     status=status.HTTP_400_BAD_REQUEST
-    #     )
-    # email = data
-    return JsonResponse({"detail": "TEST"}, status=200)
+  except Exception as e:
+    print("Ошибка при расшифровке:", str(e))
+  else:
+    response = UserRegister.objects.filter(email__contains = decrypt_data_str)
+    if len(response) > 0:
+      serializers.update(UserPatchSerializer(response[0], many=False).data)
+    else:
+      return JsonResponse(
+        {"detail": "Not found"}, status=status.HTTP_400_BAD_REQUEST
+        )
+  return JsonResponse({"data": serializers["id"]}, status=status.HTTP_200_OK)
+
+
+  
+  
+
 def main(request, pk=None):
   if request.method.lower() == "get":
     template = "users/index.html"

@@ -14,32 +14,30 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.urls import (path, include)
 from rest_framework import routers, urls
 
 from cloud_user.views import (UserView, UserPatchViews, send_message,
-                              csrftoken)
+                              csrftoken, api_get_index)
 
 from cloud_user.contribute.controler_activate import user_activate
 
 router = routers.DefaultRouter()
 router.register("", UserView, basename="fulluser")
 router.register("<int:pk>/", UserView, basename="profileuser")
-# router.register("/<str:data>/parameters/", UserPatchViews)
-# router.register("login", UserPatchViews, basename="login")
 router2 = routers.DefaultRouter()
 router2.register("", UserPatchViews, basename="login", )
+router2.register("<int:pk>/", UserPatchViews, basename="login_patch", )
+# router2.register("<str:data>", UserPatchViews.send_index, basename="additional-route")
+# router2.register("<data>", UserPatchViews, basename="login_3333", )
 urlpatterns_user = [
     path("activate/<str:sign>/", user_activate, name="user_activate"),
     path("email/message/", send_message, name="emailmessage"),
-    # path("patch/<int:pk>/", UserPatchViews.as_view(), name="login"),
-    # path("patch/", include(router2.urls), name="login"),
-    # path("parameters/<str:pk>/", UserPatchViews.as_view(), name="parameters"),
-    # path("parameters/", UserPatchViews.as_view()),
-    # path("/api/v1/users/get/<str:data>/", send_index, name="parameters"),
     path("", csrftoken),
+    path("choice/name/", api_get_index),
     path("choice/", include(router.urls)),
-    # path("change/", include(router2.urls))
+    
     
     
 ]

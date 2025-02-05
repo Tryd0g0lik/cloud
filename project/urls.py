@@ -25,7 +25,7 @@ from cloud_file.urls_files import urlpatterns_files
 from cloud_file.views import FileStorageViewSet
 from cloud_user import views as vws
 # from cloud_user.urls_users import urlpatterns
-from cloud_user.urls_users import urlpatterns_user
+from cloud_user.urls_users import urlpatterns_user, router2
 
 
 
@@ -37,6 +37,7 @@ urlpatterns = [
     path("profile/<int:pk>/", vws.main, name="main"),
     
     path("api/v1/users/", include((urlpatterns_user, "user"), namespace="user")),
+    path("api/v1/users/patch/", include(router2.urls)),
     path("api/v1/files/", include((urlpatterns_files, "files"), namespace="file")),
     path("api/v1/session/increase/time/", user_update_sessionTime, name="session"),
     

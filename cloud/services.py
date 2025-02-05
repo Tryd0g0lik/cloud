@@ -28,12 +28,13 @@ the authenticate of user.
         #     numb = user_session_key_list[0].split("_")[-1]
         
         index = request.COOKIES.get("index")
+        
+        # import re
+        # match = re.search(r"[^v1]\d{1,}", request.path)
+        # if not index and match:
+        #     index = request.path[match.start() + 1: match.end()]
         if ( not index):
-            
-            raise ValueError(
-                f"[{__name__}::{get_data_authenticate.__name__}]: \
-            Mistake => User index is invalid."
-                )
+            return {}
         setattr(instance, "id", index)
         setattr(instance,  "user_session", \
                 request.COOKIES.get(f"user_session"))
