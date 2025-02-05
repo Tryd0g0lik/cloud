@@ -14,24 +14,29 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.urls import (path, include)
 from rest_framework import routers, urls
 
-from cloud_user.views import( UserView, UserPatchViews, send_message, csrftoken)
+from cloud_user.views import (UserView, UserPatchViews, send_message,
+                              csrftoken, api_get_index)
 
 from cloud_user.contribute.controler_activate import user_activate
 
 router = routers.DefaultRouter()
 router.register("", UserView, basename="fulluser")
 router.register("<int:pk>/", UserView, basename="profileuser")
-# router.register("login", UserPatchViews, basename="login")
+router2 = routers.DefaultRouter()
+router2.register("", UserPatchViews, basename="login", )
+router2.register("<int:pk>/", UserPatchViews, basename="login_patch", )
 
 urlpatterns_user = [
     path("activate/<str:sign>/", user_activate, name="user_activate"),
     path("email/message/", send_message, name="emailmessage"),
-    path("patch/<int:pk>/", UserPatchViews.as_view(), name="login"),
     path("", csrftoken),
-    path("choice/", include(router.urls))
+    path("choice/name/", api_get_index),
+    path("choice/", include(router.urls)),
+    
     
     
 ]

@@ -16,31 +16,17 @@ the authenticate of user.
     instance = CookieData()
     
     try:
-        # key_list = request.COOKIES.keys()
-        # if len(list(key_list)) == 0:
-        #     raise ValueError(
-        #         f"[{__name__}::{get_data_authenticate.__name__}]: \
-        #     Mistake => 'request.COOKIE' is invalid."
-        #         )
-        # user_session_key_list = \
-        #     [key for key in list(key_list) if r"user_session_" in key]
-        # if len(user_session_key_list) != 0:
-        #     numb = user_session_key_list[0].split("_")[-1]
-        
         index = request.COOKIES.get("index")
+        
         if ( not index):
-            
-            raise ValueError(
-                f"[{__name__}::{get_data_authenticate.__name__}]: \
-            Mistake => User index is invalid."
-                )
+            return {}
         setattr(instance, "id", index)
         setattr(instance,  "user_session", \
                 request.COOKIES.get(f"user_session"))
-        #request.COOKIES.get(f"user_session_{index}"))
+        
         setattr(instance, "is_superuser", \
                 request.COOKIES.get(f"is_superuser"))
-        # request.COOKIES.get(f"is_superuser_{index}"))
+        
     except Exception as e:
         
         raise ValueError(f"[{__name__}::{get_data_authenticate.__name__}]: \

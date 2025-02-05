@@ -1,15 +1,17 @@
 """
 cloud_user/views.py
 """
-# Create your views here.
 import scrypt
 import json
+import logging
 from datetime import datetime
+from Crypto.Cipher import AES
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
 from rest_framework import (viewsets, generics, status)
 from rest_framework.response import Response
+from rest_framework.decorators import action, api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
@@ -27,7 +29,11 @@ from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
 
 from cloud_user.contribute.services import get_fields_response, get_user_cookie
+from logs import configure_logging
 
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
+log.info("START")
 
 async def csrftoken(request):
   if (request.method != "GET"):
@@ -231,7 +237,7 @@ Mistake => {e.__str__()}", }, status=400)
       return instance
       
 # class UserPatchViews(viewsets.ModelViewSet ):
-class UserPatchViews(generics.RetrieveUpdateAPIView):
+class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
   """
   TODO: For update data of single cell or more cells.
     Method: PATCH.
@@ -254,15 +260,44 @@ class UserPatchViews(generics.RetrieveUpdateAPIView):
   """
   queryset = UserRegister.objects.all()
   serializer_class = UserPatchSerializer
-  #
-  
+  # lookup_field = 'pk'
+  # extra_actions =
+  # extra_actions = .get_extra_actions()
+  # def get_extra_actions(cls):
+  #   response = super().get_extra_actions(cls)
+  #   return  response
   
   def options(self, request, *args, **kwargs):
     response = super().options(request, *args, **kwargs)
     return response
+  def update(self, request, *args, **kwargs):
+    response = super().update(request, *args, **kwargs)
+    # return Response(request.body)
+    return response
   
+  def retrieve(self, request, *args, **kwargs):
+    response = super().retrieve(request, *args, **kwargs)
+    return response
+  
+  def partial_update(self, request, *args, **kwargs):
+    # response = super().partial_update(request, *args, **kwargs)
+    response = self.patch_change(request, *args, **kwargs)
+    return response
+  
+  def get(self, request, *args, **kwargs):
+    
+    response = super().get( request, *args, **kwargs)
+    return response
   # @csrf_exempt
+
+  # @action(detail=True, methods=['patch', 'option'])
+  
   def patch(self, request, *args, **kwargs):
+    response = self.patch_change(request, *args, **kwargs)
+    return response
+  
+  def patch_change(self, request, *args, **kwargs):
+    
     """
     Возвращает данные для COOKIE ('user_session_{id}')  если\
 json.loads(request.body)["is_active"] == True, and 'is_active'
@@ -278,9 +313,10 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     cacher = {
         'user_session': cache.get(f"user_session_{kwargs['pk']}"),
     }
+    
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
-      user_session = scrypt.hash(cacher.user_session, SECRET_KEY)
+      user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
       if cookie_data.user_session == (user_session).decode('ISO-8859-1') and \
         request.method.lower() == "patch":
         user_session = request.COOKIES.get(f"user_session")
@@ -334,11 +370,6 @@ Something what wrong. Check the 'pk'."}
                 # GET COOKIE
                 response = get_user_cookie(request, response)
                 return response
-
-              # body_data = request.data
-              # del body_data["password"]
-              
-              # data.pop("password")
               continue
               
             # next
@@ -348,21 +379,26 @@ Something what wrong. Check the 'pk'."}
           instance = super().patch(request, args, kwargs)
       
           response = Response(instance.data, status=200)
-          # CHANGE IS_ACTIVE
+          # IF IS_ACTIVE CHANGE
           if "is_active" in data:
+            hash_create_user_session(
+              kwargs['pk'],
+              f"user_session_{kwargs['pk']}"
+              )
+            if not data["is_active"]:
+              cache.delete(f"user_session_{kwargs['pk']}")
+              cache.delete(f"is_superuser_{kwargs['pk']}")
             if data["is_active"]:
               kwargs["last_login"] = datetime.utcnow()
-            hash_create_user_session(kwargs['pk'],
-                                     f"user_session_{kwargs['pk']}")
-            response.set_cookie(
-              f"is_active", data.is_active,
-              max_age=SESSION_COOKIE_AGE,
-              httponly=SESSION_COOKIE_HTTPONLY,
-              secure=SESSION_COOKIE_SECURE,
-              samesite=SESSION_COOKIE_SAMESITE
-              )
+              response.set_cookie(
+                f"is_active", data.is_active,
+                max_age=SESSION_COOKIE_AGE,
+                httponly=SESSION_COOKIE_HTTPONLY,
+                secure=SESSION_COOKIE_SECURE,
+                samesite=SESSION_COOKIE_SAMESITE
+                )
           user_list.first().save()
-          # GET COOKIE
+          # GET the DATA COOKIE
           response = get_user_cookie(request, response)
           return response
         return JsonResponse({"detail": "Something what wrong!"},
@@ -386,6 +422,77 @@ Something what wrong"}, status=400)
   def put(self, request, *args, **kwargs):
     json.loads(request.body)["Message"] = "Not Ok"
     return Response(json.loads(request.body), status=400)
+  
+  # def get_extra_action(self):
+  #   return [self.send_index]
+  
+
+@api_view(['GET'])
+def api_get_index(request, **kwargs):
+  """
+  Received the request to restore the index by email of user.\
+  URL contein the user of email, but only  the email address is encrypted.\
+  The sub-function 'decrypt_data' contain algorithm for decryption.\
+  :param request: method GET. URL contain one parameter of email address..
+  :param kwargs: empty.
+  :return:
+  """
+  decrypt_data_str = ""
+  serializers = {}
+  def decrypt_data(encrypted_data: str, secret_key: str) -> str:
+    """
+    https://pycryptodome.readthedocs.io/en/latest/src/cipher/classic.html
+    Decodes an encrypted string
+    :param encrypted_data:
+    :param secret_key:
+    :return:
+    """
+    from array import array
+    from base64 import b64decode
+    status_data = ""
+    __text = f"{__name__}{decrypt_data.__name__}"
+    log.info(f"[{__text}] START")
+    try:
+      secret_key_int_array = array('B', secret_key.encode())
+      # print()
+      numb_str = "".join(map(str, list(secret_key_int_array)))
+      key = numb_str[:32].encode()  # 32
+      iv = numb_str[:16].encode()  # 16
+      cipher = AES.new(key, AES.MODE_CBC, iv)
+      # (unpad(cipher.decrypt(decrypted_data), AES.block_size)).decode()
+      ct = b64decode(encrypted_data)
+      pt = cipher.decrypt(ct)
+      # encrypted_data_bytes = base64.b64decode(ct)
+      status_data += pt.decode().strip("").strip("\\x01").strip("")
+    except Exception as e:
+      log.error(f"[{__text}] ERROR: {str(e)}")
+      raise ValueError(f"[{__text}] Mistake => to the decrypt: {str(e)}")
+    finally:
+      log.info(f"[{__name__}{decrypt_data.__name__}] END")
+    return status_data
+  try:
+    # Пример использования
+    secret_key = f"{SECRET_KEY}"  # Убедитесь, что длина ключа соответствует требованиям (16/24/32 байта)
+    crypto_data = request.GET.get('data')  # Замените на ваш зашифрованный email
+    # Function of DECRYPTion.
+    decrypted_data: str = decrypt_data(crypto_data, secret_key)
+    decrypt_data_str += decrypted_data
+    
+  except Exception as e:
+    print("Ошибка при расшифровке:", str(e))
+  else:
+    response = UserRegister.objects.filter(email__contains = decrypt_data_str)
+    if len(response) > 0:
+      serializers.update(UserPatchSerializer(response[0], many=False).data)
+    else:
+      return JsonResponse(
+        {"detail": "Not found"}, status=status.HTTP_400_BAD_REQUEST
+        )
+  return JsonResponse({"data": serializers["id"]}, status=status.HTTP_200_OK)
+
+
+  
+  
 
 def main(request, pk=None):
   if request.method.lower() == "get":
@@ -438,5 +545,8 @@ def send_message(request):
   del data["password"]
   signal_user_registered.send(data, instance=user)
 
+
+  # asyncio.create_task((lambda: sync_to_async(UserSerializer.objects.filter)(email=email)))
+    
 ready()
   
