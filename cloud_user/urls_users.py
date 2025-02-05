@@ -29,8 +29,7 @@ router.register("<int:pk>/", UserView, basename="profileuser")
 router2 = routers.DefaultRouter()
 router2.register("", UserPatchViews, basename="login", )
 router2.register("<int:pk>/", UserPatchViews, basename="login_patch", )
-# router2.register("<str:data>", UserPatchViews.send_index, basename="additional-route")
-# router2.register("<data>", UserPatchViews, basename="login_3333", )
+
 urlpatterns_user = [
     path("activate/<str:sign>/", user_activate, name="user_activate"),
     path("email/message/", send_message, name="emailmessage"),

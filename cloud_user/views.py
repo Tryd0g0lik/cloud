@@ -1,18 +1,11 @@
 """
 cloud_user/views.py
 """
-# Create your views here.
 import scrypt
 import json
 import logging
 from datetime import datetime
-from array import array
-import base64
 from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
-from base64 import b64encode
-from Crypto.Util.Padding import pad
-
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
@@ -377,11 +370,6 @@ Something what wrong. Check the 'pk'."}
                 # GET COOKIE
                 response = get_user_cookie(request, response)
                 return response
-
-              # body_data = request.data
-              # del body_data["password"]
-              
-              # data.pop("password")
               continue
               
             # next
@@ -391,7 +379,7 @@ Something what wrong. Check the 'pk'."}
           instance = super().patch(request, args, kwargs)
       
           response = Response(instance.data, status=200)
-          # CHANGE IS_ACTIVE
+          # IF IS_ACTIVE CHANGE
           if "is_active" in data:
             hash_create_user_session(
               kwargs['pk'],
@@ -410,7 +398,7 @@ Something what wrong. Check the 'pk'."}
                 samesite=SESSION_COOKIE_SAMESITE
                 )
           user_list.first().save()
-          # GET COOKIE
+          # GET the DATA COOKIE
           response = get_user_cookie(request, response)
           return response
         return JsonResponse({"detail": "Something what wrong!"},
@@ -441,6 +429,14 @@ Something what wrong"}, status=400)
 
 @api_view(['GET'])
 def api_get_index(request, **kwargs):
+  """
+  Received the request to restore the index by email of user.\
+  URL contein the user of email, but only  the email address is encrypted.\
+  The sub-function 'decrypt_data' contain algorithm for decryption.\
+  :param request: method GET. URL contain one parameter of email address..
+  :param kwargs: empty.
+  :return:
+  """
   decrypt_data_str = ""
   serializers = {}
   def decrypt_data(encrypted_data: str, secret_key: str) -> str:
@@ -478,6 +474,7 @@ def api_get_index(request, **kwargs):
     # Пример использования
     secret_key = f"{SECRET_KEY}"  # Убедитесь, что длина ключа соответствует требованиям (16/24/32 байта)
     crypto_data = request.GET.get('data')  # Замените на ваш зашифрованный email
+    # Function of DECRYPTion.
     decrypted_data: str = decrypt_data(crypto_data, secret_key)
     decrypt_data_str += decrypted_data
     

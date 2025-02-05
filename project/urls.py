@@ -18,14 +18,12 @@ Including another URLconf
 
 from django.contrib import admin
 
-from django.urls import include, path, re_path
+from django.urls import (include, path)
 
 from cloud.views import user_update_sessionTime
 from cloud_file.urls_files import urlpatterns_files
-from cloud_file.views import FileStorageViewSet
 from cloud_user import views as vws
-# from cloud_user.urls_users import urlpatterns
-from cloud_user.urls_users import urlpatterns_user, router2
+from cloud_user.urls_users import (urlpatterns_user, router2)
 
 
 
@@ -40,7 +38,5 @@ urlpatterns = [
     path("api/v1/users/patch/", include(router2.urls)),
     path("api/v1/files/", include((urlpatterns_files, "files"), namespace="file")),
     path("api/v1/session/increase/time/", user_update_sessionTime, name="session"),
-    
-    # path('api/v1/users/activate/<str:sign>', user_activate, name="user_activate"),
-    # path("api/v1/users/", include((router.urls, "user"), namespace="user")),
+
 ]
