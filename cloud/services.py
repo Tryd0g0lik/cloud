@@ -19,7 +19,7 @@ the authenticate of user.
         index = request.COOKIES.get("index")
         
         if ( not index):
-            return {}
+            return instance
         setattr(instance, "id", index)
         setattr(instance,  "user_session", \
                 request.COOKIES.get(f"user_session"))

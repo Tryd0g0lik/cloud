@@ -267,6 +267,104 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
   #   response = super().get_extra_actions(cls)
   #   return  response
   
+  @staticmethod
+  def update_cell(request, *args, **kwargs):
+    """
+      For update data of single cell or more cells. \
+      If make to change to the database, to inside of the 'update_cell' \
+      will send a response to the user client's request. \
+      Entry point of the 'update_cell' function will need has a min of \
+      the data from: \
+      - request.body \
+      - kwargs["pk"] \
+      Then the 'update_cell' function will perform successfully then, from \
+      the 'update_cell' will sending a response to the user client. \
+      This the status-code 200 \
+      Or, not successfully and will send a response with the status-code 400
+      :param request:
+      :param args:
+      :param kwargs:
+      :return:
+    """
+    # Get data from the reqyest body.
+    data = json.loads(request.body)
+    user_list = UserRegister.objects.filter(id=kwargs["pk"])
+    # CREATE RESPONSE
+    if len(data.keys()) > 0:
+      kwargs["id"] = (lambda: int(kwargs["pk"]))()
+      for item in data.keys():
+        if item == "id":
+          continue
+        # CHANGE PASSWORD
+        if "password" == item and "is_active" not in data.keys():
+          """
+          Hash the password from the data user's request. It's\
+          from the entry-point.
+          """
+          __hash_password = UserPatchViews.__hash__((lambda: data['password'])())
+        
+          data[item] = __hash_password
+        elif "password" == item and "email" in data.keys() and \
+          "is_active" in data.keys():
+          # PASSWORD and EMAIL need to CHECK for checking the authenticity
+          """
+          Checks the password, the email address to the authenticity.\
+          If , the code below returns the False, this method/code returns\
+          the status code 400. \
+          Or, passes next. It changes the property 'is_active' \
+          from 'False' to the 'True' in db.
+          """
+          __hash_password = UserPatchViews.__hash__((lambda: data[item])())
+        
+          authenticity = True if __hash_password == \
+                                 (lambda: user_list[0].password)() and \
+                                 data["email"] == user_list[0].email else False
+          del request.data["password"]
+        
+          if not authenticity:
+            # status code 400
+            response = JsonResponse(
+              {"detail": "Password or email is invalid!"},
+              status=status.HTTP_400_BAD_REQUEST
+            )
+            # GET COOKIE
+            response = get_user_cookie(request, response)
+            return response
+          continue
+      
+        # next
+        kwargs[item] = (lambda: data[item])()
+    
+      # CHANGEs cells of db
+      instance = super().patch(request, args, kwargs)
+    
+      response = Response(instance.data, status=200)
+      # IF IS_ACTIVE CHANGE
+      if "is_active" in data:
+        hash_create_user_session(
+          kwargs['pk'],
+          f"user_session_{kwargs['pk']}"
+        )
+        if not data["is_active"]:
+          cache.delete(f"user_session_{kwargs['pk']}")
+          cache.delete(f"is_superuser_{kwargs['pk']}")
+        if data["is_active"]:
+          kwargs["last_login"] = datetime.utcnow()
+          response.set_cookie(
+            f"is_active", data.is_active,
+            max_age=SESSION_COOKIE_AGE,
+            httponly=SESSION_COOKIE_HTTPONLY,
+            secure=SESSION_COOKIE_SECURE,
+            samesite=SESSION_COOKIE_SAMESITE
+          )
+      user_list.first().save()
+      # GET the DATA COOKIE
+      response = get_user_cookie(request, response)
+      return response
+    return JsonResponse(
+      {"detail": "Something what wrong!"},
+      status=status.HTTP_400_BAD_REQUEST
+      )
   def options(self, request, *args, **kwargs):
     response = super().options(request, *args, **kwargs)
     return response
@@ -308,16 +406,22 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     :param kwargs:
     :return: the data of body and 'user_session_{id}' from cookie
     """
-    # GET user ID
-    cookie_data = get_data_authenticate(request)
-    cacher = {
-        'user_session': cache.get(f"user_session_{kwargs['pk']}"),
-    }
     
     # cacher.is_superuser = cache.get(f"is_superuser_{kwargs['pk']}")
     try:
+      # Get data from the reqyest body.
+      data = json.loads(request.body)
+      # GETs the cookie's data how an object from the user's ID
+      cookie_data = get_data_authenticate(request)
+      if "user_session" not in cookie_data.keys():
+        pass
+      cacher = {
+        'user_session': cache.get(f"user_session_{kwargs['pk']}"),
+      }
+      
       user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
-      if cookie_data.user_session == (user_session).decode('ISO-8859-1') and \
+      if cookie_data.user_session and \
+        cookie_data.user_session == (user_session).decode('ISO-8859-1') and \
         request.method.lower() == "patch":
         user_session = request.COOKIES.get(f"user_session")
         # CHECK a COOKIE KEY ?????????????????
@@ -327,82 +431,12 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
               {"message": f"[{__name__}]: \
 Something what wrong. Check the 'pk'."}
               )
-        data = json.loads(request.body)
-        if "is_superuser" in data.keys():
-          del data["is_superuser"]
-          
-        user_list = UserRegister.objects.filter(id=kwargs["pk"])
-        # CREATE RESPONSE
-        if len(data.keys()) > 0:
-          kwargs["id"] = (lambda: int(kwargs["pk"]))()
-          for item in data.keys():
-            if item == "id":
-              continue
-            # CHANGE PASSWORD
-            if "password" == item and "is_active" not in data.keys():
-              # hash = hash_password(data[item])
-              __hash_password = self.__hash__((lambda: data['password'])())
-
-              data[item] = __hash_password
-            elif "password" == item and "email" in data.keys() and \
-              "is_active" in data.keys():
-              # PASSWORD and EMAIL need to CHECK for checking the authenticity
-              """
-              Checks the password, the email address to the authenticity.\
-              If , the code below returns the False, this method/code returns\
-              the status code 400. \
-              Or, passes next. It changes the property 'is_active' \
-              from 'False' to the 'True' in db.
-              """
-              __hash_password = self.__hash__((lambda: data[item])())
-              
-              authenticity = True if __hash_password == \
-                                     (lambda: user_list[0].password)() and \
-                data["email"] == user_list[0].email else False
-              del request.data["password"]
-
-              if not authenticity:
-                # status code 400
-                response = JsonResponse(
-                  {"detail": "Password or email is invalid!"},
-                  status=status.HTTP_400_BAD_REQUEST
-                  )
-                # GET COOKIE
-                response = get_user_cookie(request, response)
-                return response
-              continue
-              
-            # next
-            kwargs[item] = (lambda: data[item])()
-          
-          # CHANGEs cells of db
-          instance = super().patch(request, args, kwargs)
-      
-          response = Response(instance.data, status=200)
-          # IF IS_ACTIVE CHANGE
-          if "is_active" in data:
-            hash_create_user_session(
-              kwargs['pk'],
-              f"user_session_{kwargs['pk']}"
-              )
-            if not data["is_active"]:
-              cache.delete(f"user_session_{kwargs['pk']}")
-              cache.delete(f"is_superuser_{kwargs['pk']}")
-            if data["is_active"]:
-              kwargs["last_login"] = datetime.utcnow()
-              response.set_cookie(
-                f"is_active", data.is_active,
-                max_age=SESSION_COOKIE_AGE,
-                httponly=SESSION_COOKIE_HTTPONLY,
-                secure=SESSION_COOKIE_SECURE,
-                samesite=SESSION_COOKIE_SAMESITE
-                )
-          user_list.first().save()
-          # GET the DATA COOKIE
-          response = get_user_cookie(request, response)
-          return response
-        return JsonResponse({"detail": "Something what wrong!"},
-                            status=status.HTTP_400_BAD_REQUEST)
+        """
+        If make to change to the database, to inside of the 'update_cell'\
+        will send a response to the user client's request.
+        """
+        UserPatchViews.update_cell(request, *args, **kwargs)
+        
       return JsonResponse({"detail": "Something what wrong! \
 Check the 'user_session' or 'pk'"},
                           status=status.HTTP_400_BAD_REQUEST)
@@ -416,6 +450,11 @@ Something what wrong"}, status=400)
       cache.close()
 
   def __hash__(self, password: str):
+    """
+    Hash the password from the data user's request.
+    :param password: str. Pure password from user's request.
+    :return: str. Hash of password.
+    """
     __hash_password = str(scrypt.hash(f"pbkdf2${str(20000)}${password}", SECRET_KEY).decode('windows-1251'))
     return __hash_password
 
