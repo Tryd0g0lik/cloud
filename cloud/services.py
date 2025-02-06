@@ -1,5 +1,5 @@
 
-def get_data_authenticate(request) -> object:
+def  get_data_authenticate(request) -> object:
     """
     TODO: function gets the user data from user request. They, after can use to \
 the authenticate of user.
