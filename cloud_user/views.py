@@ -5,7 +5,7 @@ import scrypt
 import json
 import logging
 from datetime import datetime
-from Crypto.Cipher import AES
+
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
@@ -19,7 +19,7 @@ from cloud_user.tasks import ready
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
   SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE, SESSION_COOKIE_HTTPONLY)
 from django.views.decorators.csrf import get_token
-from cloud.services import get_data_authenticate
+from cloud.services import (get_data_authenticate, decrypt_data)
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (check,
                                             hash_create_user_session)
@@ -439,37 +439,7 @@ def api_get_index(request, **kwargs):
   """
   decrypt_data_str = ""
   serializers = {}
-  def decrypt_data(encrypted_data: str, secret_key: str) -> str:
-    """
-    https://pycryptodome.readthedocs.io/en/latest/src/cipher/classic.html
-    Decodes an encrypted string
-    :param encrypted_data:
-    :param secret_key:
-    :return:
-    """
-    from array import array
-    from base64 import b64decode
-    status_data = ""
-    __text = f"{__name__}{decrypt_data.__name__}"
-    log.info(f"[{__text}] START")
-    try:
-      secret_key_int_array = array('B', secret_key.encode())
-      # print()
-      numb_str = "".join(map(str, list(secret_key_int_array)))
-      key = numb_str[:32].encode()  # 32
-      iv = numb_str[:16].encode()  # 16
-      cipher = AES.new(key, AES.MODE_CBC, iv)
-      # (unpad(cipher.decrypt(decrypted_data), AES.block_size)).decode()
-      ct = b64decode(encrypted_data)
-      pt = cipher.decrypt(ct)
-      # encrypted_data_bytes = base64.b64decode(ct)
-      status_data += pt.decode().strip("").strip("\\x01").strip("")
-    except Exception as e:
-      log.error(f"[{__text}] ERROR: {str(e)}")
-      raise ValueError(f"[{__text}] Mistake => to the decrypt: {str(e)}")
-    finally:
-      log.info(f"[{__name__}{decrypt_data.__name__}] END")
-    return status_data
+  
   try:
     # Пример использования
     secret_key = f"{SECRET_KEY}"  # Убедитесь, что длина ключа соответствует требованиям (16/24/32 байта)
