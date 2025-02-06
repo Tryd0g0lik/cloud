@@ -39,7 +39,7 @@ a password text of user.
         _, _, md5_hash = MD5PasswordHasher().encode(secret_key, salt).split("$", 2)
         return self.encode_md5_hash(md5_hash, salt, iterations)
 
-def hash_password(secret_key, encode='utf-8'):
+def hashpw_password(secret_key, encode='utf-8'):
     """
     This the function for hashing password.
     :param secret_key: The message wich will be hashing. It is simple '\
@@ -53,6 +53,7 @@ a password text of user.
     hashed_password = bcrypt.hashpw(secret_key.encode(encode), salt)
     
     return hashed_password
+
 
 def md5_chacker(link:str) -> str:
     """
