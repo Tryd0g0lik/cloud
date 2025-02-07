@@ -344,30 +344,17 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 # CHANGE PASSWORD
                 if "password" == item and "is_active" not in data.keys():
                     """
-          Hash the password from the data user's request. It's\
-          from the entry-point.
-          """
-                    # __hash_password = UserPatchViews.hash_password(
-                    #     (lambda: data['password'])()
-                    #     )
+                  Hash the password from the data user's request. It's\
+                  from the entry-point.
+                  """
+                    __hash_password = UserPatchViews.hash_password(
+                        (lambda: data['password'])()
+                        )
                     
-                    # data[item] = __hash_password
+                    data[item] = __hash_password
                 elif "password" == item and "email" in data.keys() and \
                   "is_active" in data.keys():
-                    # PASSWORD and EMAIL need to CHECK for checking the authenticity
-                    """
-          Checks the password, the email address to the authenticity.\
-          If , the code below returns the False, this method/code returns\
-          the status code 400. \
-          Or, passes next. It changes the property 'is_active' \
-          from 'False' to the 'True' in db.
-          """
-                    # __hash_password = UserPatchViews.hash_password(
-                    #     (lambda: data[item])()
-                    #     )
-                    
                     authenticity = True if data["email"] == user_list[0].email else False
-                    
                     if not authenticity:
                         # status code 400
                         response = JsonResponse(
@@ -382,13 +369,10 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 # next
                 kwargs[item] = (lambda: data[item])()
             
-            # CHANGEs cells of db ~~~~~~~!!!!!!!!!!!!!!
-            # instance = generics.RetrieveUpdateAPIView.patch(request, args, kwargs)
             for item in kwargs.keys():
                 if item == "pk" or item == "id":
                     continue
                 setattr(user_list[0], item, kwargs[item])
-                # user_list[0][item] = kwargs[item]
             user_list[0].save()
             instance = UserPatchSerializer(user_list.first(), many=False)
             instance = get_fields_response(instance)
@@ -409,7 +393,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 if data["is_active"]:
                     kwargs["last_login"] = datetime.utcnow()
                     response.set_cookie(
-                        f"is_active", data.is_active,
+                        f"is_active", data["is_active"],
                         max_age=SESSION_COOKIE_AGE,
                         httponly=SESSION_COOKIE_HTTPONLY,
                         secure=SESSION_COOKIE_SECURE,
@@ -499,14 +483,15 @@ Something what wrong. Check the 'pk'."},
 Something what wrong. Check the 'password'."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            """
-            If make to change to the database, to inside of the 'update_cell'\
-            will send a response to the user client's request.
-            """
-            body = json.loads(request.body)
-            body["password"] = user_list[0].password
-            request.body = json.dumps(body)
-            UserPatchViews.update_cell(request, *args, **kwargs)
+                """
+                If make to change to the database, to inside of the 'update_cell'\
+                will send a response to the user client's request.
+                """
+                body = json.loads(request.body)
+                body["password"] = user_list[0].password
+                request.body = json.dumps(body)
+                response = UserPatchViews.update_cell(request, *args, **kwargs)
+                return  response
             cacher = {
                 'user_session': cache.get(f"user_session_{kwargs['pk']}"),
             }
