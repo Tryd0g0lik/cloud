@@ -159,7 +159,7 @@ Your profile is not activate"}
             # data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
         password = json.loads(request.body)["password"]
         password_validation(password)
-        hash = hashpw_password(f'pbkdf2${str(20000)}{password}').decode("utf-8")
+        hash = hashpw_password(f'pbkdf2${str(20000)}{password}') #.decode("utf-8")
         json.loads(request.body)["password"] = hash
         
         instance = super().update(request, *args, **kwargs)
@@ -201,10 +201,32 @@ Your profile is not activate"}
     :param kwargs:
     :return:
     """
-        
-        instance = super().create(request, *args, **kwargs)
-        request.data['password'] = make_password(request.data['password'])
-        instance = get_fields_response(instance)
+        data = request.data
+        # password_byte = make_password(data["password"].encode("utf-8"))
+        password_byte = data["password"].encode("utf-8")
+        # data["password"] = password_byte
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+        else:
+            return Response(serializer.errors, status=400)
+            # instance = super().create(request, *args, **kwargs)
+        """
+            def create(self, request, *args, **kwargs):
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED,
+                headers=headers
+                )
+                
+                create eбопть из насле дия. Пароль сделать  - бинарный!!
+        """
+        # instance = super().create(request, *args, **kwargs)
+        # request.data['password'] = make_password(request.data['password'])
+        instance = get_fields_response(serializer)
         response = JsonResponse(data=instance, status=200)
         
         return response
@@ -295,7 +317,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
     def update_cell(request, *args, **kwargs):
         """
       For update data of single cell or more cells. \
-      If make to change to the database, to inside of the 'update_cell' \
+      If make to change to the databasebase, to inside of the 'update_cell' \
       will send a response to the user client's request. \
       Entry point of the 'update_cell' function will need has a min of \
       the data from: \
@@ -325,11 +347,11 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
           Hash the password from the data user's request. It's\
           from the entry-point.
           """
-                    __hash_password = UserPatchViews.hash_password(
-                        (lambda: data['password'])()
-                        )
+                    # __hash_password = UserPatchViews.hash_password(
+                    #     (lambda: data['password'])()
+                    #     )
                     
-                    data[item] = __hash_password
+                    # data[item] = __hash_password
                 elif "password" == item and "email" in data.keys() and \
                   "is_active" in data.keys():
                     # PASSWORD and EMAIL need to CHECK for checking the authenticity
@@ -340,16 +362,11 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
           Or, passes next. It changes the property 'is_active' \
           from 'False' to the 'True' in db.
           """
-                    __hash_password = UserPatchViews.hash_password(
-                        (lambda: data[item])()
-                        )
+                    # __hash_password = UserPatchViews.hash_password(
+                    #     (lambda: data[item])()
+                    #     )
                     
-                    authenticity = True if __hash_password == \
-                                           (lambda: user_list[
-                                               0].password)() and \
-                                           data["email"] == user_list[
-                                               0].email else False
-                    del request.data["password"]
+                    authenticity = True if data["email"] == user_list[0].email else False
                     
                     if not authenticity:
                         # status code 400
@@ -381,6 +398,10 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 hash_create_user_session(
                     kwargs['pk'],
                     f"user_session_{kwargs['pk']}"
+                )
+                hash_create_user_session(
+                    kwargs['pk'],
+                    f"user_superuser_{kwargs['pk']}"
                 )
                 if not data["is_active"]:
                     cache.delete(f"user_session_{kwargs['pk']}")
@@ -454,11 +475,14 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
             data = json.loads(request.body)
             # GETs the cookie's data how an object from the user's ID
             cookie_data = get_data_authenticate(request)
-            
+            user_list = UserRegister.objects.filter(id=kwargs["pk"])
             # If we do not have cookie's data, then we look to the password of user.
-            if not hasattr(cookie_data, "user_session") and \
+            if (not hasattr(cookie_data, "user_session") or (
+              hasattr(cookie_data, "user_session") and
+              not cache.get(f"user_session_{kwargs['pk']}")
+            )) and \
               len((data.keys())) > 0:
-                user_list = UserRegister.objects.filter(id=kwargs["pk"])
+                
                 if len(user_list) == 0:
                     return Response(
                         {"message": f"[{__name__}]: \
@@ -467,7 +491,7 @@ Something what wrong. Check the 'pk'."},
                     )
                 # Comparing password of the user
                 _hash_password = self.hash_password(
-                    (lambda: user_list[0].password)()
+                    (lambda: data["password"])()
                     )
                 if user_list[0].password != _hash_password:
                     return Response(
@@ -479,29 +503,32 @@ Something what wrong. Check the 'password'."},
             If make to change to the database, to inside of the 'update_cell'\
             will send a response to the user client's request.
             """
+            body = json.loads(request.body)
+            body["password"] = user_list[0].password
+            request.body = json.dumps(body)
             UserPatchViews.update_cell(request, *args, **kwargs)
             cacher = {
                 'user_session': cache.get(f"user_session_{kwargs['pk']}"),
             }
             
-            user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
-            if cookie_data.user_session and \
-              cookie_data.user_session == (user_session).decode(
-                'ISO-8859-1'
-                ) and \
-              request.method.lower() == "patch":
-                user_session = request.COOKIES.get(f"user_session")
-                # CHECK a COOKIE KEY ?????????????????
-                check_bool = check(
-                    f"user_session_{kwargs['pk']}", user_session, **kwargs
-                    )
-                if not check_bool:
-                    return Response(
-                        {"message": f"[{__name__}]: \
-Something what wrong. Check the 'pk'."}
-                    )
-                response = UserPatchViews.update_cell(request, *args, **kwargs)
-                return response
+            
+            if cacher['user_session'] and cookie_data.user_session:
+                user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
+                if cookie_data.user_session == (user_session).decode(
+                  'ISO-8859-1'
+                ) and request.method.lower() == "patch":
+                    user_session = request.COOKIES.get(f"user_session")
+                    # CHECK a COOKIE KEY ?????????????????
+                    check_bool = check(
+                        f"user_session_{kwargs['pk']}", user_session, **kwargs
+                        )
+                    if not check_bool:
+                        return Response(
+                            {"message": f"[{__name__}]: \
+    Something what wrong. Check the 'pk'."}
+                        )
+                    response = UserPatchViews.update_cell(request, *args, **kwargs)
+                    return response
             return JsonResponse(
                 {"detail": "Something what wrong! \
 Check the 'user_session' or 'pk'"},
@@ -513,7 +540,7 @@ Check the 'user_session' or 'pk'"},
                     "message": "Not Ok",
                     "error":
                         f"{UserPatchViews.__class__}.{self.patch.__name__} Mistake => \
-Something what wrong"}, status=400
+{e.__str__()}"}, status=400
             )
         finally:
             cache.close()
@@ -526,12 +553,14 @@ Something what wrong"}, status=400
     :param password: str. Pure password from user's request.
     :return: str. Hash of password.
     """
-        import re
-        _hash_password = str(
-            scrypt.hash(f"pbkdf2${str(20000)}${(lambda: password)()}",
-                        SECRET_KEY).decode(encode)
-            ) #.replace(r"[ \t\v\r\n\f]+", "") ##.replace("\n", "").replace(r" ", "")
-        return re.sub(r"[ \t\v\r\n\f]+", "", _hash_password)
+        from base64 import b64encode
+        # _hash_password = scrypt.hash(f"pbkdf2${str(20000)}${(lambda: password)()}",
+        #                 SECRET_KEY).decode(encode)
+        _hash_password = scrypt.hash(
+            f"pbkdf2${str(20000)}${(lambda: password)()}", SECRET_KEY
+        )
+        #.replace(r"[ \t\v\r\n\f]+", "") ##.replace("\n", "").replace(r" ", "")
+        return b64encode(_hash_password).decode()
     
     def put(self, request, *args, **kwargs):
         json.loads(request.body)["Message"] = "Not Ok"
