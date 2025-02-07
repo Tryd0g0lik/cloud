@@ -392,13 +392,13 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                     cache.delete(f"user_superuser_{kwargs['pk']}")
                 if data["is_active"]:
                     kwargs["last_login"] = datetime.utcnow()
-                    response.set_cookie(
-                        f"is_active", data["is_active"],
-                        max_age=SESSION_COOKIE_AGE,
-                        httponly=SESSION_COOKIE_HTTPONLY,
-                        secure=SESSION_COOKIE_SECURE,
-                        samesite=SESSION_COOKIE_SAMESITE
-                    )
+                    # response.set_cookie(
+                    #     f"is_active", data["is_active"],
+                    #     max_age=SESSION_COOKIE_AGE,
+                    #     httponly=SESSION_COOKIE_HTTPONLY,
+                    #     secure=SESSION_COOKIE_SECURE,
+                    #     samesite=SESSION_COOKIE_SAMESITE
+                    # )
            
             # GET the DATA COOKIE
             response = get_user_cookie(request, response)
