@@ -87,11 +87,11 @@ def _run_async():
     loop.run_until_complete(task_check_keys())
 
 
-def ready():
+def ready(run_async_ofTask):
     log.info(f"{__name__} Hash WAS STARTED")
     
     # Создаем и запускаем отдельный поток для асинхронных операций
-    thread = threading.Thread(target=_run_async)
+    thread = threading.Thread(target=run_async_ofTask)
     thread.daemon = True  # Демонизированный поток
     thread.start()
     

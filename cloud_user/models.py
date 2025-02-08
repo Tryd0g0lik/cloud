@@ -4,6 +4,7 @@ cloud_user/models.py
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core import validators as val
+from django.core.exceptions import ValidationError
 # Create your models here.
 from django.contrib.auth.models import AbstractUser
 
@@ -49,6 +50,14 @@ class UserRegister(AbstractUser):
 'granted to each of their groups.'),
         verbose_name='groups'
     )
+    # password = models.BinaryField(_("password"),
+    #                               max_length=128,
+    #                               validators=[val.MinLengthValidator(3),
+    #                                         val.MaxLengthValidator(128),
+    #                                         ],
+    #                               help_text=_("Password of user"),
+    #                               unique=False,
+    #                               )
     user_permissions = models.ManyToManyField(
         'auth.Permission',
         related_name='%(class)s_user_permissions',
@@ -79,7 +88,8 @@ to user's email. User indicates his email at the registrations moment.")
                 fields=['username'], name='unique_username'
                 )
         ]
-        
+    
+    
     @property
     def is_authenticated(self) -> bool:
         """
@@ -98,6 +108,14 @@ to user's email. User indicates his email at the registrations moment.")
         if self.is_active:
             return True
         return False
+
+def validate_no_spaces( value):
+    if " " in value:
+        raise ValidationError("Spaces are not allowed")
+    return value
+    
+  
+   
         
     
 

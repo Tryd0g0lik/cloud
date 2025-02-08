@@ -4,6 +4,7 @@ Here is a serializer fot user registration
 """
 import logging
 import scrypt
+from base64 import b64encode
 from rest_framework import serializers
 from cloud_user.apps import signal_user_registered
 from cloud_user.models import UserRegister
@@ -43,11 +44,10 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             _user.is_staff = False
 
             # /* -----------------временно HASH----------------- */
-            _user.password = str(
-                scrypt.hash(
-                    f"pbkdf2${str(20000)}${(lambda: validated_data['password'])()}", SECRET_KEY
-                    ).decode('windows-1251')
-                )
+            b_password = scrypt.hash(
+                f"pbkdf2${str(20000)}${(lambda: validated_data['password'])()}", SECRET_KEY
+            ) #.decode('windows-1251')
+            _user.password = b64encode(b_password).decode()
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)

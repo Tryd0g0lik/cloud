@@ -81,19 +81,19 @@ def get_user_cookie(request: type(requests),
         request.COOKIES.get("index") else \
         (kwargs["pk"] if 'pk' in kwargs else None)
         # index = request.COOKIES.get("index")
+    if not index:
+        import re
+        index_list = re.findall(r"\d+", request.path)
+        if len(index_list) > 0:
+            index = index_list[-1]
     if index != None:
         user_list = UserRegister.objects.filter(id=int(index))
-    # elif request.COOKIES.get("user_session"):
-        # Если вдруг индекс в куки пропал - получаем значение сессиия, вытаскиваем
-        # его из ключа (от cache) номер индекса юзера.
-        pass
     if len(user_list) > 0:
-        index = request.COOKIES.get('index')
         # Check the "user_session_{index}", it is in the cacher table or not.
         user_session = cache.get(f"user_session_{index}")
         if user_session == None:
             hash_create_user_session(int(index), f"user_session_{index}")
-    
+    if index != None:
         response.set_cookie(
             f"user_session",
             scrypt.hash(
@@ -106,7 +106,6 @@ def get_user_cookie(request: type(requests),
             secure=SESSION_COOKIE_SECURE,
             samesite=SESSION_COOKIE_SAMESITE
         )
-        # response.set_cookie(f"is_superuser_{user.id}",
         response.set_cookie(
             f"is_superuser",
             user_list[0].is_superuser,
@@ -117,6 +116,13 @@ def get_user_cookie(request: type(requests),
         )
         response.set_cookie(
             f"is_active", user_list[0].is_active,
+            max_age=SESSION_COOKIE_AGE,
+            httponly=SESSION_COOKIE_HTTPONLY,
+            secure=SESSION_COOKIE_SECURE,
+            samesite=SESSION_COOKIE_SAMESITE
+        )
+        response.set_cookie(
+            "index", index,
             max_age=SESSION_COOKIE_AGE,
             httponly=SESSION_COOKIE_HTTPONLY,
             secure=SESSION_COOKIE_SECURE,

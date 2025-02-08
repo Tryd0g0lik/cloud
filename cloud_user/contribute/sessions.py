@@ -6,7 +6,7 @@ cloud_user/contribute/sessions.py
 import bcrypt
 from django.core.signing import Signer
 from django.core.cache import cache
-from cloud.hashers import hash_password
+from cloud.hashers import hashpw_password
 from cloud_user.models import UserRegister
 signer = Signer()
 def create_signer(user: UserRegister) -> str:
@@ -19,7 +19,7 @@ def create_signer(user: UserRegister) -> str:
     try:
         
         s = signer.sign(user.email)
-        hash_bstring += hash_password(s)
+        hash_bstring += hashpw_password(s)
     except Exception as e:
         raise ValueError(f"Mistake => {e.__str__()}")
     finally:
