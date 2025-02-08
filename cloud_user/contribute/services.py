@@ -88,12 +88,7 @@ def get_user_cookie(request: type(requests),
             index = index_list[-1]
     if index != None:
         user_list = UserRegister.objects.filter(id=int(index))
-    # elif request.COOKIES.get("user_session"):
-        # Если вдруг индекс в куки пропал - получаем значение сессиия, вытаскиваем
-        # его из ключа (от cache) номер индекса юзера.
-        pass
     if len(user_list) > 0:
-        # index = request.COOKIES.get('index')
         # Check the "user_session_{index}", it is in the cacher table or not.
         user_session = cache.get(f"user_session_{index}")
         if user_session == None:
@@ -111,7 +106,6 @@ def get_user_cookie(request: type(requests),
             secure=SESSION_COOKIE_SECURE,
             samesite=SESSION_COOKIE_SAMESITE
         )
-        # response.set_cookie(f"is_superuser_{user.id}",
         response.set_cookie(
             f"is_superuser",
             user_list[0].is_superuser,

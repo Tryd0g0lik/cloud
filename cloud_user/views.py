@@ -15,7 +15,7 @@ from rest_framework.decorators import action, api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from cloud_user.tasks import ready
+from cloud_user.tasks import ready, _run_async
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
                               SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE,
                               SESSION_COOKIE_HTTPONLY)
@@ -28,7 +28,7 @@ from cloud.hashers import hashpw_password
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
-
+import asyncio
 from cloud_user.contribute.services import get_fields_response, get_user_cookie
 from logs import configure_logging
 
@@ -306,15 +306,9 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
     queryset = UserRegister.objects.all()
     serializer_class = UserPatchSerializer
     
-    # lookup_field = 'pk'
-    # extra_actions =
-    # extra_actions = .get_extra_actions()
-    # def get_extra_actions(cls):
-    #   response = super().get_extra_actions(cls)
-    #   return  response
     
     @staticmethod
-    def update_cell(request, *args, **kwargs):
+    def update_cell( request, *args, **kwargs):
         """
       For update data of single cell or more cells. \
       If make to change to the databasebase, to inside of the 'update_cell' \
@@ -368,12 +362,15 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 
                 # next
                 kwargs[item] = (lambda: data[item])()
-            
+          
+            user = user_list[0]
+            # CHANGE THE PROPERTY of the user object.
             for item in kwargs.keys():
                 if item == "pk" or item == "id":
                     continue
-                setattr(user_list[0], item, kwargs[item])
-            user_list[0].save()
+                user.__setattr__(item, kwargs[item])
+                user.save(update_fields=[item])
+            # CREATE RESPONSE
             instance = UserPatchSerializer(user_list.first(), many=False)
             instance = get_fields_response(instance)
             response = JsonResponse(instance, status=200)
@@ -392,13 +389,6 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                     cache.delete(f"user_superuser_{kwargs['pk']}")
                 if data["is_active"]:
                     kwargs["last_login"] = datetime.utcnow()
-                    # response.set_cookie(
-                    #     f"is_active", data["is_active"],
-                    #     max_age=SESSION_COOKIE_AGE,
-                    #     httponly=SESSION_COOKIE_HTTPONLY,
-                    #     secure=SESSION_COOKIE_SECURE,
-                    #     samesite=SESSION_COOKIE_SAMESITE
-                    # )
            
             # GET the DATA COOKIE
             response = get_user_cookie(request, response)
@@ -653,4 +643,4 @@ def send_message(request):
     # asyncio.create_task((lambda: sync_to_async(UserSerializer.objects.filter)(email=email)))
 
 
-ready()
+ready(_run_async)
