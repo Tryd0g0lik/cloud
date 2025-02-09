@@ -4,7 +4,9 @@ Data result from logging we can see in console and in 'log_putout.log' file.
 """
 
 import logging
-
+import threading
+import time
+import os
 
 def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> None:
     """
@@ -37,6 +39,33 @@ def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> N
     console_handler.setFormatter(formatter)
     # Настройка корневого логгера
     logging.basicConfig(level=level, handlers=[file_handler, console_handler])
+    # Запуск проверки файла логов в отдельном потоке
+    threading.Thread(
+        target=check_log_file, args=(log_file,), daemon=True
+        ).start()
+
+
+def check_log_file(log_file: str) -> None:
+    """
+    Проверяет количество строк в файле логов каждые 30 минут.
+    Если количество строк превышает 3000, файл обнуляется.
+    :param log_file: Имя файла логов
+    """
+    while True:
+        time.sleep(1800)  # Ожидание 30 минут
+        try:
+            with open(log_file, 'r', encoding='utf-8') as file:
+                lines = file.readlines()
+                if len(lines) >= 3000:
+                    # Обнуление файла
+                    with open(log_file, 'w', encoding='utf-8') as f:
+                        f.truncate()
+                    logging.info(
+                        "Лог-файл был обнулен, так как количество строк превысило 3000."
+                        )
+        except Exception as e:
+            logging.error(f"Ошибка при проверке лог-файла: {e}")
+
 
 class Logger:
    def print_class_name(self):

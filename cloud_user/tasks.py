@@ -32,6 +32,7 @@ async def process_users(users_list_filter, quantity):
             continue
         log.info(f'[{process_users.__name__}]: 1')
         hash_instance = Hash()
+        
         log.info(
             f'[{process_users.__name__}]: Create the TASK0'
         )
@@ -56,7 +57,7 @@ def get_users(q: int, n:int) -> [object]:
 
 async def task_check_keys(quantity=0,
                           number=60,
-                          range_=5,
+                          range_=10*60*60,
                           hash_live_time=86400): # 1800
     """
     This is the Task, for check the live time of the line from \
@@ -93,13 +94,10 @@ async def task_check_keys(quantity=0,
             # quantity + number
             users_list = await get_users(quantity, quantity + number)
             log.info(f'[{task_check_keys.__name__}]: users_list: {users_list}')
-            users_list_filter = [
-                user for user in users_list
-                    if user.last_login <= timezone.now() + timedelta(
-                        seconds=range_
-                        ) - timedelta(
-                        seconds=hash_live_time
-                    )
+            users_list_filter = [user for user in users_list if
+                                 timezone.now() + timedelta(
+                                     seconds=range_) - user.last_login >= timedelta(
+                                     seconds=(24 * 60 * 60))
             ]
             log.info(f'[{task_check_keys.__name__}]: Before update the database \
 table "caher" he is the cache. "users_list_filter" Length: \
@@ -125,7 +123,7 @@ table "caher" he is the cache. "users_list_filter" Length: \
 #                 await process_users(users_list_filter, quantity)
 #                 log.info(f'[{task_check_keys.__name__}]: 8')
             quantity += number
-            print(quantity)
+            # print(quantity)
     except Exception as e:
         log.error(
             f'[{task_check_keys.__name__}]:\
