@@ -463,30 +463,37 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
 Something what wrong. Check the 'pk'."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                # Comparing password of the user
-                _hash_password = self.hash_password(
-                    (lambda: data["password"])()
-                    )
-                if user_list[0].password != _hash_password:
-                    return Response(
-                        {"message": f"[{__name__}]: \
-Something what wrong. Check the 'password'."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                """
-                If make to change to the database, to inside of the 'update_cell'\
-                will send a response to the user client's request.
-                """
-                body = json.loads(request.body)
-                body["password"] = user_list[0].password
-                request.body = json.dumps(body)
-                response = UserPatchViews.update_cell(request, *args, **kwargs)
-                return  response
+                if "password" in data.keys():
+                    # Comparing password of the user
+                    _hash_password = self.hash_password(
+                        (lambda: data["password"])()
+                        )
+                    if user_list[0].password != _hash_password:
+                        return Response(
+                            {"message": f"[{__name__}]: \
+    Something what wrong. Check the 'password'."},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    """
+                    If make to change to the database, to inside of the 'update_cell'\
+                    will send a response to the user client's request.
+                    """
+                    body = json.loads(request.body)
+                    body["password"] = user_list[0].password
+                    request.body = json.dumps(body)
+                    response = UserPatchViews.update_cell(request, *args, **kwargs)
+                    return  response
             cacher = {
                 'user_session': cache.get(f"user_session_{kwargs['pk']}"),
             }
+            """
+            Сервер не запускался.
+            Куки устале и дроп в сервере.
+            Сделал запрос без пароля, только куки из браузера.
             
-            
+            итог допуска к данным нет так как пароля и куки не имеем.
+            """
+            # COMPARE a COOKIE KEY if the not have the password.
             if cacher['user_session'] and cookie_data.user_session:
                 user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
                 if cookie_data.user_session == (user_session).decode(

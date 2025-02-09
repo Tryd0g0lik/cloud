@@ -41,4 +41,4 @@ def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> N
 class Logger:
    def print_class_name(self):
         """Return class-name"""
-        return Logger.__class__.__name__
+        return self.__class__.__name__
