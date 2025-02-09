@@ -108,10 +108,8 @@ API: `api/v1/users/patch/<int:pk>/`
 <<<<<<< HEAD
 Это хеш данные, синтаксис:   
 ```code
-=======
 Это хеш данные, синтаксис:    'ISO-8859-1'
 ```text
->>>>>>> profile
 <user_email>:<django_signer>
 ```
 "[cloud_user/contribute/controler_activate.py](cloud_user/contribute/controler_activate.py)"
@@ -224,10 +222,5 @@ Note: `cloud_file/views.py::FileStorageViewSet.generate_link` Выполняет
  - [Проверить параллельный](#обновление-записей-в-hash) канал CACHER - логика 
 обновления кеша для "`user_session_{id}`".\
 При закрытии профиля и загрузки страницы (запуск логики параллельного канала) \
-<<<<<<< HEAD
 в db появляется 1/2 записей - "`user_session_{id}`". 
-=======
-в db появляется 1/2 записей - "`user_session_{id}`".
 
-
->>>>>>> profile

@@ -498,9 +498,8 @@ Something what wrong. Check the 'pk'."},
                 # OLD of VERSIONS
                 # user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
                 user_session = cacher["user_session"]
-                if cookie_data.user_session == (user_session).decode(
-                  'ISO-8859-1'
-                ) and request.method.lower() == "patch":
+                # .decode('ISO-8859-1')
+                if cookie_data.user_session == (user_session) and request.method.lower() == "patch":
                     user_session = request.COOKIES.get(f"user_session")
                     # CHECK a COOKIE KEY ?????????????????
                     check_bool = check(
