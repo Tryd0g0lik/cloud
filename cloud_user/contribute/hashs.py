@@ -1,13 +1,16 @@
-import re
-import asyncio
+
+import logging
 from copy import copy
-from datetime import (datetime, timedelta)
 
-from asgiref.sync import async_to_sync, sync_to_async
+from asgiref.sync import sync_to_async
+
 from cloud_user.contribute.sessions import hash_create_user_session
-from cloud_user.models import UserRegister
-from django.core.cache import (cache, caches)
 
+from django.core.cache import (cache)
+from logs import configure_logging
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
+log.info("START")
 class Hash:
     def __init__(self, user_id: int | str | None = None):
         """
@@ -21,13 +24,6 @@ class Hash:
         self.__everyone_hash: list[str] = []
         self.__everyone_keys = None
         self.live_time: int = 86400
-        # self.__second_hash = None
-        # self.user_register = UserRegister.objects.get(user_id=self.user_id)
-        # self.user_register_id = self.user_register.id
-        # self.user_register_hash = self.user_register.hash
-        # self.user_register_hash_id = self.user_register.hash_id
-        # self.user_register_hash_id_list = self.user_register_hash_id.split(',')
-        # self.user_register_hash_id_list_len = len(self.user_register
     
     async def get_session_hash(self, session_key:  str | None) -> str:
         """
@@ -47,7 +43,7 @@ is None.
             self.__user_session = self.__cache.get(session_key.split())
         except Exception as e:
             print(
-                f'[{Hash.__class__.get_session_hash.__name__}]:\
+                f'[{self.__class__.get_session_hash.__name__}]:\
             Mistake => {e.__str__()}'
                 )
         finally:
@@ -68,11 +64,21 @@ database model.
         :return:
         """
         try:
+    
+            log.info(f"[{self.__class__.set_session_hash.__name__}]: \
+START")
             user_id = user_id if user_id else self.__user_id
-            hash_create_user_session(user_id, session_key, copy(self.live_time))
+            log.info(f"[{self.__class__.set_session_hash.__name__}]: \
+user_id => {user_id}")
+            await sync_to_async(hash_create_user_session)(user_id, session_key, copy(self.live_time))
+            log.info(f"[{self.__class__.set_session_hash.__name__}]: \
+END")
         except Exception as e:
-            print(f'[{Hash.__class__.set_session_hash.__name__}]:\
+            print(f'[{self.__class__.set_session_hash.__name__}]:\
 Mistake => {e.__str__()}')
+            log.error(f"[{self.__class__.set_session_hash.__name__}]:\
+ Mistake => {e.__str__()}")
+ 
 
 
 

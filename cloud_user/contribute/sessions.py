@@ -4,10 +4,16 @@ cloud_user/contribute/sessions.py
     Look to the settings.py::CACHES
  """
 import bcrypt
+
+import logging
 from django.core.signing import Signer
 from django.core.cache import cache
 from cloud.hashers import hashpw_password
 from cloud_user.models import UserRegister
+from logs import configure_logging
+configure_logging(logging.INFO)
+log = logging.getLogger(__name__)
+log.info("START")
 signer = Signer()
 def create_signer(user: UserRegister) -> str:
     """
@@ -36,21 +42,28 @@ def hash_check_user_session(pk: int,
     """
     # Get b-code
     status_bool = False
+    log.info(f"[{__name__}::hash_check_user_session]: START {pk}: {session_val}")
     try:
         # GET B-CODE
         res = session_val.encode(encoding="utf-8")
         # Get signer
         user_list = UserRegister.objects.filter(id=pk)
         if len(user_list) != 0:
+            log.info(f"[{__name__}:{hash_check_user_session.__name__}::hash_check_user_session]: Get  'user_list' > 0")
             s = signer.sign(user_list[0].email)
             # CHECK
             status_bool = bcrypt.checkpw(s.encode("utf-8"), res )
         else:
+            log.error(f"[{__name__}::{hash_check_user_session.__name__}]: "
+f"Mistake => 'user_list' empty.'pk' invalid." )
             raise ValueError(
                 f"[{__name__}::{hash_check_user_session.__name__}]: \
-            Mistake => 'pk' invalid."
+            Mistake => 'user_list' empty. 'pk' invalid."
                 )
+        log.info(f"[{__name__}::hash_check_user_session]: END")
     except Exception as e:
+        log.error(f"[{__name__}::{hash_check_user_session.__name__}]: \
+Mistake => {e.__str__()}")
         raise ValueError(f"[{__name__}::{hash_check_user_session.__name__}]: \
 Mistake => {e.__str__()}")
     finally:
@@ -67,21 +80,35 @@ def hash_create_user_session(pk: int, session_key: str,
 value is the 86400 hours/
     :return: False means what the updates have can not get or Ture,
     """
+    log.info(f"[{hash_create_user_session.__name__}]: START {pk}")
     user_list = UserRegister.objects.filter(id=pk)
     if len(user_list) == 0:
+        log.error(f"[{__name__}::{hash_create_user_session.__name__}]: \
+Mistake => 'user_list' empty. 'pk' invalid.")
         return False
     status_bool = False
+    log.info(f"[{__name__}::{hash_create_user_session.__name__}]: \
+'user_list' > 0 ")
     try:
         # GREAT SIGNER
         signer = create_signer(user_list[0])
+        log.info(f"[{__name__}::hash_create_user_session]: \
+Getting signer")
         # SAVE in db the key of session and HASH's value for our key
         session_key = session_key if session_key else f"user_session_{pk}"
+        log.info(f"[{__name__}::hash_create_user_session]: \
+'session_key': {session_key}")
         cache.set(session_key, signer, live_time)
+        log.info(f"[{__name__}::hash_create_user_session]: \
+cache.set was successful")
         status_bool = True
     except Exception as e:
+        log.error(f"[{__name__}::{hash_create_user_session.__name__}]: \
+Mistake => {e.__str__()}")
         raise ValueError(f"[{__name__}::{hash_create_user_session.__name__}]: \
 Mistake => {e.__str__()}")
     finally:
+        log.info(f"[{__name__}::hash_create_user_session]: END")
         return status_bool
 def check(session_key: str, session_val: str, **kwargs) -> False:
     """
@@ -95,14 +122,21 @@ of single object from db.)
     :return:
     """
     try:
+        log.info(f"[{__name__}::{check.__name__}]: START")
         if not session_val or not session_key:
+            log.error(f'[{__name__}::{check.__name__}]: \
+not "session_val" or not "session_key"')
             return False
         session_key_value = cache.get(session_key)
+        log.info(f"[{__name__}::{check.__name__}]: \
+'session_key_value': {session_key_value}")
         # session_key_value_checker = hash_check_user_session(kwargs["pk"], session_key_value)
         session_key_value_checker = hash_check_user_session(kwargs["pk"],
                                                             session_key_value)
         # if not session_key_value or not session_key_value_checker:
         if not session_key_value_checker:
+            log.error(f'[{__name__}::{check.__name__}]: \
+not session_key_value_checker')
             return False
         # if not session_key_value:
         #     return False
@@ -111,6 +145,7 @@ of single object from db.)
         raise ValueError(f"[{__name__}::{check.__name__}]: \
 Mistake => {e.__str__()}")
     finally:
+        log.info(f"[{__name__}::{check.__name__}]: END")
         pass
     
 def update(pk: int, session_key: str,
@@ -125,10 +160,14 @@ value is the 86400 hours.
     :return: False means what the updates have can not get or Ture,
     """
     status_bool = False
+    log.info(f"[{__name__}::{update.__name__}]: START")
     try:
         status_bool = hash_create_user_session(pk, session_key, live_time)
+        log.info(f"[{__name__}::{update.__name__}]: status_bool: {status_bool}")
     except Exception as e:
+        log.error(f"[{__name__}::{update.__name__}]: Mistake =>  {e.__str__()}")
         raise ValueError(f'[{__name__}::{update.__name__}]: \
 Mistake => {e.__str__()}')
     finally:
+        log.info(f"[{__name__}::{update.__name__}]: END")
         return status_bool

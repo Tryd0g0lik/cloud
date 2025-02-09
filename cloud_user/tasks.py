@@ -1,21 +1,57 @@
 import asyncio
 import threading
-from copy import copy
-from datetime import datetime, timedelta, timezone
-from asgiref.sync import async_to_sync, sync_to_async
-from django.core.cache import (cache, caches)
+from datetime import timedelta, datetime
+from asgiref.sync import sync_to_async
+from django.utils import timezone
+from django.core.cache import (cache,)
 import logging
-from cloud_user.contribute.hash import Hash
+from cloud_user.contribute.hashs import Hash
 from logs import configure_logging
-
+from cloud_user.models import UserRegister
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
 
+
+
+
+async def process_users(users_list_filter, quantity):
+    for user in users_list_filter:
+        user_id = user.id
+        user_session_key = f"user_session_{user_id}"
+        # user_superuser_key = f"user_superuser_{user_id}"
+        log.info(f'[{process_users.__name__}]: STAR')
+        await sync_to_async(cache.delete)(user_session_key)
+        # await sync_to_async(cache.delete)(user_superuser_key)
+        log.info(f'[{process_users.__name__}]: The old  linea was removed')
+        if not user.is_active:
+            continue
+        hash_instance = Hash()
+        log.info(
+            f'[{process_users.__name__}]: Create the TASK0'
+        )
+        # set_session_hash = hash.set_session_hash
+        await asyncio.gather(
+            hash_instance.set_session_hash(user_session_key, user_id),
+            # hash_instance.set_session_hash(user_superuser_key, user_id)
+        )
+        log.info(
+            f'[{process_users.__name__}]: Create the TASK1'
+        )
+        log.info(
+        f'[{process_users.__name__}]: The is completed the cycle.\
+Quantity: {quantity}'
+        )
+
+@sync_to_async
+def get_users(q: int, n:int) -> [object]:
+    total_list = list(UserRegister.objects.filter(id__gte=q).filter(id__lte=n))
+    return total_list
+
 async def task_check_keys(quantity=0,
                           number=60,
-                          range_=1800,
-                          hash_live_time=86400):
+                          range_=10*60*60,
+                          hash_live_time=86400): # 1800
     """
     This is the Task, for check the live time of the line from \
     the 'cache' (it is 'cacher' from 'settings.py').
@@ -29,55 +65,56 @@ async def task_check_keys(quantity=0,
     :param hash_live_time: This is the total live time for the hash's line.
     :return:
     """
-    from cloud_user.models import UserRegister
     # Get the total number of lines from the database
     runs = True
     try:
-        # pass
-        total_list = await sync_to_async(list)(
-            UserRegister.objects.filter(id__gte=0)
-        )
-        
-        # det the total number of lines from the database
-        total_quantity = copy(len(total_list))
-        total_list.clear()
         while runs:
-            if quantity >= total_quantity:
+            object_last_id = await sync_to_async(
+                UserRegister.objects.latest
+            )("id")
+            if quantity >= object_last_id.id:
                 runs = False
             # Get the list where more when quantity  and less when
-            # quantity + number and 'last_login' less when \
-            # the now time + range_ seconds
-            users = await sync_to_async(list)(
-                UserRegister.objects.filter(id__gt=quantity).filter(
-                    id__lte=quantity + 60
-                ).filter(last_login__lte=(timezone.now() + timedelta(seconds=range_) - timedelta(seconds=hash_live_time)))
-            )
+            # quantity + number
+            users_list = await get_users(quantity, quantity + number)
+            log.info(f'[{task_check_keys.__name__}]: users_list: {users_list}')
+            users_list_filter = [user for user in users_list if
+                                 timezone.now() + timedelta(
+                                     seconds=range_) - user.last_login >= timedelta(
+                                     seconds=(24 * 60 * 60))
+            ]
             log.info(f'[{task_check_keys.__name__}]: Before update the database \
-table "caher" he is the cache')
-            for user in users:
-                user_id = user.id
-                user_session_key = f"user_session_{user_id}"
-                user_is_superuser_key = f"user_is_superuser_{user_id}"
-                cache.delete(user_session_key)
-                cache.delete(user_is_superuser_key)
-                if not user.is_active:
-                    continue
-                
-                hash = Hash()
-                await hash.set_session_hash(user_session_key, user_id)
-            log.info(f'[{task_check_keys.__name__}]: The is completed the cycle.\
-Quantity: {quantity}')
+table "caher" he is the cache. "users_list_filter" Length: \
+{len(users_list_filter)}')
+            if len(users_list_filter) > 0:
+                await process_users(users_list_filter, quantity)
+            else:
+                pass
+                """
+                если раскомментировать , надо добавлять проверку хеша -
+                а вдруг ДО это был создан хеш.
+                Без проверки , ориентируясь на таблицу юзера он протсо по куру  -удалит -создаст
+                """
+#                 log.info(f'[{task_check_keys.__name__}]: 6')
+#                 users_list_filter = await sync_to_async(list)(
+#                     UserRegister.objects.filter(id__gte=quantity).filter(is_active=True)
+#                 )
+#                 log.info(f'[{task_check_keys.__name__}]: 7 "sers_list_filter2" Length: \
+# {len(users_list_filter)}')
+#                 await process_users(users_list_filter, quantity)
+#                 log.info(f'[{task_check_keys.__name__}]: 8')
             quantity += number
-            print(quantity)
+            # print(quantity)
     except Exception as e:
         log.error(
             f'[{task_check_keys.__name__}]:\
-Mistake => {e.__str__()}'
+ Mistake => {e.__str__()}'
         )
     finally:
         # self.__cache.close()
+        quantity = 0
         await asyncio.sleep(range_)
-        await task_check_keys()
+        await task_check_keys(quantity)
         log.info(f'[{task_check_keys.__name__}]: The end of the cycle')
 
 

@@ -62,7 +62,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             if "[" in str(serializer.data):
                 status_data = {"data": list(serializer.data)}
         except Exception as e:
-            status_data = {"error": f"[{FileStorageViewSet.__class__.list.__name__}]: \
+            status_data = {"error": f"[{self.__class__.list.__name__}]: \
             Mistake => {e.__str__()}"}
             status_code = status.HTTP_400_BAD_REQUEST
         finally:
@@ -117,7 +117,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             )
         except Exception as e:
             status_data = {
-                "error": f"[{FileStorageViewSet.__class__.retrieve.__name__}]: \
+                "error": f"[{self.__class__.retrieve.__name__}]: \
                        Mistake => {e.__str__()}"}
             status_code = status.HTTP_400_BAD_REQUEST
         

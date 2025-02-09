@@ -94,13 +94,17 @@ def get_user_cookie(request: type(requests),
         if user_session == None:
             hash_create_user_session(int(index), f"user_session_{index}")
     if index != None:
+        # OLD of VERTION S
         response.set_cookie(
             f"user_session",
-            scrypt.hash(
-                cache.get(
-                    f"user_session_{index}"
-                ), SECRET_KEY
-            ).decode('ISO-8859-1'),
+            cache.get(
+                f"user_session_{index}"
+            ),
+            # scrypt.hash(
+            #     cache.get(
+            #         f"user_session_{index}"
+            #     ), SECRET_KEY
+            # ).decode('ISO-8859-1'),
             max_age=SESSION_COOKIE_AGE,
             httponly=True,
             secure=SESSION_COOKIE_SECURE,
