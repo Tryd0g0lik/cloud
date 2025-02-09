@@ -118,29 +118,33 @@ from 'is_activated'."
         # CREATE SIGNER
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session, SESSION_COOKIE_AGE)
-        cache.set(f"is_superuser_{user.id}", user.is_superuser, SESSION_COOKIE_AGE) # ????????????????????
+        # cache.set(f"is_superuser_{user.id}", user.is_superuser, SESSION_COOKIE_AGE) # ????????????????????
         """ New object has tha `user_session_{id}` variable"""
         redirect_url = f"{request.scheme}://{request.get_host()}" \
 f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
         response =  HttpResponseRedirect(redirect_url)
         
         # response.set_cookie(f"user_session_{user.id}",
+        #OlD of VERSIONS
         response.set_cookie(f"user_session",
-                             scrypt.hash(cache.get(
+                            cache.get(
                                 f"user_session_{user.id}"
-                            ), SECRET_KEY).decode('ISO-8859-1'),
+                            ),
+                            #  scrypt.hash(cache.get(
+                            #     f"user_session_{user.id}"
+                            # ), SECRET_KEY).decode('ISO-8859-1'),
                             max_age=SESSION_COOKIE_AGE,
                             httponly=True,
                             secure=SESSION_COOKIE_SECURE,
                             samesite=SESSION_COOKIE_SAMESITE
                             )
         # response.set_cookie(f"is_superuser_{user.id}",
-        response.set_cookie(f"is_superuser",
-                            user.is_superuser,
-                            max_age=SESSION_COOKIE_AGE,
-                            httponly=SESSION_COOKIE_HTTPONLY,
-                            secure=SESSION_COOKIE_SECURE,
-                            samesite=SESSION_COOKIE_SAMESITE)
+        # response.set_cookie(f"is_superuser",
+        #                     user.is_superuser,
+        #                     max_age=SESSION_COOKIE_AGE,
+        #                     httponly=SESSION_COOKIE_HTTPONLY,
+        #                     secure=SESSION_COOKIE_SECURE,
+        #                     samesite=SESSION_COOKIE_SAMESITE)
         response.set_cookie(f"is_active",user.is_active,
                             max_age=SESSION_COOKIE_AGE,
                             httponly=SESSION_COOKIE_HTTPONLY,

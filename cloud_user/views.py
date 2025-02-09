@@ -386,7 +386,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 # )
                 if not data["is_active"]:
                     cache.delete(f"user_session_{kwargs['pk']}")
-                    cache.delete(f"user_superuser_{kwargs['pk']}")
+                    # cache.delete(f"user_superuser_{kwargs['pk']}")
                 if data["is_active"]:
                     kwargs["last_login"] = datetime.utcnow()
            
@@ -495,7 +495,9 @@ Something what wrong. Check the 'pk'."},
             """
             # COMPARE a COOKIE KEY if the not have the password.
             if cacher['user_session'] and cookie_data.user_session:
-                user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
+                # OLD of VERSIONS
+                # user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
+                user_session = cacher["user_session"]
                 if cookie_data.user_session == (user_session).decode(
                   'ISO-8859-1'
                 ) and request.method.lower() == "patch":

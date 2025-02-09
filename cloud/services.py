@@ -24,8 +24,8 @@ the authenticate of user.
         setattr(instance,  "user_session", \
                 request.COOKIES.get(f"user_session"))
         
-        setattr(instance, "user_superuser", \
-                request.COOKIES.get(f"is_superuser"))
+        # setattr(instance, "user_superuser", \
+        #         request.COOKIES.get(f"is_superuser"))
         
     except Exception as e:
         
