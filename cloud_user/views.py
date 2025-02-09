@@ -380,10 +380,10 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                     kwargs['pk'],
                     f"user_session_{kwargs['pk']}"
                 )
-                hash_create_user_session(
-                    kwargs['pk'],
-                    f"user_superuser_{kwargs['pk']}"
-                )
+                # hash_create_user_session(
+                #     kwargs['pk'],
+                #     f"user_superuser_{kwargs['pk']}"
+                # )
                 if not data["is_active"]:
                     cache.delete(f"user_session_{kwargs['pk']}")
                     cache.delete(f"user_superuser_{kwargs['pk']}")
