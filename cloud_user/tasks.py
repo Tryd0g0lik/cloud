@@ -19,10 +19,10 @@ async def process_users(users_list_filter, quantity):
     for user in users_list_filter:
         user_id = user.id
         user_session_key = f"user_session_{user_id}"
-        user_superuser_key = f"user_superuser_{user_id}"
+        # user_superuser_key = f"user_superuser_{user_id}"
         log.info(f'[{process_users.__name__}]: STAR')
         await sync_to_async(cache.delete)(user_session_key)
-        await sync_to_async(cache.delete)(user_superuser_key)
+        # await sync_to_async(cache.delete)(user_superuser_key)
         log.info(f'[{process_users.__name__}]: The old  linea was removed')
         if not user.is_active:
             continue
@@ -33,7 +33,7 @@ async def process_users(users_list_filter, quantity):
         # set_session_hash = hash.set_session_hash
         await asyncio.gather(
             hash_instance.set_session_hash(user_session_key, user_id),
-            hash_instance.set_session_hash(user_superuser_key, user_id)
+            # hash_instance.set_session_hash(user_superuser_key, user_id)
         )
         log.info(
             f'[{process_users.__name__}]: Create the TASK1'
