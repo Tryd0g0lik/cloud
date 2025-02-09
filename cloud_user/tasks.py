@@ -16,27 +16,20 @@ log.info("START")
 
 
 async def process_users(users_list_filter, quantity):
-    log.info(f'[{process_users.__name__}]: 0, \
-"users_list_filter"  Length: {len(users_list_filter)}')
     for user in users_list_filter:
-        log.info(f'[{process_users.__name__}]: 00')
         user_id = user.id
         user_session_key = f"user_session_{user_id}"
         user_superuser_key = f"user_superuser_{user_id}"
-        log.info(f'[{process_users.__name__}]: 01')
+        log.info(f'[{process_users.__name__}]: STAR')
         await sync_to_async(cache.delete)(user_session_key)
-        log.info(f'[{process_users.__name__}]: 02')
         await sync_to_async(cache.delete)(user_superuser_key)
-        log.info(f'[{process_users.__name__}]: 03')
+        log.info(f'[{process_users.__name__}]: The old  linea was removed')
         if not user.is_active:
             continue
-        log.info(f'[{process_users.__name__}]: 1')
         hash_instance = Hash()
-        
         log.info(
             f'[{process_users.__name__}]: Create the TASK0'
         )
-        log.info(f'[{process_users.__name__}]: 2')
         # set_session_hash = hash.set_session_hash
         await asyncio.gather(
             hash_instance.set_session_hash(user_session_key, user_id),
@@ -75,19 +68,10 @@ async def task_check_keys(quantity=0,
     # Get the total number of lines from the database
     runs = True
     try:
-        # pass
-        
-
-        object_last_id = await sync_to_async(
-            UserRegister.objects.latest
-        )("id")
-        
         while runs:
             object_last_id = await sync_to_async(
                 UserRegister.objects.latest
             )("id")
-        # while :
-            print("ID: ",object_last_id.id)
             if quantity >= object_last_id.id:
                 runs = False
             # Get the list where more when quantity  and less when
@@ -102,11 +86,8 @@ async def task_check_keys(quantity=0,
             log.info(f'[{task_check_keys.__name__}]: Before update the database \
 table "caher" he is the cache. "users_list_filter" Length: \
 {len(users_list_filter)}')
-            log.info(f'[{task_check_keys.__name__}]: 3')
             if len(users_list_filter) > 0:
-                log.info(f'[{task_check_keys.__name__}]: 4')
                 await process_users(users_list_filter, quantity)
-                log.info(f'[{task_check_keys.__name__}]: 5')
             else:
                 pass
                 """

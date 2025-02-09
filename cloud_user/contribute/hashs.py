@@ -24,13 +24,6 @@ class Hash:
         self.__everyone_hash: list[str] = []
         self.__everyone_keys = None
         self.live_time: int = 86400
-        # self.__second_hash = None
-        # self.user_register = UserRegister.objects.get(user_id=self.user_id)
-        # self.user_register_id = self.user_register.id
-        # self.user_register_hash = self.user_register.hash
-        # self.user_register_hash_id = self.user_register.hash_id
-        # self.user_register_hash_id_list = self.user_register_hash_id.split(',')
-        # self.user_register_hash_id_list_len = len(self.user_register
     
     async def get_session_hash(self, session_key:  str | None) -> str:
         """
