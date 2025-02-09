@@ -201,10 +201,24 @@ Note: `cloud_file/views.py::FileStorageViewSet.generate_link` Выполняет
 Интерфейс исключающий проверку прав пользователя:
 - скачать файл по специальной ссылке.
 
+## Logging
+Код имеет логирование. Результат видно в косоли и файле 'log_putout.log
+```log
+[2025-02-09 14:24:42,767 767] check_log_file logs : 63 INFO - Лог-файл был обнулен, так как количество строк превысило 3000.
+[2025-02-09 14:24:42,768 768] check_log_file logs : 63 INFO - Лог-файл был обнулен, так как количество строк превысило 3000.
+[2025-02-09 15:24:17,985 985] trigger_reload autoreload : 266 INFO - E:\Netologe\diplom\backend\logs.py changed, reloading.
+[2025-02-09 15:24:22,351 351] <module> utilites : 17 INFO - START
+[2025-02-09 15:24:22,352 352] <module> utilites : 20 INFO - Received a signature
+[2025-02-09 15:24:22,353 353] <module> apps : 28 INFO - START
+[2025-02-09 15:24:22,354 354] <module> apps : 76 INFO - cloud_user.apps Signal WAS STARTED
+[2025-02-09 15:24:23,095 95] run_with_reloader autoreload : 668 INFO - Watching for file changes with StatReloader
+[2025-02-09 15:24:24,845 845] <module> sessions : 16 INFO - START
+```
 
 # Note:
  - [Проверить параллельный](#обновление-записей-в-hash) канал CACHER - логика 
 обновления кеша для "`user_session_{id}`".\
 При закрытии профиля и загрузки страницы (запуск логики параллельного канала) \
-в db появляется 1/2 записей - "`user_session_{id}`". 
+в db появляется 1/2 записей - "`user_session_{id}`".
+
 

@@ -1,12 +1,13 @@
 """
-This page has a logics for logging.
+This page is include the module for logging.
 Data result from logging we can see in console and in 'log_putout.log' file.
+The 'log_file'  parameter for setting the file's  name '*.log'.
+Default the name is 'log_putout.log
 """
 
 import logging
 import threading
 import time
-import os
 
 def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> None:
     """

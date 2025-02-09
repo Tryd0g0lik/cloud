@@ -4,7 +4,7 @@
 name = "cloud_backend"
 version = "0.1.0"
 description = ""
-authors = ["Tryd0g0lik <work80@mail.ru>"]
+    authors = ["Tryd0g0lik <work80@mail.ru>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
