@@ -1,3 +1,6 @@
+"""
+cloud_user/tasks.py
+"""
 import asyncio
 import threading
 from datetime import timedelta, datetime
@@ -14,13 +17,16 @@ log.info("START")
 
 
 
-
+"""
+TASK
+"""
 async def process_users(users_list_filter, quantity):
     for user in users_list_filter:
         user_id = user.id
         user_session_key = f"user_session_{user_id}"
         # user_superuser_key = f"user_superuser_{user_id}"
         log.info(f'[{process_users.__name__}]: STAR')
+        # OLD KEY DELETE
         await sync_to_async(cache.delete)(user_session_key)
         # await sync_to_async(cache.delete)(user_superuser_key)
         log.info(f'[{process_users.__name__}]: The old  linea was removed')
@@ -30,7 +36,7 @@ async def process_users(users_list_filter, quantity):
         log.info(
             f'[{process_users.__name__}]: Create the TASK0'
         )
-        # set_session_hash = hash.set_session_hash
+        # NEW KEY MAKE
         await asyncio.gather(
             hash_instance.set_session_hash(user_session_key, user_id),
             # hash_instance.set_session_hash(user_superuser_key, user_id)
@@ -45,7 +51,8 @@ Quantity: {quantity}'
 
 @sync_to_async
 def get_users(q: int, n:int) -> [object]:
-    total_list = list(UserRegister.objects.filter(id__gte=q).filter(id__lte=n))
+    total_list = list(UserRegister.objects.filter(id__gte=q).filter(id__lte=n).filter(is_active=True))
+    
     return total_list
 
 async def task_check_keys(quantity=0,

@@ -330,7 +330,8 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
         data = json.loads(request.body)
         user_list = UserRegister.objects.filter(id=kwargs["pk"])
         # CREATE RESPONSE
-        if len(data.keys()) > 0:
+        if len(data.keys()) > 0 and len(user_list) > 0:
+            user = user_list[0]
             kwargs["id"] = (lambda: int(kwargs["pk"]))()
             for item in data.keys():
                 if item == "id":
@@ -348,7 +349,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                     data[item] = __hash_password
                 elif "password" == item and "email" in data.keys() and \
                   "is_active" in data.keys():
-                    authenticity = True if data["email"] == user_list[0].email else False
+                    authenticity = True if data["email"] == user.email else False
                     if not authenticity:
                         # status code 400
                         response = JsonResponse(
@@ -363,7 +364,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 # next
                 kwargs[item] = (lambda: data[item])()
           
-            user = user_list[0]
+            
             # CHANGE THE PROPERTY of the user object.
             for item in kwargs.keys():
                 if item == "pk" or item == "id":
@@ -371,7 +372,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 user.__setattr__(item, kwargs[item])
                 user.save(update_fields=[item])
             # CREATE RESPONSE
-            instance = UserPatchSerializer(user_list.first(), many=False)
+            instance = UserPatchSerializer(user, many=False)
             instance = get_fields_response(instance)
             response = JsonResponse(instance, status=200)
             # IF IS_ACTIVE CHANGE
@@ -483,16 +484,10 @@ Something what wrong. Check the 'pk'."},
                     request.body = json.dumps(body)
                     response = UserPatchViews.update_cell(request, *args, **kwargs)
                     return  response
+            user = user_list[0]
             cacher = {
                 'user_session': cache.get(f"user_session_{kwargs['pk']}"),
             }
-            """
-            Сервер не запускался.
-            Куки устале и дроп в сервере.
-            Сделал запрос без пароля, только куки из браузера.
-            
-            итог допуска к данным нет так как пароля и куки не имеем.
-            """
             # COMPARE a COOKIE KEY if the not have the password.
             if cacher['user_session'] and cookie_data.user_session:
                 # OLD of VERSIONS
@@ -512,11 +507,23 @@ Something what wrong. Check the 'pk'."},
                         )
                     response = UserPatchViews.update_cell(request, *args, **kwargs)
                     return response
-            return JsonResponse(
+                else:
+                    user.is_active = False
+                    user.save(update_fields=['is_active'])
+            response = JsonResponse(
                 {"detail": "Something what wrong! \
 Check the 'user_session' or 'pk'"},
                 status=status.HTTP_400_BAD_REQUEST
                 )
+            response.set_cookie(
+                "is_active",
+                False,
+                max_age=SESSION_COOKIE_AGE,
+                httponly=SESSION_COOKIE_HTTPONLY,
+                secure=SESSION_COOKIE_SECURE,
+                samesite=SESSION_COOKIE_SAMESITE
+            )
+            return response
         except Exception as e:
             return Response(
                 {
