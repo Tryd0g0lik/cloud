@@ -260,7 +260,9 @@ CSRF_TRUSTED_ORIGINS = [
 # True, сервер будет принимать запросы из любого источника. Это означает, что
 # ваш API будет доступен для всех доменов без ограничений
 # Should be False when using specific origins
+# Разрешить запросы с любого источника (для разработки)
 CORS_ORIGIN_ALLOW_ALL = False
+# Или разрешить только определённые домены
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://localhost:8000",

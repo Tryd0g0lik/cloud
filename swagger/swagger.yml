@@ -15,7 +15,7 @@ info:
     email: work80@mail.ru
     url: https://github.com/Tryd0g0lik
 servers:
-  - url: http://localhost:8000/api/v1
+  - url: http://localhost:8080/api/v1
     description: "Basis server"
 paths:
   /users/patch/{pk}/:

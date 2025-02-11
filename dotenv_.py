@@ -4,7 +4,7 @@ dotenv.load_dotenv()
 
 SECRET_KEY_ = os.getenv("SECRET_KEY", "")
 APP_PROTOKOL = os.getenv("APP_PROTOKOL", "https")
-APP_PORT = os.getenv("APP_PORT", "8000")
+APP_PORT = os.getenv("APP_PORT", "8080")
 APP_SERVER_HOST = os.getenv("APP_SERVER_HOST", "")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "127.0.0.1")

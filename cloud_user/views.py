@@ -483,7 +483,7 @@ Something what wrong. Check the 'pk'."},
                     body["password"] = user_list[0].password
                     request.body = json.dumps(body)
                     response = UserPatchViews.update_cell(request, *args, **kwargs)
-                    return  response
+                    return response
             user = user_list[0]
             cacher = {
                 'user_session': cache.get(f"user_session_{kwargs['pk']}"),
