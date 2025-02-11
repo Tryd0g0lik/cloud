@@ -45,7 +45,12 @@ class FileStorageViewSet(viewsets.ViewSet):
                     user_id=int(instance.id)
                     ))
             if len(files) == 0:
-                return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
+                status_data = {"data": []}
+                status_code=status.HTTP_200_OK
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                    )
             # /* -----------  lambda  ----------- */
             user_is_staff = await sync_to_async(lambda: files[0].user.is_staff)()
             if user_is_staff :
@@ -61,13 +66,20 @@ class FileStorageViewSet(viewsets.ViewSet):
             status_data = serializer.data
             if "[" in str(serializer.data):
                 status_data = {"data": list(serializer.data)}
+            return JsonResponse(
+                status_data,
+                status=status_code
+                )
         except Exception as e:
             status_data = {"error": f"[{self.__class__.list.__name__}]: \
             Mistake => {e.__str__()}"}
             status_code = status.HTTP_400_BAD_REQUEST
+            return JsonResponse(
+                status_data,
+                status=status_code
+                )
         finally:
-            return JsonResponse(status_data,
-                status=status_code)
+            pass
     
     async def retrieve(self, request, *args, **kwargs: Kwargs):
         """
