@@ -35,7 +35,7 @@ in response for the client.
        {
          "id": 19,
          "last_login": null,
-         "is_superuser": false,
+         "is_staff": false,
          "username": "",
          "first_name": "Денис",
          "last_name": "Королев",
@@ -65,7 +65,7 @@ def get_user_cookie(request: type(requests),
     From the request we receive an index of user. Then, to the response add the\
     cookie data:
      -'user_session_{index}' from the cacher table's db;
-     - 'is_superuser' from the users table's db;
+     - 'is_staff' from the users table's db;
      - 'is_active' from the users table's db.
      The variables above, these data for COOKIES.
     :param request: protocol 'http(s)' methods: 'GET' ... 'PATCH'.
@@ -111,8 +111,8 @@ def get_user_cookie(request: type(requests),
             samesite=SESSION_COOKIE_SAMESITE
         )
         response.set_cookie(
-            f"is_superuser",
-            user_list[0].is_superuser,
+            f"is_staff",
+            user_list[0].is_staff,
             max_age=SESSION_COOKIE_AGE,
             httponly=SESSION_COOKIE_HTTPONLY,
             secure=SESSION_COOKIE_SECURE,

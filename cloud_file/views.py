@@ -80,7 +80,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         status_code = status.HTTP_200_OK
         files = []
         try:
-            # GET  data of COOKIE (is_superuser_* & user_session_*)
+            # GET  data of COOKIE (is_staff_* & user_session_*)
             instance = await sync_to_async(get_data_authenticate)(request)
             if kwargs["pk"]:
                 files = await sync_to_async(list)(
