@@ -15,12 +15,14 @@ from rest_framework.decorators import action, api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from project import CSRF_TOKEN_VALUE
+
+from project import decorators_CSRFToken
+
 from cloud_user.tasks import ready, _run_async
 
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
                               SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE,
-                              SESSION_COOKIE_HTTPONLY)
+                              SESSION_COOKIE_HTTPONLY, CSRF_COOKIE_NAME)
 from django.views.decorators.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from cloud.services import (get_data_authenticate, decrypt_data)
@@ -40,17 +42,27 @@ configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
 
-@ensure_csrf_cookie
+
 def csrftoken(request):
-    from cloud_user.apps import use_CSRFToken
+    from project import use_CSRFToken
     if (request.method != "GET"):
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
     csrf_token_value = get_token(request)
-    
+    # GET 'csrftoken' for a 'decorators_CSRFToken' decorator
     use_CSRFToken.set_state(csrf_token_value)
-    return JsonResponse(
+    response = JsonResponse(
         {"csrftoken": csrf_token_value}, status=status.HTTP_200_OK
         )
+    # ADD THE 'csrftoken' to RESPONSE for COOKIE
+    response.set_cookie(CSRF_COOKIE_NAME,
+                        csrf_token_value,
+                        httponly=True,
+                        max_age=15,
+                        secure=True,
+                        samesite=SESSION_COOKIE_SAMESITE
+                        )
+                        
+    return response
 
 
 class UserView(viewsets.ModelViewSet):
@@ -133,6 +145,7 @@ Your profile is not activate"}
             resp = super().dispatch(request, *args, **kwargs)
             
             # return JsonResponse(resp.data, status=resp.status_code)
+            
             return resp
         except Exception as e:
             return JsonResponse({}, status=400)
@@ -420,8 +433,9 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
         response = super().retrieve(request, *args, **kwargs)
         return response
     
+    @decorators_CSRFToken(False)
     def partial_update(self, request, *args, **kwargs):
-        # response = super().partial_update(request, *args, **kwargs)
+        # response  = super().partial_update(request, *args, **kwargs)
         response = self.patch_change(request, *args, **kwargs)
         return response
     

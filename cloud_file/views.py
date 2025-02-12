@@ -26,30 +26,14 @@ from cloud.services import get_data_authenticate
 
 # use_CSRFToken
 from cloud_user.models import UserRegister
-from project import settings, CSRF_TOKEN_VALUE
+
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime, timezone
+from project import decorators_CSRFToken
 
 
-def decorators_CSRFToken(func):
-    # global csrf_token_value
-    async def wrapper(session, *args, **kwargs):
-        from cloud_user.apps import use_CSRFToken
-        # if request.method == 'POST':
-        # if request.META.get('HTTP_X_CSRFTOKEN') != request.session.get('csrftoken'):
-        
-        if session.request.META.get(
-          'HTTP_X_CSRFTOKEN'
-        ) == use_CSRFToken.state: #CSRF_TOKEN_VALUE:
-            return await func(session.request, *args, **kwargs)  # (request, *args, **kwargs)
-        else:
-            return JsonResponse(
-                {"detail": "CSRF verification failed"}, status=403
-            )
-    
-    return wrapper
 
 
 
@@ -175,7 +159,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     # @method_decorator(csrf_protect)
     
     # @csrf_protect
-    @decorators_CSRFToken
+    @decorators_CSRFToken(True)
     async def create(self, request):
         # if not request.META.get("HTTP_X_CSRFTOKEN") or not \
         #   request.COOKIES.get('csrftoken') or\
@@ -234,7 +218,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 size=file_obj.size,
                 file_path="%s" % file_path,
             )
-            serializer = self.serializer_class(file_record)
+            serializer = FileStorageSerializer(file_record)
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
         else:
             # If, we found the file's dupolication
