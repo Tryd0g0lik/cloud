@@ -14,10 +14,7 @@ from django.dispatch import Signal
 import re
 import asyncio
 
-
-
-
-
+from cloud_user import Csrft
 from cloud_user.contribute.utilites import send_activation_notificcation
 
 # from cloud_user.tasks import check_keys
@@ -27,16 +24,19 @@ configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
 
+
 class CloudUserConfig(AppConfig):
     """Basis registration of app the cloud_user"""
     default_auto_field = "django.db.models.BigAutoField"
     name = "cloud_user"
     verbose_name = "Профиль пользователя"
 
-    
-    
+    from project import CSRF_TOKEN_VALUE
 
-   
+    # def use_CSRFToken(request):
+    #
+use_CSRFToken = Csrft()
+
     #
     # def ready(self):
     #

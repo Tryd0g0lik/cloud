@@ -15,11 +15,14 @@ from rest_framework.decorators import action, api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
+from project import CSRF_TOKEN_VALUE
 from cloud_user.tasks import ready, _run_async
+
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
                               SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE,
                               SESSION_COOKIE_HTTPONLY)
 from django.views.decorators.csrf import get_token
+from django.views.decorators.csrf import ensure_csrf_cookie
 from cloud.services import (get_data_authenticate, decrypt_data)
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (check,
@@ -29,6 +32,7 @@ from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
 import asyncio
+
 from cloud_user.contribute.services import get_fields_response, get_user_cookie
 from logs import configure_logging
 
@@ -36,12 +40,16 @@ configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
 
-
-async def csrftoken(request):
+@ensure_csrf_cookie
+def csrftoken(request):
+    from cloud_user.apps import use_CSRFToken
     if (request.method != "GET"):
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
+    csrf_token_value = get_token(request)
+    
+    use_CSRFToken.set_state(csrf_token_value)
     return JsonResponse(
-        {"csrftoken": get_token(request)}, status=status.HTTP_200_OK
+        {"csrftoken": csrf_token_value}, status=status.HTTP_200_OK
         )
 
 

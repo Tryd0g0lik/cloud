@@ -10,19 +10,49 @@ import os
 from asgiref.sync import sync_to_async
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt, csrf_protect, \
+    requires_csrf_token
+from django.middleware.csrf import CsrfViewMiddleware, get_token
 from rest_framework import status
 from adrf import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
+from django.utils.decorators import method_decorator
 # from django.views.decorators.csrf import csrf_exempt
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
+
+
+# use_CSRFToken
 from cloud_user.models import UserRegister
+from project import settings, CSRF_TOKEN_VALUE
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime, timezone
+
+
+def decorators_CSRFToken(func):
+    # global csrf_token_value
+    async def wrapper(session, *args, **kwargs):
+        from cloud_user.apps import use_CSRFToken
+        # if request.method == 'POST':
+        # if request.META.get('HTTP_X_CSRFTOKEN') != request.session.get('csrftoken'):
+        
+        if session.request.META.get(
+          'HTTP_X_CSRFTOKEN'
+        ) == use_CSRFToken.state: #CSRF_TOKEN_VALUE:
+            return await func(session.request, *args, **kwargs)  # (request, *args, **kwargs)
+        else:
+            return JsonResponse(
+                {"detail": "CSRF verification failed"}, status=403
+            )
+    
+    return wrapper
+
+
+
 
 
 class Kwargs(TypedDict):
@@ -33,7 +63,11 @@ class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
-    
+
+    # @staticmethod
+    # def decorators_CSRF():
+    #     # require_csrf_token=True
+    #
     async def list(self, request, *args, **kwargs: Kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -137,12 +171,19 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status_data,
                 status=status_code
                 )
-        
 
+    # @method_decorator(csrf_protect)
+    
+    # @csrf_protect
+    @decorators_CSRFToken
     async def create(self, request):
-        # https://docs.djangoproject.com/en/4.2/topics/http/file-uploads/
-       
-        # GET the user ID from COOKIE
+        # if not request.META.get("HTTP_X_CSRFTOKEN") or not \
+        #   request.COOKIES.get('csrftoken') or\
+        #   request.COOKIES.get(settings.CSRF_COOKIE_NAME) != request.META.get("HTTP_X_CSRFTOKEN"):
+        #     return JsonResponse(
+        #         {"detail": "CSRF verification failed"}, status=403
+        #         )
+        
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
         user_session = await sync_to_async(cache.get)(f"user_session_{user_ind}")
@@ -498,4 +539,6 @@ If we will be  check the one file with itself (and both files will be unchanged)
             return False
         finally:
             pass
+
+
 
