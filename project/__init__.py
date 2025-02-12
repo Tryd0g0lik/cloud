@@ -23,6 +23,12 @@ class Csrft():
 use_CSRFToken = Csrft()
 
 def decorators_CSRFToken(async_ = False):
+    """
+    Decorator for methods and for work with the 'csrftoken'.
+    :param async_: if True, then the decorator will be async.
+    :param func: the function, which will be decorated.
+    :return: the function, which will be decorated.
+    """
     def decorator(func):
         def __wrapper(self, request, *args, **kwargs):
             if request.META.get('HTTP_X_CSRFTOKEN') == use_CSRFToken.state:
