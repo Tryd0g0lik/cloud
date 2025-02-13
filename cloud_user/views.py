@@ -16,6 +16,7 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 
+
 from project import decorators_CSRFToken
 
 from cloud_user.tasks import ready, _run_async
@@ -35,7 +36,8 @@ from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
 import asyncio
 
-from cloud_user.contribute.services import get_fields_response, get_user_cookie
+from cloud_user.contribute.services import get_fields_response, \
+    get_user_cookie  # , get_user_cookie
 from logs import configure_logging
 
 configure_logging(logging.INFO)
@@ -43,6 +45,7 @@ log = logging.getLogger(__name__)
 log.info("START")
 
 
+# @ensure_csrf_cookie
 def csrftoken(request):
     from project import use_CSRFToken
     if (request.method != "GET"):
@@ -57,9 +60,9 @@ def csrftoken(request):
     response.set_cookie(CSRF_COOKIE_NAME,
                         csrf_token_value,
                         httponly=True,
-                        max_age=15,
-                        secure=True,
-                        samesite=SESSION_COOKIE_SAMESITE
+                        max_age=10,
+                        secure=SESSION_COOKIE_SECURE, # TRue for https
+                        samesite=SESSION_COOKIE_SAMESITE,
                         )
                         
     return response
@@ -397,19 +400,18 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
             instance = get_fields_response(instance)
             response = JsonResponse(instance, status=200)
             # IF IS_ACTIVE CHANGE
-            if "is_active" in data:
+            if "is_active" in data and data["is_active"]:
                 hash_create_user_session(
                     kwargs['pk'],
                     f"user_session_{kwargs['pk']}"
                 )
-                if data["is_active"]:
-                    user_list[0].last_login = datetime.now()
-                    user_list[0].save(update_fields=["last_login"])
-                if not data["is_active"]:
-                    cache.delete(f"user_session_{kwargs['pk']}")
-                    # cache.delete(f"user_superuser_{kwargs['pk']}")
-                if data["is_active"]:
-                    kwargs["last_login"] = str(datetime.utcnow())
+                user_list[0].last_login = datetime.now()
+                user_list[0].save(update_fields=["last_login"])
+            else:
+                cache.delete(f"user_session_{kwargs['pk']}")
+                # cache.delete(f"user_superuser_{kwargs['pk']}")
+            
+                
            
             # GET the DATA COOKIE
             response = get_user_cookie(request, response)
@@ -472,19 +474,22 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
             # GETs the cookie's data how an object from the user's ID
             cookie_data = get_data_authenticate(request)
             user_list = UserRegister.objects.filter(id=kwargs["pk"])
+            if len(user_list) == 0:
+                return Response(
+                    {"message": f"[{__name__}]: \
+            Something what wrong. Check the 'pk'."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            cacher = {
+                'user_session': cache.get(f"user_session_{kwargs['pk']}"),
+            }
             # If we do not have cookie's data, then we look to the password of user.
             if (not hasattr(cookie_data, "user_session") or (
               hasattr(cookie_data, "user_session") and
-              not cache.get(f"user_session_{kwargs['pk']}")
-            )) and \
+              not cacher["user_session"]
+            ) or (hasattr(cookie_data, "user_session") != cacher["user_session"])) and \
               len((data.keys())) > 0:
-                
-                if len(user_list) == 0:
-                    return Response(
-                        {"message": f"[{__name__}]: \
-Something what wrong. Check the 'pk'."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                # LOOK THE PASSWORD if TRUE
                 if "password" in data.keys():
                     # Comparing password of the user
                     _hash_password = self.hash_password(
@@ -505,12 +510,11 @@ Something what wrong. Check the 'pk'."},
                     request.body = json.dumps(body)
                     response = UserPatchViews.update_cell(request, *args, **kwargs)
                     return response
-            user = user_list[0]
-            cacher = {
-                'user_session': cache.get(f"user_session_{kwargs['pk']}"),
-            }
-            # COMPARE a COOKIE KEY if the not have the password.
-            if cacher['user_session'] and cookie_data.user_session:
+          
+                # COMPARE a COOKIE KEY if the not have the password.
+                # if cacher['user_session'] and cookie_data.user_session:
+            else:
+                user = user_list[0]
                 # OLD of VERSIONS
                 # user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
                 user_session = cacher["user_session"]
