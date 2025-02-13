@@ -22,9 +22,6 @@ from django.utils.decorators import method_decorator
 # from django.views.decorators.csrf import csrf_exempt
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
-
-
-# use_CSRFToken
 from cloud_user.models import UserRegister
 
 from .models import FileStorage
@@ -99,6 +96,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         finally:
             pass
     
+    @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs: Kwargs):
         """
         Method GET for receive a single position
@@ -107,14 +105,21 @@ class FileStorageViewSet(viewsets.ViewSet):
         :param kwargs: dict. {'pk': 21}
         :return:
         """
+        from project import use_CSRFToken
         status_code = status.HTTP_200_OK
+        coockies = request.COOKIES
+        csrf = coockies.get("csrftoken")
+        if use_CSRFToken.state != csrf:
+            return JsonResponse({"detail": "CSRF token is invalid"},
+                               status=status.HTTP_400_BAD_REQUEST)
+        
         files = []
         try:
             # GET  data of COOKIE (is_staff_* & user_session_*)
             instance = await sync_to_async(get_data_authenticate)(request)
             if kwargs["pk"]:
                 files = await sync_to_async(list)(
-                    FileStorage.objects.filter(id=int(kwargs["pk"]))
+                    FileStorage.objects.filter(user_id=int(kwargs["pk"]))
                 )
                 #  await sync_to_async(lambda: files[0].user.is_staff)()
                 if len(files) == 0:
@@ -141,6 +146,11 @@ class FileStorageViewSet(viewsets.ViewSet):
                     )
             serializer = self.serializer_class(files[0])
             status_data = serializer.data
+            if type(files) == list and len(files) > 1:
+                serializer = self.serializer_class(files, many=True)
+                status_data = {"files": serializer.data}
+                
+            
             return JsonResponse(
                 status_data,
                 status=status_code
