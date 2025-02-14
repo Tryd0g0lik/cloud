@@ -247,7 +247,12 @@ class FileStorageViewSet(viewsets.ViewSet):
         return JsonResponse({"error": "The wrong, incorrect request"},
                             status=status.HTTP_400_BAD_REQUEST)
     
-    async def destroy(self, request, pk: Kwargs = None):
+    async def destroy(self, request, *args):
+        return sync_to_async(JsonResponse)({"error": "The wrong, incorrect request"})
+    
+    # @decorators_CSRFToken(True)
+    @action(detail=True, url_name="delete", methods=["PUT"])
+    async def remove(self, request, **kwargs):
         """
         TODO: This is for delete a single file's line from db. .
         :param request:
@@ -256,44 +261,29 @@ class FileStorageViewSet(viewsets.ViewSet):
         """
         status_data = {}
         status_code =status.HTTP_204_NO_CONTENT
+        files_id_list = json.loads(request.body)["files"]
         # GET the user ID from COOKIE
-        cookie_data = await asyncio.create_task(
-            sync_to_async(get_data_authenticate)(request)
-        )
+        # cookie_data = await asyncio.create_task(
+        #     sync_to_async(get_data_authenticate)(request)
+        # )
         try:
             
-            file_list = await asyncio.create_task(
-                sync_to_async(list)(FileStorage.objects.filter(id=pk))
-            )
+            file_list = [await asyncio.create_task(
+                sync_to_async(list)(FileStorage.objects.filter(id=index))
+            ) for index in files_id_list]
+            file_list = [file[0] for file in file_list]
             if len(file_list) == 0:
-                return JsonResponse({"error": "'pk' invalid"},
+                return sync_to_async(JsonResponse)({"error": "'pk' invalid"},
                                     status=status.HTTP_400_BAD_REQUEST)
-            # Get data of line from db
-            # /* -----------  lambda  ----------- */
-            user_id_fromFile = \
-                await asyncio.create_task(
-                    sync_to_async(lambda: file_list[0].user.id)()
-                )
-            user_is_staff_fromFile = \
-                await asyncio.create_task(
-                    sync_to_async(lambda:  file_list[0].user.is_staff)()
-                )
-  
-            user_ind = getattr(cookie_data, "id")
-            if  \
-              user_id_fromFile != user_ind and \
-              not user_is_staff_fromFile:
-                return Response(
-                    {"error": "Permission denied."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            
-            # DELETE a single file from db
-            await asyncio.gather(
-                sync_to_async(default_storage.delete)\
-                    (f"{file_list[0].file_path}"),
-                sync_to_async(file_list[0].delete)()
-            )
+            # CREATE TASK ASYNC
+            tasks = []
+            for file in file_list:
+                tasks.append(
+                    sync_to_async(default_storage.delete)(f"{file.file_path}")
+                    )
+                tasks.append(sync_to_async(file.delete)())
+            #  DELETE OLD FILES (ALL TASKS)
+            await asyncio.gather(*tasks)
             status_code=status.HTTP_204_NO_CONTENT
         except FileStorage.DoesNotExist:
             status_data = {"error": "File not found."}
