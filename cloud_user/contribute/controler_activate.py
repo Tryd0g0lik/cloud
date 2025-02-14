@@ -162,8 +162,8 @@ f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
         return  HttpResponseRedirect(
-            redirect_url=f"{request.scheme}://{request.get_host()}",
-            status=400)
+            redirect_to=f"{request.scheme}://{request.get_host()}/", # redirect_url
+            status=400) # status
     finally:
         if "Mistake" in _text:
             log.error(_text)
