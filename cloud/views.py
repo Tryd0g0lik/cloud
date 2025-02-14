@@ -18,7 +18,7 @@ def user_update_sessionTime(request):
     header: <'X-CSRFToken': csrftoken>
     :param index: Id of user from user's db.
     :param time: integer. Seconds for update the live time from property the\
-    'user_session_{id}' and 'is_superuser_{id}'
+    'user_session_{id}' and 'is_staff_{id}'
     :return: boolean, True - all OK or all NOT OK if we get the False.
     """
     response = JsonResponse({"message": "Not OK"})
@@ -33,7 +33,7 @@ def user_update_sessionTime(request):
         instance = get_data_authenticate(request)
         data: SessionData_Type = json.loads(request.body.decode())
         cache.touch(f"user_session_{instance.id}", data["time"] * 2)
-        cache.touch(f"is_superuser_{instance.id}", data["time"] * 2)
+        cache.touch(f"is_staff_{instance.id}", data["time"] * 2)
         return JsonResponse({"message": "OK"})
     except Exception as e:
         raise ValueError(f"[{__name__}::{user_update_sessionTime.__name__}]: \

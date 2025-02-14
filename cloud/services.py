@@ -7,7 +7,7 @@ the authenticate of user.
     :return: object of '{ \
     user_id: id, \
     user_session: <user_session_<id>'s value>, \
-    is_superuser: <is_superuser_<id>'s value>\
+    is_staff: <is_staff_<id>'s value>\
         }' if everything went well or \
     returns the empty object if everything went not well.
     """
@@ -25,7 +25,7 @@ the authenticate of user.
                 request.COOKIES.get(f"user_session"))
         
         # setattr(instance, "user_superuser", \
-        #         request.COOKIES.get(f"is_superuser"))
+        #         request.COOKIES.get(f"is_staff"))
         
     except Exception as e:
         

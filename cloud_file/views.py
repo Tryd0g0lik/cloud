@@ -10,19 +10,30 @@ import os
 from asgiref.sync import sync_to_async
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt, csrf_protect, \
+    requires_csrf_token
+from django.middleware.csrf import CsrfViewMiddleware, get_token
 from rest_framework import status
 from adrf import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
+from django.utils.decorators import method_decorator
 # from django.views.decorators.csrf import csrf_exempt
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
 from cloud_user.models import UserRegister
+
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime, timezone
+from project import decorators_CSRFToken
+
+
+
+
+
 
 
 class Kwargs(TypedDict):
@@ -33,7 +44,11 @@ class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
-    
+
+    # @staticmethod
+    # def decorators_CSRF():
+    #     # require_csrf_token=True
+    #
     async def list(self, request, *args, **kwargs: Kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -45,7 +60,12 @@ class FileStorageViewSet(viewsets.ViewSet):
                     user_id=int(instance.id)
                     ))
             if len(files) == 0:
-                return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
+                status_data = {"data": []}
+                status_code=status.HTTP_200_OK
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                    )
             # /* -----------  lambda  ----------- */
             user_is_staff = await sync_to_async(lambda: files[0].user.is_staff)()
             if user_is_staff :
@@ -61,14 +81,22 @@ class FileStorageViewSet(viewsets.ViewSet):
             status_data = serializer.data
             if "[" in str(serializer.data):
                 status_data = {"data": list(serializer.data)}
+            return JsonResponse(
+                status_data,
+                status=status_code
+                )
         except Exception as e:
             status_data = {"error": f"[{self.__class__.list.__name__}]: \
             Mistake => {e.__str__()}"}
             status_code = status.HTTP_400_BAD_REQUEST
+            return JsonResponse(
+                status_data,
+                status=status_code
+                )
         finally:
-            return JsonResponse(status_data,
-                status=status_code)
+            pass
     
+    @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs: Kwargs):
         """
         Method GET for receive a single position
@@ -77,14 +105,21 @@ class FileStorageViewSet(viewsets.ViewSet):
         :param kwargs: dict. {'pk': 21}
         :return:
         """
+        from project import use_CSRFToken
         status_code = status.HTTP_200_OK
+        coockies = request.COOKIES
+        csrf = coockies.get("csrftoken")
+        if use_CSRFToken.state != csrf:
+            return JsonResponse({"detail": "CSRF token is invalid"},
+                               status=status.HTTP_400_BAD_REQUEST)
+        
         files = []
         try:
-            # GET  data of COOKIE (is_superuser_* & user_session_*)
+            # GET  data of COOKIE (is_staff_* & user_session_*)
             instance = await sync_to_async(get_data_authenticate)(request)
             if kwargs["pk"]:
                 files = await sync_to_async(list)(
-                    FileStorage.objects.filter(id=int(kwargs["pk"]))
+                    FileStorage.objects.filter(user_id=int(kwargs["pk"]))
                 )
                 #  await sync_to_async(lambda: files[0].user.is_staff)()
                 if len(files) == 0:
@@ -111,6 +146,11 @@ class FileStorageViewSet(viewsets.ViewSet):
                     )
             serializer = self.serializer_class(files[0])
             status_data = serializer.data
+            if type(files) == list and len(files) > 1:
+                serializer = self.serializer_class(files, many=True)
+                status_data = {"files": serializer.data}
+                
+            
             return JsonResponse(
                 status_data,
                 status=status_code
@@ -125,12 +165,19 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status_data,
                 status=status_code
                 )
-        
 
+    # @method_decorator(csrf_protect)
+    
+    # @csrf_protect
+    @decorators_CSRFToken(True)
     async def create(self, request):
-        # https://docs.djangoproject.com/en/4.2/topics/http/file-uploads/
-       
-        # GET the user ID from COOKIE
+        # if not request.META.get("HTTP_X_CSRFTOKEN") or not \
+        #   request.COOKIES.get('csrftoken') or\
+        #   request.COOKIES.get(settings.CSRF_COOKIE_NAME) != request.META.get("HTTP_X_CSRFTOKEN"):
+        #     return JsonResponse(
+        #         {"detail": "CSRF verification failed"}, status=403
+        #         )
+        
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
         user_session = await sync_to_async(cache.get)(f"user_session_{user_ind}")
@@ -181,7 +228,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 size=file_obj.size,
                 file_path="%s" % file_path,
             )
-            serializer = self.serializer_class(file_record)
+            serializer = FileStorageSerializer(file_record)
             return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
         else:
             # If, we found the file's dupolication
@@ -486,4 +533,6 @@ If we will be  check the one file with itself (and both files will be unchanged)
             return False
         finally:
             pass
+
+
 

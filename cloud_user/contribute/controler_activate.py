@@ -48,7 +48,7 @@ the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
 - user.is_activated = True (of table 'UserRegister').
 \
 Response (of HttpResponseRedirect)  has data for the cookie. Data of \
-variable `user_session_{id}` and 'is_superuser__{id}'. It is more info in README::COOKIE.
+variable `user_session_{id}` and 'is_staff__{id}'. It is more info in README::COOKIE.
 1. The user is registered on the site.\
 2. The function is `send_activation_notification` from` app.py` sends an email with a tkene link to the user email address.\
 3. The user presses on a token link.\
@@ -118,7 +118,7 @@ from 'is_activated'."
         # CREATE SIGNER
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session, SESSION_COOKIE_AGE)
-        # cache.set(f"is_superuser_{user.id}", user.is_superuser, SESSION_COOKIE_AGE) # ????????????????????
+        # cache.set(f"is_staff_{user.id}", user.is_staff, SESSION_COOKIE_AGE) # ????????????????????
         """ New object has tha `user_session_{id}` variable"""
         redirect_url = f"{request.scheme}://{request.get_host()}" \
 f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
@@ -138,13 +138,13 @@ f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
                             secure=SESSION_COOKIE_SECURE,
                             samesite=SESSION_COOKIE_SAMESITE
                             )
-        # response.set_cookie(f"is_superuser_{user.id}",
-        # response.set_cookie(f"is_superuser",
-        #                     user.is_superuser,
-        #                     max_age=SESSION_COOKIE_AGE,
-        #                     httponly=SESSION_COOKIE_HTTPONLY,
-        #                     secure=SESSION_COOKIE_SECURE,
-        #                     samesite=SESSION_COOKIE_SAMESITE)
+        # response.set_cookie(f"is_staff_{user.id}",
+        response.set_cookie(f"is_staff",
+                            user.is_staff,
+                            max_age=SESSION_COOKIE_AGE,
+                            httponly=True,
+                            secure=SESSION_COOKIE_SECURE,
+                            samesite=SESSION_COOKIE_SAMESITE)
         response.set_cookie(f"is_active",user.is_active,
                             max_age=SESSION_COOKIE_AGE,
                             httponly=SESSION_COOKIE_HTTPONLY,
@@ -162,8 +162,8 @@ f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
         return  HttpResponseRedirect(
-            redirect_url=f"{request.scheme}://{request.get_host()}",
-            status=400)
+            redirect_to=f"{request.scheme}://{request.get_host()}/", # redirect_url
+            status=400) # status
     finally:
         if "Mistake" in _text:
             log.error(_text)

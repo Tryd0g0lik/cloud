@@ -11,21 +11,13 @@ import logging
 
 from django.apps import AppConfig
 from django.dispatch import Signal
-import re
-import asyncio
-
-
-
-
-
 from cloud_user.contribute.utilites import send_activation_notificcation
-
-# from cloud_user.tasks import check_keys
 from logs import configure_logging
 
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
+
 
 class CloudUserConfig(AppConfig):
     """Basis registration of app the cloud_user"""
@@ -33,41 +25,6 @@ class CloudUserConfig(AppConfig):
     name = "cloud_user"
     verbose_name = "Профиль пользователя"
 
-    
-    
-
-   
-    #
-    # def ready(self):
-    #
-    #     # from cloud_user.contribute.hash import Hash
-    #     # hash = Hash()
-    #     log.info(f"{__name__} Hash WAS STARTED")
-    #     # создаём новый цикл событий asyncio и обеспечиваем доступ к нему
-    #     loop = asyncio.new_event_loop()
-    #
-    #     async def sud_readyloop():
-    #         task = lambda:  loop.create_task(self.check_keys())
-    #         await asyncio.gather(task())
-    #     #
-    #     loop.run_until_complete(sud_readyloop())
-    #     # asyncio.run(sud_readyloop(corut))
-    #
-    #     # loop.gather(task)
-    #     # Первый способ такого создания задач заключается в использовании
-    #     # аналог  loop.create_task().
-    #     # asyncio.ensure_future(hash.check_keys(), loop=loop)
-    #     # asyncio.set_event_loop(loop)
-    #     # asyncio.get_running_loop()
-    #
-    #
-    #     # asyncio.create_task()
-    #
-    #     log.info(
-    #         f"{__name__} Hash WAS RUN for checking the time from the line of the 'cache' model."
-    #         )
-
-       
 
 # send message from the registration part
 # https://docs.djangoproject.com/en/4.2/topics/signals/#defining-signals

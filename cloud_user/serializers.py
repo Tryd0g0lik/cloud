@@ -83,6 +83,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
                 instance = super().update(instance, validated_data)
             else:
                 validated_data["is_superuser"] = False
+                validated_data["is_staff"] = False
                 instance = super().update(instance, validated_data)
             return instance
         instance = super().update(instance, validated_data)

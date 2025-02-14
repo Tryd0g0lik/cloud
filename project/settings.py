@@ -249,6 +249,7 @@ SESSION_COOKIE_SAMESITE = 'Lax' # CSRF_COOKIE_SAMESITE = 'Lax'  # или 'Strict
 SESSION_COOKIE_AGE = 86400
 
 # '''CSRF'''
+CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_DOMAIN = ALLOWED_HOSTS
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
@@ -260,7 +261,9 @@ CSRF_TRUSTED_ORIGINS = [
 # True, сервер будет принимать запросы из любого источника. Это означает, что
 # ваш API будет доступен для всех доменов без ограничений
 # Should be False when using specific origins
+# Разрешить запросы с любого источника (для разработки)
 CORS_ORIGIN_ALLOW_ALL = False
+# Или разрешить только определённые домены
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://localhost:8000",
