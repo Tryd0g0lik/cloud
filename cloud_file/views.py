@@ -23,6 +23,8 @@ from django.utils.decorators import method_decorator
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
 from cloud_user.models import UserRegister
+from project.settings import SESSION_COOKIE_AGE, SESSION_COOKIE_HTTPONLY, \
+    SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE
 
 from .models import FileStorage
 from .serializers import FileStorageSerializer
@@ -189,10 +191,19 @@ class FileStorageViewSet(viewsets.ViewSet):
                                 status=status.HTTP_400_BAD_REQUEST)
         if not file_obj or user_session != \
           getattr(cookie_data, f"user_session"):
-            return JsonResponse(
+            response = JsonResponse(
                 {"error": "No file provided."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+            response.set_cookie(
+                "is_active",
+                False,
+                max_age=SESSION_COOKIE_AGE,
+                httponly=SESSION_COOKIE_HTTPONLY,
+                secure=SESSION_COOKIE_SECURE,
+                samesite=SESSION_COOKIE_SAMESITE
+            )
+            return response
         """
         Conservation a one file in serverby by path \
         'card/<year>/<month>/<day>/< file name >'
