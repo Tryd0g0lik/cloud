@@ -47,10 +47,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
 
-    # @staticmethod
-    # def decorators_CSRF():
-    #     # require_csrf_token=True
-    #
+    @decorators_CSRFToken(True)
     async def list(self, request, *args, **kwargs: Kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -168,9 +165,6 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status=status_code
                 )
 
-    # @method_decorator(csrf_protect)
-    
-    # @csrf_protect
     @decorators_CSRFToken(True)
     async def create(self, request):
         # if not request.META.get("HTTP_X_CSRFTOKEN") or not \
@@ -261,8 +255,9 @@ class FileStorageViewSet(viewsets.ViewSet):
     async def destroy(self, request, *args):
         return sync_to_async(JsonResponse)({"error": "The wrong, incorrect request"})
     
-    # @decorators_CSRFToken(True)
+    
     @action(detail=True, url_name="delete", methods=["PUT"])
+    @decorators_CSRFToken(True)
     async def remove(self, request, **kwargs):
         """
         TODO: This is for delete a single file's line from db. .
@@ -302,8 +297,10 @@ class FileStorageViewSet(viewsets.ViewSet):
         finally:
             return JsonResponse(status_data, status=status_code)
 
+    
     @action(detail=True, url_name="rename",
             methods=['post'])
+    @decorators_CSRFToken(True)
     async def rename(self, request, pk: Kwargs = None):
         """
         TODO: This is for rename a single file's line from db. .
@@ -377,49 +374,42 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-    # @csrf_exempt
+    #
     @action(detail=True,
-            url_name="comment", methods=['POST'])
-    async def update_comment(self, request, pk: Kwargs = None):
+            url_name="comment", methods=['PATCH'])
+    @decorators_CSRFToken(True)
+    async def update_comment(self, request,  **kwargs):
         new_comment = json.loads(request.body).get('comment')
         # http://127.0.0.1:8000/api/v1/files/31/update_comment/
+        file_id = json.loads(request.body).get('fileId')
+        if file_id == None or new_comment == None:
+            return sync_to_async(JsonResponse)(
+                {"error": "User not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
         try:
             file_record_list = \
-                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
+                await sync_to_async(list)(FileStorage.objects.filter(user_id=kwargs["pk"]).filter(pk=int(file_id)))
             if len(file_record_list) == 0:
-                return JsonResponse(
-                    {"error": "File not found."},
+                return sync_to_async(JsonResponse)(
+                    {"error": "User not found."},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            # GET the user ID from COOKIE
-            cookie_data = await asyncio.create_task(
-                sync_to_async(get_data_authenticate)(
-                request
-                )
-            )
-            user_ind = getattr(cookie_data, "id")
-            user_id_fromFile = \
-                await asyncio.create_task(
-                    sync_to_async(lambda: file_record_list[0].user.id)()
-                )
-            if user_id_fromFile != int(user_ind):
-                return JsonResponse(
-                    {"error": "Permission denied."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        
+                
             file_record_list[0].comment = new_comment
             await sync_to_async(file_record_list[0].save)()
             
-            return JsonResponse(self.serializer_class(file_record_list[0]).data)
+            return await sync_to_async(JsonResponse)(self.serializer_class(file_record_list[0]).data)
         except FileStorage.DoesNotExist:
-            return JsonResponse(
+            return await sync_to_async(JsonResponse)(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
     
     # @action(detail=True, url_path="download/<int:pk>/", methods=['get'])
+    
     @action(detail=True, url_name="download",
             methods=['GET'])
+    @decorators_CSRFToken(True)
     async def download(self, request, pk: PKStr = None):
         from datetime import timezone
         try:
@@ -460,8 +450,10 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
     
+    
     @action(detail=True, url_name="generate_link",
             methods=['GET'])
+    @decorators_CSRFToken(True)
     async def generate_link(self, request, pk: Kwargs = None):
         try:
             # GET the user ID from COOKIE
