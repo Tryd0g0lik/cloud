@@ -18,6 +18,8 @@ from django.core.signing import BadSignature
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.core.cache import cache
+
+from cloud.cookies import Cookies
 from cloud_user.contribute.sessions import create_signer
 from cloud_user.contribute.utilites import signer
 from cloud_user.models import UserRegister
@@ -125,38 +127,40 @@ f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
         response =  HttpResponseRedirect(redirect_url)
         
         # response.set_cookie(f"user_session_{user.id}",
+        cookie = Cookies(user.id, response)
+        response = cookie.All(user.is_staff, user.is_active)
         #OlD of VERSIONS
-        response.set_cookie(f"user_session",
-                            cache.get(
-                                f"user_session_{user.id}"
-                            ),
-                            #  scrypt.hash(cache.get(
-                            #     f"user_session_{user.id}"
-                            # ), SECRET_KEY).decode('ISO-8859-1'),
-                            max_age=SESSION_COOKIE_AGE,
-                            httponly=True,
-                            secure=SESSION_COOKIE_SECURE,
-                            samesite=SESSION_COOKIE_SAMESITE
-                            )
-        # response.set_cookie(f"is_staff_{user.id}",
-        response.set_cookie(f"is_staff",
-                            user.is_staff,
-                            max_age=SESSION_COOKIE_AGE,
-                            httponly=True,
-                            secure=SESSION_COOKIE_SECURE,
-                            samesite=SESSION_COOKIE_SAMESITE)
-        response.set_cookie(f"is_active",user.is_active,
-                            max_age=SESSION_COOKIE_AGE,
-                            httponly=SESSION_COOKIE_HTTPONLY,
-                            secure=SESSION_COOKIE_SECURE,
-                            samesite=SESSION_COOKIE_SAMESITE)
-        response.set_cookie(
-            f"index", str(user.id),
-            max_age=SESSION_COOKIE_AGE,
-            httponly=False,
-            secure=SESSION_COOKIE_SECURE,
-            samesite=SESSION_COOKIE_SAMESITE
-            )
+        # response.set_cookie(f"user_session",
+        #                     cache.get(
+        #                         f"user_session_{user.id}"
+        #                     ),
+        #                     #  scrypt.hash(cache.get(
+        #                     #     f"user_session_{user.id}"
+        #                     # ), SECRET_KEY).decode('ISO-8859-1'),
+        #                     max_age=SESSION_COOKIE_AGE,
+        #                     httponly=True,
+        #                     secure=SESSION_COOKIE_SECURE,
+        #                     samesite=SESSION_COOKIE_SAMESITE
+        #                     )
+        # # response.set_cookie(f"is_staff_{user.id}",
+        # response.set_cookie(f"is_staff",
+        #                     user.is_staff,
+        #                     max_age=SESSION_COOKIE_AGE,
+        #                     httponly=True,
+        #                     secure=SESSION_COOKIE_SECURE,
+        #                     samesite=SESSION_COOKIE_SAMESITE)
+        # response.set_cookie(f"is_active",user.is_active,
+        #                     max_age=SESSION_COOKIE_AGE,
+        #                     httponly=SESSION_COOKIE_HTTPONLY,
+        #                     secure=SESSION_COOKIE_SECURE,
+        #                     samesite=SESSION_COOKIE_SAMESITE)
+        # response.set_cookie(
+        #     f"index", str(user.id),
+        #     max_age=SESSION_COOKIE_AGE,
+        #     httponly=False,
+        #     secure=SESSION_COOKIE_SECURE,
+        #     samesite=SESSION_COOKIE_SAMESITE
+        #     )
         return response
 
     except Exception as e:

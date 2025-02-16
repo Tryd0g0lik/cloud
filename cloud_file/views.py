@@ -478,6 +478,13 @@ class FileStorageViewSet(viewsets.ViewSet):
                     lambda: file_record_list[0].user.is_staff
                 )()
                 )
+            user_ind = getattr(cookie_data, "id")
+            user_session_fromFile = getattr(cookie_data, "user_session")
+            # GET use-session from the ceche (table from db session)
+            user_session_db = await sync_to_async(cache.get)(
+                f"user_session_{user_ind}"
+                )
+            
             # CHECK of user
             if user_id_fromFile != int(user_ind) and \
               not user_is_staff_fromFile:
@@ -485,12 +492,28 @@ class FileStorageViewSet(viewsets.ViewSet):
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
-            # GENERATE a spacial link
-            download_path = f"/api/files/{file_record_list[0].special_link}/download/"
-            special_link = \
+            # CHECK of session/authorisation
+            if user_session_fromFile != user_session_db:
+                response =  JsonResponse(
+                    {"error": "Permission denied."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                response.set_cookie(
+                    "is_active",
+                    False,
+                    max_age=SESSION_COOKIE_AGE,
+                    httponly=SESSION_COOKIE_HTTPONLY,
+                    secure=SESSION_COOKIE_SECURE,
+                    samesite=SESSION_COOKIE_SAMESITE
+                )
+                return response
+            # GENERATE a referral link
+            # download_path = f"/api/files/{file_record_list[0].special_link}/download/"
+            download_path = f"/files/{file_record_list[0].special_link}/"
+            referral_link = \
             f"{request.build_absolute_uri(download_path)}"
             
-            return JsonResponse({"special_link": special_link})
+            return JsonResponse({"special_link": referral_link})
         except (FileStorage.DoesNotExist, Exception) as e:
             return JsonResponse(
                 {"error": f"Mistake => {e.__str__()}"},
