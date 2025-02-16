@@ -451,16 +451,15 @@ class FileStorageViewSet(viewsets.ViewSet):
             )
     
     
-    @action(detail=True, url_name="generate_link",
+    @action(detail=True, url_name="referral_links",
             methods=['GET'])
     @decorators_CSRFToken(True)
-    async def generate_link(self, request, pk: Kwargs = None):
+    async def referral_links(self, request, **wargs):
         try:
             # GET the user ID from COOKIE
             cookie_data = await sync_to_async(get_data_authenticate)(request)
-            user_ind = getattr(cookie_data, "id")
             file_record_list = \
-                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
+                await sync_to_async(list)(FileStorage.objects.filter(pk=wargs["pk"]))
             if len(file_record_list) == 0 :
                 # Get data of line from db
                 # /* -----------  lambda  ----------- */
