@@ -19,6 +19,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
 from django.utils.decorators import method_decorator
+
+from cloud.cookies import Cookies
 # from django.views.decorators.csrf import csrf_exempt
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
@@ -301,7 +303,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     @action(detail=True, url_name="rename",
             methods=['post'])
     @decorators_CSRFToken(True)
-    async def rename(self, request, pk: Kwargs = None):
+    async def rename(self, request, **kwargs):
         """
         TODO: This is for rename a single file's line from db. .
         :param request:
@@ -309,9 +311,10 @@ class FileStorageViewSet(viewsets.ViewSet):
         :return:
         """
         new_name = json.loads(request.body).get('new_name')
-        # GET the user ID from COOKIE
+        file_id = json.loads(request.body).get('fileId')
+        
+        # GET the user ID from COOKIE (cookie_data the object
         cookie_data = await sync_to_async(get_data_authenticate)(request)
-        user_ind = getattr(cookie_data, "id")
         if not new_name:
             return JsonResponse(
                 {"error": "New name is required."},
@@ -320,8 +323,18 @@ class FileStorageViewSet(viewsets.ViewSet):
         
         try:
             file_record_list =\
-                await sync_to_async(list)(FileStorage.objects.filter(pk=pk))
-            
+                await sync_to_async(list)(FileStorage.objects
+                                          .filter(user_id=int(kwargs['pk']))
+                                          .filter(id=int(file_id)))
+            # CHER THE NEW NAME OF FILE DUPLICATION
+            file_name_duplication = await sync_to_async(list)(FileStorage.objects
+                                          .filter(user_id=int(kwargs['pk']))
+                                          .filter(original_name=new_name))
+            if len(file_name_duplication) != 0:
+                return JsonResponse(
+                    {"detail": "The file with this name already exists."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             if len(file_record_list) == 0 :
                 # Get data of line from db
                 # /* -----------  lambda  ----------- */
@@ -329,6 +342,23 @@ class FileStorageViewSet(viewsets.ViewSet):
                     {"error": "Check the 'pk"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            # GET use-session from the cache (table from db sessionю
+            # It is our the caher)
+            user_session_db = await sync_to_async(cache.get)(
+                f"user_session_{kwargs['pk']}"
+            )
+            user_session_fromClient = cookie_data.user_session
+            # CHECK of session/authorisation
+            if user_session_fromClient != user_session_db:
+                response = JsonResponse(
+                    {"detail": "Permission denied."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                cookie = Cookies((lambda: int(kwargs['pk']))(), response)
+                response = cookie.is_active(
+                    is_active=False, max_age_=24 * 60 * 60
+                    )
+                return response
             # GET old data from db
             user_id_fromFile = \
                 await asyncio.create_task(
@@ -346,22 +376,21 @@ class FileStorageViewSet(viewsets.ViewSet):
                 )
             file_extencion = str(user_original_name_fromFile).split(".")[-1]
             # CHECK of user
-            if user_id_fromFile != int(user_ind) and \
-              not user_is_staff_fromFile:
+            if user_id_fromFile != int(kwargs["pk"]) and not user_is_staff_fromFile:
                 return JsonResponse(
-                    {"error": "Permission denied."},
+                    {"detail": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
             
             # RENAME file
             new_file_path = (file_record_list[0].file_path.path).replace(
                           file_record_list[0].file_path.name.split("/")[-1],
-                          f"{new_name}.{file_extencion}")
+                new_name) # f"{new_name}.{file_extencion}"
             os.rename(file_record_list[0].file_path.path, new_file_path)
             
             # GET path for the db
             
-            file_record_list[0].original_name = f"{new_name}.{file_extencion}"
+            file_record_list[0].original_name = new_name #f"{new_name}.{file_extencion}"
             file_record_list[0].file_path.name = \
                 "uploads" + new_file_path.replace("\\", "/").replace(r"//", "/")\
                     .split("uploads")[-1]
@@ -370,7 +399,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             return JsonResponse(self.serializer_class(file_record_list[0]).data)
         except (FileStorage.DoesNotExist, Exception) as e:
             return JsonResponse(
-                {"error": f"Mistake => {e.__str__()}"},
+                {"detail": f"Mistake => {e.__str__()}"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -409,19 +438,12 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     @action(detail=True, url_name="download",
             methods=['GET'])
-    @decorators_CSRFToken(True)
-    async def download(self, request, pk: PKStr = None):
-        from datetime import timezone
+    async def download(self, request, **wargs):
         try:
-            # GET the user ID from COOKIE
-            # cookie_data = await asyncio.create_task(
-            #     sync_to_async(get_data_authenticate)(request)
-            # )
-            # user_ind = getattr(cookie_data, "id")
-            # GET line from db
+            # GET file  from db
             file_record_list = \
                 await sync_to_async(list)(FileStorage.objects\
-                                          .filter(special_link=pk))
+                                          .filter(special_link=wargs["pk"]))
                 
             if len(file_record_list) == 0:
                 # Get data of line from db
@@ -430,10 +452,10 @@ class FileStorageViewSet(viewsets.ViewSet):
                     {"error": "Check the 'pk"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            # Here is not a check of user
-            
+                
             # Update the 'last_downloaded' from line
-            file_record_list[0].last_downloaded = datetime.utcnow()
+            # file_record_list[0].last_downloaded = datetime.utcnow()
+            file_record_list[0].last_downloaded =str(datetime.utcnow())
             await sync_to_async(file_record_list[0].save)()
             # DOWNLOAD file
             response = HttpResponse(
@@ -458,8 +480,11 @@ class FileStorageViewSet(viewsets.ViewSet):
         try:
             # GET the user ID from COOKIE
             cookie_data = await sync_to_async(get_data_authenticate)(request)
+            user_ind = getattr(cookie_data, "id")
+            file_id = request.COOKIES.get("fileId")
+            # file_id = getattr(cookie_data, "fileId")
             file_record_list = \
-                await sync_to_async(list)(FileStorage.objects.filter(pk=wargs["pk"]))
+                await sync_to_async(list)(FileStorage.objects.filter(user_id=int(wargs["pk"])).filter(pk=int(file_id)))
             if len(file_record_list) == 0 :
                 # Get data of line from db
                 # /* -----------  lambda  ----------- */
@@ -478,42 +503,45 @@ class FileStorageViewSet(viewsets.ViewSet):
                     lambda: file_record_list[0].user.is_staff
                 )()
                 )
-            user_ind = getattr(cookie_data, "id")
+           
             user_session_fromFile = getattr(cookie_data, "user_session")
             # GET use-session from the ceche (table from db session)
             user_session_db = await sync_to_async(cache.get)(
                 f"user_session_{user_ind}"
                 )
             
-            # CHECK of user
-            if user_id_fromFile != int(user_ind) and \
+            # CHECK of user/ This when the user id (from cookie of client)
+            # not equals user id from db
+            if (lambda: user_id_fromFile)() != (lambda: int(user_ind))() and \
               not user_is_staff_fromFile:
-                return JsonResponse(
+                response = JsonResponse(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
+                cookie = Cookies((lambda: int(user_ind))(), response)
+                response = cookie.is_active(is_active=False)
+                return response
+            
             # CHECK of session/authorisation
             if user_session_fromFile != user_session_db:
                 response =  JsonResponse(
                     {"error": "Permission denied."},
                     status=status.HTTP_403_FORBIDDEN
                 )
-                response.set_cookie(
-                    "is_active",
-                    False,
-                    max_age=SESSION_COOKIE_AGE,
-                    httponly=SESSION_COOKIE_HTTPONLY,
-                    secure=SESSION_COOKIE_SECURE,
-                    samesite=SESSION_COOKIE_SAMESITE
-                )
+                cookie = Cookies((lambda: int(user_ind))(), response)
+                response = cookie.is_active(is_active=False, max_age_=30 * 1000)
+              
                 return response
             # GENERATE a referral link
-            # download_path = f"/api/files/{file_record_list[0].special_link}/download/"
-            download_path = f"/files/{file_record_list[0].special_link}/"
-            referral_link = \
-            f"{request.build_absolute_uri(download_path)}"
+            download_path = f"/api/v1/files/{file_record_list[0].special_link}/download/"
             
-            return JsonResponse({"special_link": referral_link})
+            referral_link = download_path
+            # f"{request.build_absolute_uri(download_path)}"
+            response = HttpResponse(status=status.HTTP_200_OK)
+            cookie = Cookies((lambda: int(user_ind))(), response)
+            response = cookie.empty_templete('referral_link', referral_link, max_age_=30 * 1000)
+            # return JsonResponse({"special_link": referral_link})
+            return response
         except (FileStorage.DoesNotExist, Exception) as e:
             return JsonResponse(
                 {"error": f"Mistake => {e.__str__()}"},

@@ -13,9 +13,7 @@ class Cookies:
                      httponly_=True,
                      secure_=SESSION_COOKIE_SECURE,
                      samesite_=SESSION_COOKIE_SAMESITE):
-        response = self.response
-
-        return response.set_cookie(f"user_session",
+        self.response.set_cookie(f"user_session",
                             cache.get(
                                 f"user_session_{self.user_id}"
                             ),
@@ -24,14 +22,14 @@ class Cookies:
                             secure=secure_,
                             samesite=samesite_
                             )
+        return self.response
     def is_staff(self, is_staff: bool,
                  max_age_=SESSION_COOKIE_AGE,
                  httponly_=True,
                  secure_=SESSION_COOKIE_SECURE,
                  samesite_=SESSION_COOKIE_SAMESITE
                  ):
-        response = self.response
-        return response.set_cookie(
+        self.response.set_cookie(
             f"is_staff",
             is_staff,
             max_age=max_age_,
@@ -39,14 +37,15 @@ class Cookies:
             secure=secure_,
             samesite=samesite_
             )
+        return self.response
     def is_active(self, is_active: bool,
                   max_age_=SESSION_COOKIE_AGE,
                   httponly_=SESSION_COOKIE_HTTPONLY,
                   secure_=SESSION_COOKIE_SECURE,
                   samesite_=SESSION_COOKIE_SAMESITE
                   ):
-        response = self.response
-        return response.set_cookie(
+        
+        self.response.set_cookie(
             f"is_active",
             is_active,
             max_age=max_age_,
@@ -54,14 +53,15 @@ class Cookies:
             secure=secure_,
             samesite=samesite_
         )
+        return self.response
     def user_index(self,
                 max_age_=SESSION_COOKIE_AGE,
                 httponly_=False,
                 secure_=SESSION_COOKIE_SECURE,
                 samesite_=SESSION_COOKIE_SAMESITE
                 ):
-        response = self.response
-        return response.set_cookie(
+        
+        self.response.set_cookie(
             f"index",
             self.user_id,
             max_age=max_age_,
@@ -69,14 +69,14 @@ class Cookies:
             secure=secure_,
             samesite=samesite_
         )
+        return self.response
     def All(self, is_staff: bool,
             is_active: bool):
-        self.response = self.user_session(self.user_id)
-        self.response = self.is_staff(is_staff)
-        self.response = self.is_staff(is_active)
-        self.response = self.user_index(self.user_id)
-        response = self.response
-        return response
+        self.user_session(self.user_id)
+        self.is_staff(is_staff)
+        self.is_staff(is_active)
+        self.user_index(self.user_id)
+        return self.response
     def empty_templete(self, key,
                        value,
                        max_age_=SESSION_COOKIE_AGE,
@@ -84,12 +84,14 @@ class Cookies:
                        secure_=SESSION_COOKIE_SECURE,
                        samesite_=SESSION_COOKIE_SAMESITE
                        ):
-        response = self.response
-        return response.set_cookie(
-            f"{key}",
+        
+        self.response.set_cookie(
+            key,
             value,
            max_age=max_age_,
            httponly=httponly_,
            secure=secure_,
            samesite=samesite_
             )
+
+        return self.response
