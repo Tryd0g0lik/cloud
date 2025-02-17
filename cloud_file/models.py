@@ -19,6 +19,7 @@ class FileStorage(models.Model):
                                        # ]
                                        )
     upload_date = models.DateTimeField(_("Date upload"),auto_now_add=True)
+    
     last_downloaded = models.DateTimeField(_("Date download"), null=True,
                                            blank=True)
     comment = models.CharField(_("Mark"), blank=True, null=True)

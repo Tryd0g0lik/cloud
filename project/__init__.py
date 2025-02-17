@@ -1,3 +1,4 @@
+from functools import wraps
 from asgiref.sync import sync_to_async
 from django.http import JsonResponse, HttpResponse
 
@@ -30,6 +31,7 @@ def decorators_CSRFToken(async_ = False):
     :return: the function, which will be decorated.
     """
     def decorator(func):
+        @wraps(func)  # Сохраняем имя и документацию оригинальной функции
         def __wrapper(self, request, *args, **kwargs):
             if request.META.get('HTTP_X_CSRFTOKEN'):
                 if request.META.get('HTTP_X_CSRFTOKEN') == use_CSRFToken.state:
@@ -39,6 +41,7 @@ def decorators_CSRFToken(async_ = False):
             else:
                 return JsonResponse({"detail": "CSRF verification failed"}, status=403)
         if async_:
+            @wraps(func)  # Сохраняем имя и документацию оригинальной функции
             async def wrapper(self, request, *args, **kwargs):
                 if request.META.get('HTTP_X_CSRFTOKEN'):
                     if request.META.get(
@@ -54,6 +57,7 @@ def decorators_CSRFToken(async_ = False):
                         {"detail": "CSRF verification failed"}, status=403
                         )
         else:
+            @wraps(func)  # Сохраняем имя и документацию оригинальной функции
             def wrapper(self, request, *args, **kwargs):
                 return __wrapper(self, request, *args, **kwargs)
         return wrapper
