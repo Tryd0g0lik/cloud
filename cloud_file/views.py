@@ -146,7 +146,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                     )
             serializer = self.serializer_class(files[0])
-            status_data = serializer.data
+            status_data = {"files": [serializer.data]}
             if type(files) == list and len(files) > 1:
                 serializer = self.serializer_class(files, many=True)
                 status_data = {"files": serializer.data}
