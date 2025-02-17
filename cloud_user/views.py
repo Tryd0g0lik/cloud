@@ -16,7 +16,7 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 
-
+from cloud.cookies import Cookies
 from project import decorators_CSRFToken
 
 from cloud_user.tasks import ready, _run_async
@@ -535,19 +535,21 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
                 else:
                     user.is_active = False
                     user.save(update_fields=['is_active'])
+            # MAYBE THE USER SESSION IS NOT CORRECT BUT USER.is_active = True
             response = JsonResponse(
                 {"detail": "Something what wrong! \
-Check the 'user_session' or 'pk'"},
+Check the 'user_session' or 'pk'. \
+The 'user_session' of client and the \
+of ceche (table of db - session) not equals. It's maybe."},
                 status=status.HTTP_400_BAD_REQUEST
                 )
-            response.set_cookie(
-                "is_active",
-                False,
-                max_age=SESSION_COOKIE_AGE,
-                httponly=SESSION_COOKIE_HTTPONLY,
-                secure=SESSION_COOKIE_SECURE,
-                samesite=SESSION_COOKIE_SAMESITE
-            )
+            # GO OUT FROM THE PROFILE
+            cookie = Cookies(kwargs['pk'], response)
+            response = cookie.is_active(is_active_=False)
+            # USER IS NOT ACTIVE
+            user = UserRegister.objects.get(pk=int(kwargs["pk"]))
+            user.is_active =  False if str(False) in response.cookies.get("is_active").value else True
+            user.save(update_fields=['is_active'])
             return response
         except Exception as e:
             return Response(
