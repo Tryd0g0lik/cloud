@@ -331,16 +331,6 @@ Mistake => f{e.__str__()}"}
             f"user_session_{kwargs['pk']}", user_session, **kwargs
             )
         
-        # CHECK to USER
-        class DataCookie:
-            pass
-        
-        # GET user ID
-        cookie_data = get_data_authenticate(request)
-        cacher = {
-            'user_session': cache.get(f"user_session_{cookie_data.id}"),
-            'is_staff': cache.get(f"is_staff_{cookie_data.id}")
-        }
         
         if not check_bool:
             return Response(
@@ -348,16 +338,39 @@ Mistake => f{e.__str__()}"}
                     "message": f"[{__name__}::{self.__class__.destroy.__name__}]: Not OK"}
                 )
         try:
-            if cacher["is_staff"] and \
-              cacher["user_session"] == cache.get(
-                f"user_session_{cookie_data.id}"
-                ):
-                # Remove the user
-                instance = super().destroy(request, *args, **kwargs)
-                # Remove cache the user
-                cache.delete(f"user_session_{kwargs['pk']}")
-                cache.delete(f"is_staff_{kwargs['pk']}")
-                instance = Response()
+            user_session_client = request.COOKIES.get("user_session")
+            # GET use-session from the cache (our
+            # cacher table from settings.py)
+            user_session_db = cache.get(
+                f"user_session_{request.user.id}"
+            )
+            # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN
+            if user_session_db != user_session_client and not request.user.is_staff:
+                response = JsonResponse(
+                    {"data": ["User is not authenticated"]},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                user = UserRegister.objects.get(
+                    pk=request.user.id
+                )
+                user.is_active = False
+                user.save(update_fields=["is_active"])
+                login(request, user)
+                cookie = Cookies(request.user.id, response)
+                response = cookie.is_active(False)
+                return response
+                # CHECK USER ID
+            if request.user.id != int(kwargs["pk"]) \
+              and not request.user.is_staff:
+                return JsonResponse(
+                    {"error": "There is no access"},
+                    status=status.HTTP_400_BAD_REQUEST)
+            # REMOVE THE USER
+            instance = super().destroy(request, *args, **kwargs)
+            # REMOVE CACHE THE USER
+            cache.delete(f"user_session_{kwargs['pk']}")
+            cache.delete(f"is_staff_{kwargs['pk']}")
+            instance = Response()
         except Exception as e:
             instance = Response(
                 {"message": f"Not Ok.\
