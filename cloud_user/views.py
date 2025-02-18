@@ -649,14 +649,20 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
     :param password: str. Pure password from user's request.
     :return: str. Hash of password.
     """
-        from base64 import b64encode
-        # _hash_password = scrypt.hash(f"pbkdf2${str(20000)}${(lambda: password)()}",
-        #                 SECRET_KEY).decode(encode)
-        _hash_password = scrypt.hash(
-            f"pbkdf2${str(20000)}${(lambda: password)()}", SECRET_KEY
-        )
-        #.replace(r"[ \t\v\r\n\f]+", "") ##.replace("\n", "").replace(r" ", "")
-        return b64encode(_hash_password).decode()
+        try:
+            from base64 import b64encode
+            # _hash_password = scrypt.hash(f"pbkdf2${str(20000)}${(lambda: password)()}",
+            #                 SECRET_KEY).decode(encode)
+            _hash_password = scrypt.hash(
+                f"pbkdf2${str(20000)}${(lambda: password)()}", SECRET_KEY
+            )
+            # .replace(r"[ \t\v\r\n\f]+", "") ##.replace("\n", "").replace(r" ", "")
+            return b64encode(_hash_password).decode()
+        except Exception as err:
+            return JsonResponse(
+                {"detail": f"Mistake => {e.__str__()}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
     
     def put(self, request, *args, **kwargs):
         json.loads(request.body)["Message"] = "Not Ok"
