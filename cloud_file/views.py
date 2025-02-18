@@ -126,7 +126,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 user_session_db = await sync_to_async(cache.get)(
                     f"user_session_{request.user.id}")
                 # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db != user_session_client:
+                if user_session_db != user_session_client and not request.user.is_staff:
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
@@ -205,7 +205,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                     pk=request.user.id
                 )
                 # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db != user_session_client:
+                if user_session_db != user_session_client and not request.user.is_staff:
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
@@ -311,7 +311,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                     f"user_session_{request.user.id}"
                 )
                 # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db != user_session_client:
+                if user_session_db != user_session_client and not request.user.is_staff:
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
@@ -371,93 +371,103 @@ class FileStorageViewSet(viewsets.ViewSet):
         :param pk: integer from single line of db, for changing
         :return:
         """
-        new_name = json.loads(request.body).get('new_name')
-        file_id = json.loads(request.body).get('fileId')
-        
-        # GET the user ID from COOKIE (cookie_data the object
-        cookie_data = await sync_to_async(get_data_authenticate)(request)
-        if not new_name:
-            return JsonResponse(
-                {"error": "New name is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
         try:
-            file_record_list =\
-                await sync_to_async(list)(FileStorage.objects
-                                          .filter(user_id=int(kwargs['pk']))
-                                          .filter(id=int(file_id)))
-            # CHER THE NEW NAME OF FILE DUPLICATION
-            file_name_duplication = await sync_to_async(list)(FileStorage.objects
-                                          .filter(user_id=int(kwargs['pk']))
-                                          .filter(original_name=new_name))
-            if len(file_name_duplication) != 0:
+            
+            new_name = ""
+            file_id = ""
+            if hasattr(request, "data"):
+                new_name = new_name.replace("", request.data.get('new_name'))
+                file_id = file_id.replace("", request.data.get('fileId'))
+            elif hasattr(request, "body"):
+                new_name = json.loads(request.body).get('new_name')
+                file_id = json.loads(request.body).get('fileId')
+            if not new_name:
                 return JsonResponse(
-                    {"detail": "The file with this name already exists."},
+                    {"error": "New name is required."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            if len(file_record_list) == 0 :
-                # Get data of line from db
-                # /* -----------  lambda  ----------- */
-                return JsonResponse(
-                    {"error": "Check the 'pk"},
-                    status=status.HTTP_400_BAD_REQUEST
+            
+        
+            if request.user.is_authenticated:
+                user_session_client = request.COOKIES.get("user_session")
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
+                user_session_db = await sync_to_async(cache.get)(
+                    f"user_session_{request.user.id}"
                 )
-            # GET use-session from the cache (table from db sessionю
-            # It is our the caher)
-            user_session_db = await sync_to_async(cache.get)(
-                f"user_session_{kwargs['pk']}"
-            )
-            user_session_fromClient = cookie_data.user_session
-            # CHECK of session/authorisation
-            if user_session_fromClient != user_session_db:
-                response = JsonResponse(
-                    {"detail": "Permission denied."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-                cookie = Cookies((lambda: int(kwargs['pk']))(), response)
-                response = cookie.is_active(
-                    is_active=False, max_age_=24 * 60 * 60
+                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN
+                if user_session_db != user_session_client and not request.user.is_staff:
+                    response = JsonResponse(
+                        {"data": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN
                     )
-                return response
-            # GET old data from db
-            user_id_fromFile = \
-                await asyncio.create_task(
-                    sync_to_async(lambda: file_record_list[0].user.id)()
-                )
-            user_is_staff_fromFile = \
-                await asyncio.create_task(
-                    sync_to_async(
-                    lambda: file_record_list[0].user.is_staff
-                    )()
-                )
-            user_original_name_fromFile =\
-                await asyncio.create_task(
-                    sync_to_async(lambda: file_record_list[0].original_name)()
-                )
-            file_extencion = str(user_original_name_fromFile).split(".")[-1]
-            # CHECK of user
-            if user_id_fromFile != int(kwargs["pk"]) and not user_is_staff_fromFile:
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pd=request.user.id
+                    )
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
+                # CHECK USER ID
+                if request.user.id != int(kwargs["pk"]) \
+                  and not request.user.is_staff:
+                    return JsonResponse(
+                        {"error": "There is no access"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                # GET THE FILE BY FILE ID FOR RENAMING
+                file_record_list =\
+                    await sync_to_async(list)(FileStorage.objects
+                                              .filter(user_id=int(kwargs['pk']))
+                                              .filter(id=int(file_id)))
+                # CHECK THE NEW NAME IF EXISTS
+                file_name_duplication = await sync_to_async(list)(FileStorage.objects
+                                              .filter(user_id=int(kwargs['pk']))
+                                              .filter(original_name=new_name))
+                # FOUND OF DUPLICATION
+                if len(file_name_duplication) != 0:
+                    return JsonResponse(
+                        {"detail": "The file with this name already exists."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                # NOT FOUND FILE FOR RENAMING
+                if len(file_record_list) == 0 :
+                    return JsonResponse(
+                        {"error": "Check the 'pk"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # GET ORIGINAL NAME FROM FILE
+                user_original_name_fromFile =\
+                    await asyncio.create_task(
+                        sync_to_async(lambda: file_record_list[0].original_name)()
+                    )
+                file_extencion = str(user_original_name_fromFile).split(".")[-1]
+                
+                # RENAME OF FILE
+                new_file_path = (file_record_list[0].file_path.path).replace(
+                              file_record_list[0].file_path.name.split("/")[-1],
+                    new_name) # f"{new_name}.{file_extencion}"
+                os.rename(file_record_list[0].file_path.path, new_file_path)
+                
+                # GET PATH FOR THE DB
+                file_record_list[0].original_name = new_name #f"{new_name}.{file_extencion}"
+                file_record_list[0].file_path.name = \
+                    "uploads" + new_file_path.replace("\\", "/").replace(r"//", "/")\
+                        .split("uploads")[-1]
+                await sync_to_async(file_record_list[0].save)()
+                
+                return JsonResponse(self.serializer_class(file_record_list[0]).data)
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
                 return JsonResponse(
-                    {"detail": "Permission denied."},
-                    status=status.HTTP_403_FORBIDDEN
+                    status_data,
+                    status=status_code
                 )
-            
-            # RENAME file
-            new_file_path = (file_record_list[0].file_path.path).replace(
-                          file_record_list[0].file_path.name.split("/")[-1],
-                new_name) # f"{new_name}.{file_extencion}"
-            os.rename(file_record_list[0].file_path.path, new_file_path)
-            
-            # GET path for the db
-            
-            file_record_list[0].original_name = new_name #f"{new_name}.{file_extencion}"
-            file_record_list[0].file_path.name = \
-                "uploads" + new_file_path.replace("\\", "/").replace(r"//", "/")\
-                    .split("uploads")[-1]
-            await sync_to_async(file_record_list[0].save)()
-            
-            return JsonResponse(self.serializer_class(file_record_list[0]).data)
         except (FileStorage.DoesNotExist, Exception) as e:
             return JsonResponse(
                 {"detail": f"Mistake => {e.__str__()}"},
