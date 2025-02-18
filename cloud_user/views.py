@@ -147,23 +147,32 @@ Mistake => f{e.__str__()}"}
     
     def retrieve(self, request, *args, **kwargs):
         try:
-            user_session = request.COOKIES.get(f"user_session")
-            check_bool = check(
-                f"user_session_{kwargs['pk']}", user_session, **kwargs
-            )
+            if request.user.is_authenticated:
+                user_session = request.COOKIES.get(f"user_session")
+                check_bool = check(
+                    f"user_session_{kwargs['pk']}", user_session, **kwargs
+                )
     
-            if not check_bool:
-                return Response(
-                    {"message":
-                         f"[{__name__}::{self.__class__.retrieve.__name__}]:\
-            Your profile is not activate"}
-                ), 404
-            # if 'pk' in kwargs.keys():
-            instance = super().retrieve(request, *args, **kwargs)
-            instance = get_fields_response(instance)
-            return JsonResponse(instance)
-            # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
+                if not check_bool:
+                    return Response(
+                        {"message":
+                             f"[{__name__}::{self.__class__.retrieve.__name__}]:\
+                            Your profile is not activate"}
+                    ), 404
+                # if 'pk' in kwargs.keys():
+                instance = super().retrieve(request, *args, **kwargs)
+                instance = get_fields_response(instance)
+                return JsonResponse(instance)
+                # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
 
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
         except Exception as e:
             return JsonResponse(
                 data={"message": f"[{__name__}::retrieve]: \
@@ -173,49 +182,74 @@ Mistake => f{e.__str__()}"}
     def dispatch(self, request, *args, **kwargs):
         resp = None
         try:
-            resp = super().dispatch(request, *args, **kwargs)
-            
-            # return JsonResponse(resp.data, status=resp.status_code)
-            
-            return resp
+            if request.user.is_authenticated:
+                resp = super().dispatch(request, *args, **kwargs)
+                return resp
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
         except Exception as e:
             return JsonResponse({}, status=400)
     
     def update(self, request, *args, **kwargs):
         """
-     We can not update the 'is_staff' property.
-    'request.data["is_staff"]' the oll time is False
-    :param request:
-    :param args:
-    :param kwargs:
-    :return:
-    """
-        user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
-        check_bool = check(
-            f"user_session_{kwargs['pk']}", user_session, **kwargs
-            )
+         We can not update the 'is_staff' property.
+        'request.data["is_staff"]' the oll time is False
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        try:
+            if request.user.is_authenticated:
+                user_session = request.COOKIES.get(
+                    f"user_session_{kwargs['pk']}"
+                    )
+                check_bool = check(
+                    f"user_session_{kwargs['pk']}", user_session, **kwargs
+                )
+    
+                # We does can not update the 'is_staff' property
+                if json.loads(request.body)["is_staff"]:
+                    json.loads(request.body)["is_staff"] = False
+    
+                if not check_bool:
+                    return Response(
+                        {
+                            "message": f"[{__name__}::{self.__class__.retrieve.__name__}]: \
+                Your profile is not activate"}
+                    ), 404
+                if json.loads(request.body)["is_staff"]:
+                    del json.loads(request.body)["is_staff"]
         
-        # We does can not update the 'is_staff' property
-        if json.loads(request.body)["is_staff"]:
-            json.loads(request.body)["is_staff"] = False
-        
-        if not check_bool:
-            return Response(
-                {
-                    "message": f"[{__name__}::{self.__class__.retrieve.__name__}]: \
-Your profile is not activate"}
-            ), 404
-        if json.loads(request.body)["is_staff"]:
-            del json.loads(request.body)["is_staff"]
-            
-            # data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
-        password = json.loads(request.body)["password"]
-        password_validation(password)
-        hash = hashpw_password(f'pbkdf2${str(20000)}{password}') #.decode("utf-8")
-        json.loads(request.body)["password"] = hash
-        
-        instance = super().update(request, *args, **kwargs)
-        return Response(instance.data, status=200)  # Проверить
+                    # data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+                password = json.loads(request.body)["password"]
+                password_validation(password)
+                hash = hashpw_password(
+                    f'pbkdf2${str(20000)}{password}'
+                    )  # .decode("utf-8")
+                json.loads(request.body)["password"] = hash
+    
+                instance = super().update(request, *args, **kwargs)
+                return Response(instance.data, status=200)  # Проверить
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
+        except Exception as e:
+            return JsonResponse(
+                data={"message": f"[{__name__}::update]: \
+Mistake => f{e.__str__()}"}
+                )
     
     def create(self, request, *args, **kwargs):
         """
@@ -499,89 +533,103 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
         
         # cacher.is_staff = cache.get(f"is_staff_{kwargs['pk']}")
         try:
-            # Get data from the reqyest body.
-            data = json.loads(request.body)
-            # GETs the cookie's data how an object from the user's ID
-            cookie_data = get_data_authenticate(request)
-            user_list = UserRegister.objects.filter(id=kwargs["pk"])
-            if len(user_list) == 0:
-                return Response(
-                    {"message": f"[{__name__}]: \
-            Something what wrong. Check the 'pk'."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            cacher = {
-                'user_session': cache.get(f"user_session_{kwargs['pk']}"),
-            }
-            # If we do not have cookie's data, then we look to the password of user.
-            if (not hasattr(cookie_data, "user_session") or (
-              hasattr(cookie_data, "user_session") and
-              not cacher["user_session"]
-            ) or (hasattr(cookie_data, "user_session") != cacher["user_session"])) and \
-              len((data.keys())) > 0:
-                # LOOK THE PASSWORD if TRUE
-                if "password" in data.keys():
-                    # Comparing password of the user
-                    _hash_password = self.hash_password(
-                        (lambda: data["password"])()
+            if request.user.is_authenticated:
+                # Get data from the reqyest body.
+                data = json.loads(request.body)
+                # GETs the cookie's data how an object from the user's ID
+                cookie_data = get_data_authenticate(request)
+                user_list = UserRegister.objects.filter(id=kwargs["pk"])
+                if len(user_list) == 0:
+                    return Response(
+                        {"message": f"[{__name__}]: \
+                            Something what wrong. Check the 'pk'."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                cacher = {
+                    'user_session': cache.get(f"user_session_{kwargs['pk']}"),
+                }
+                # If we do not have cookie's data, then we look to the password of user.
+                if (not hasattr(cookie_data, "user_session") or (
+                  hasattr(cookie_data, "user_session") and
+                  not cacher["user_session"]
+                ) or (hasattr(cookie_data, "user_session") != cacher[
+                    "user_session"])) and \
+                  len((data.keys())) > 0:
+                    # LOOK THE PASSWORD if TRUE
+                    if "password" in data.keys():
+                        # Comparing password of the user
+                        _hash_password = self.hash_password(
+                            (lambda: data["password"])()
                         )
-                    if user_list[0].password != _hash_password:
-                        return Response(
-                            {"message": f"[{__name__}]: \
-    Something what wrong. Check the 'password'."},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-                    """
-                    If make to change to the database, to inside of the 'update_cell'\
-                    will send a response to the user client's request.
-                    """
-                    body = json.loads(request.body)
-                    body["password"] = user_list[0].password
-                    request.body = json.dumps(body)
-                    response = UserPatchViews.update_cell(request, *args, **kwargs)
-                    return response
-          
-                # COMPARE a COOKIE KEY if the not have the password.
-                # if cacher['user_session'] and cookie_data.user_session:
-            else:
-                user = user_list[0]
+                        if user_list[0].password != _hash_password:
+                            return Response(
+                                {"message": f"[{__name__}]: \
+                    Something what wrong. Check the 'password'."},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        """
+                        If make to change to the database, to inside of the 'update_cell'\
+                        will send a response to the user client's request.
+                        """
+                        body = json.loads(request.body)
+                        body["password"] = user_list[0].password
+                        request.body = json.dumps(body)
+                        response = UserPatchViews.update_cell(
+                            request, *args, **kwargs
+                            )
+                        return response
+    
+                # else:
                 # OLD of VERSIONS
                 # user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
                 user_session = cacher["user_session"]
                 # .decode('ISO-8859-1')
-                if cookie_data.user_session == (user_session) and request.method.lower() == "patch":
+                if cookie_data.user_session == (
+                user_session) and request.method.lower() == "patch":
                     user_session = request.COOKIES.get(f"user_session")
                     # CHECK a COOKIE KEY ?????????????????
                     check_bool = check(
                         f"user_session_{kwargs['pk']}", user_session, **kwargs
-                        )
+                    )
                     if not check_bool:
                         return Response(
                             {"message": f"[{__name__}]: \
-    Something what wrong. Check the 'pk'."}
+                Something what wrong. Check the 'pk'."}
                         )
-                    response = UserPatchViews.update_cell(request, *args, **kwargs)
+                    response = UserPatchViews.update_cell(
+                        request, *args, **kwargs
+                        )
                     return response
                 else:
                     user = request.user
                     user.is_active = False
                     user.save(update_fields=['is_active'])
-            # MAYBE THE USER SESSION IS NOT CORRECT BUT USER.is_active = True
-            response = JsonResponse(
-                {"detail": "Something what wrong! \
-Check the 'user_session' or 'pk'. \
-The 'user_session' of client and the \
-of ceche (table of db - session) not equals. It's maybe."},
-                status=status.HTTP_400_BAD_REQUEST
+                # MAYBE THE USER SESSION IS NOT CORRECT BUT USER.is_active = True
+                response = JsonResponse(
+                    {"detail": "Something what wrong! \
+                Check the 'user_session' or 'pk'. \
+                The 'user_session' of client and the \
+                of ceche (table of db - session) not equals. It's maybe."},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
-            # GO OUT FROM THE PROFILE
-            cookie = Cookies(kwargs['pk'], response)
-            response = cookie.is_active(is_active_=False)
-            # USER IS NOT ACTIVE
-            user = UserRegister.objects.get(pk=int(kwargs["pk"]))
-            user.is_active =  False if str(False) in response.cookies.get("is_active").value else True
-            user.save(update_fields=['is_active'])
-            return response
+                # GO OUT FROM THE PROFILE
+                cookie = Cookies(kwargs['pk'], response)
+                response = cookie.is_active(is_active_=False)
+                # USER IS NOT ACTIVE
+                user = UserRegister.objects.get(pk=int(kwargs["pk"]))
+                user.is_active = False if str(False) in response.cookies.get(
+                    "is_active"
+                    ).value else True
+                user.save(update_fields=['is_active'])
+                return response
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
         except Exception as e:
             return Response(
                 {
