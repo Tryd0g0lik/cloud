@@ -300,32 +300,62 @@ class FileStorageViewSet(viewsets.ViewSet):
         """
         status_data = {}
         status_code =status.HTTP_204_NO_CONTENT
+        # GET FILE'S ID FROM LIST
         files_id_list = json.loads(request.body)["files"]
-        # GET the user ID from COOKIE
-        # cookie_data = await asyncio.create_task(
-        #     sync_to_async(get_data_authenticate)(request)
-        # )
         try:
-            
-            file_list = [await asyncio.create_task(
-                sync_to_async(list)(FileStorage.objects.filter(id=index))
-            ) for index in files_id_list]
-            file_list = [file[0] for file in file_list]
-            if len(file_list) == 0:
-                return sync_to_async(JsonResponse)({"error": "'pk' invalid"},
-                                    status=status.HTTP_400_BAD_REQUEST)
-            # CREATE TASK ASYNC
-            tasks = []
-            for file in file_list:
-                tasks.append(
-                    sync_to_async(default_storage.delete)(f"{file.file_path}")
+            if request.user.is_authenticated:
+                user_session_client = request.COOKIES.get("user_session")
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
+                user_session_db = await sync_to_async(cache.get)(
+                    f"user_session_{request.user.id}"
+                )
+                # CHECK THE SESSION KEY of USER_SESSION
+                if user_session_db != user_session_client:
+                    response = JsonResponse(
+                        {"data": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN
                     )
-                tasks.append(sync_to_async(file.delete)())
-            #  DELETE OLD FILES (ALL TASKS)
-            await asyncio.gather(*tasks)
-            status_code=status.HTTP_204_NO_CONTENT
-        except FileStorage.DoesNotExist:
-            status_data = {"error": "File not found."}
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pd=request.user.id
+                    )
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
+                # CHECK USER ID
+                if request.user.id != int(kwargs["pk"]) \
+                  and not request.user.is_staff:
+                    return JsonResponse(
+                        {"error": "There is no access"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                # GET FILE'S LIST BY FILE's ID FROM DB
+                file_list = [await asyncio.create_task(
+                    sync_to_async(list)(FileStorage.objects.filter(id=index))
+                ) for index in files_id_list]
+                file_list = [file[0] for file in file_list]
+                if len(file_list) == 0:
+                    return sync_to_async(JsonResponse)({"error": "'pk' invalid"},
+                                        status=status.HTTP_400_BAD_REQUEST)
+                # CREATE TASK OF ASYNC
+                tasks = []
+                for file in file_list:
+                    tasks.append(
+                        sync_to_async(default_storage.delete)(f"{file.file_path}")
+                        )
+                    tasks.append(sync_to_async(file.delete)())
+                # RUN THE DELETE OLD FILES (ALL TASKS)
+                await asyncio.gather(*tasks)
+                status_code=status.HTTP_204_NO_CONTENT
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+        except Exception as e:
+            status_data = {"error": f"Mistake => {e.__str__()}"}
             status_code = status.HTTP_404_NOT_FOUND
         finally:
             return JsonResponse(status_data, status=status_code)
