@@ -182,17 +182,17 @@ Mistake => f{e.__str__()}"}
     def dispatch(self, request, *args, **kwargs):
         resp = None
         try:
-            if request.user.is_authenticated:
-                resp = super().dispatch(request, *args, **kwargs)
-                return resp
-            else:
-                # NOT LOGGED IN
-                status_data = {"detail": "User is not authenticated"}
-                status_code = status.HTTP_401_UNAUTHORIZED
-                return JsonResponse(
-                    status_data,
-                    status=status_code
-                )
+            # if request.user.is_authenticated:
+            resp = super().dispatch(request, *args, **kwargs)
+            return resp
+            # else:
+            #     # NOT LOGGED IN
+            #     status_data = {"detail": "User is not authenticated"}
+            #     status_code = status.HTTP_401_UNAUTHORIZED
+            #     return JsonResponse(
+            #         status_data,
+            #         status=status_code
+            #     )
         except Exception as e:
             return JsonResponse({}, status=400)
     
