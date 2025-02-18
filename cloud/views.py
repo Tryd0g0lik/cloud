@@ -1,12 +1,15 @@
 import json
 from typing import (NewType, TypedDict, Dict)
-from rest_framework import generics
+from rest_framework import (viewsets)
 from django.core.cache import cache
 from django.http.response import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 
+from cloud.serializers import AdminSerializer
 from cloud.services import get_data_authenticate
+from cloud_user.models import UserRegister
+
 
 @csrf_exempt
 def user_update_sessionTime(request):
@@ -40,4 +43,10 @@ def user_update_sessionTime(request):
 Mistake => {e.__str__()}")
     finally:
         cache.close()
-    
+   
+class AdminView(viewsets.ModelViewSet):
+    queryset = UserRegister.objects.all()
+    serializer_class = AdminSerializer
+    # permission_classes = [
+    #
+    # ]
