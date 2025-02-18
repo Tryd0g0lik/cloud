@@ -5,8 +5,6 @@ import scrypt
 import json
 import logging
 from datetime import datetime
-
-from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
 from django.contrib.auth import authenticate, login
@@ -35,10 +33,9 @@ from cloud.hashers import hashpw_password
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
-import asyncio
 
-from cloud_user.contribute.services import get_fields_response, \
-    get_user_cookie  # , get_user_cookie
+from cloud_user.contribute.services import (get_fields_response,
+                                            get_user_cookie )
 from logs import configure_logging
 
 configure_logging(logging.INFO)
@@ -78,9 +75,6 @@ METHOD: GET, CREATE, PUT, DELETE.
     queryset = UserRegister.objects.all()
     serializer_class = UserSerializer
     
-    # permission_classes = [permissions.IsAuthenticated]
-    # permission_classes = [IsAdminUser]
-    
     def options(self, request, *args, **kwargs):
         response = super().options(request, *args, **kwargs)
         return response
@@ -93,31 +87,40 @@ METHOD: GET, CREATE, PUT, DELETE.
         cookie_data = get_data_authenticate(request)
         cacher = DataCookie()
         cacher.user_session = cache.get(f"user_session_{cookie_data.id}")
-        cacher.is_staff = cache.get(f"is_staff_{cookie_data.id}")
         try:
-            # Check presences the 'user_session', 'is_staff' in cacher table of db
-            if cacher.is_staff is not None and \
-              cacher.user_session is not None and \
-              cacher.user_session == cache.get(
-                f"user_session_{cookie_data.id}"
+            if request.user.is_authenticated:
+                # Check presences the 'user_session', 'is_staff' in cacher table of db
+                if request.user.is_staff is not None and \
+                  cacher.user_session is not None and \
+                  cacher.user_session == cache.get(
+                    f"user_session_{cookie_data.id}"
                 ):
-                # Below, check, It is the superuser or not.
-                # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
-                # 'user_settion_{id}' from cacher table of db
-                # /* ---------------- cacher.is_staff = True Удалить ---------------- */
-                if cacher.is_staff == True:
-                    # Если администратор, получаем всех пользователей
-                    files = UserRegister.objects.all()
-                    serializer = UserSerializer(files, many=True)
-                    return Response(serializer.data)
-                else:
-                    files = UserRegister.objects.filter(id=int(cookie_data.id))
-                    
-                    serializer = UserSerializer(files, many=True)
-                    instance = get_fields_response(serializer)
-                    return Response(instance)
-            res = {"message": f"[{__name__}::list]: "}
-            return JsonResponse(data=res)
+                    # Below, check, It is the superuser or not.
+                    # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
+                    # 'user_settion_{id}' from cacher table of db
+                    # /* ---------------- cacher.is_staff = True Удалить ---------------- */
+                    if request.user.is_staff:
+                        # Если администратор, получаем всех пользователей
+                        files = UserRegister.objects.all()
+                        serializer = UserSerializer(files, many=True)
+                        return Response(serializer.data)
+                    else:
+                        files = UserRegister.objects.filter(
+                            id=request.user.id
+                            )
+                        serializer = UserSerializer(files, many=True)
+                        instance = get_fields_response(serializer)
+                        return Response(instance)
+                res = {"message": f"[{__name__}::list]: "}
+                return JsonResponse(data=res)
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                    )
         except Exception as e:
             return JsonResponse(
                 data={"message": f"[{__name__}::list]: \
