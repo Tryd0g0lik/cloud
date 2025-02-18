@@ -50,7 +50,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN)
-                    user = await sync_to_async(UserRegister.objects.get)(pd=request.user.id)
+                    user = await sync_to_async(UserRegister.objects.get)(pk=request.user.id)
                     user.is_active = False
                     user.save(update_fields=["is_active"])
                     login(request, user)
@@ -130,7 +130,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                         status=status.HTTP_403_FORBIDDEN
                         )
                     user = await sync_to_async(UserRegister.objects.get)(
-                        pd=request.user.id
+                        pk=request.user.id
                         )
                     user.is_active = False
                     user.save(update_fields=["is_active"])
@@ -315,7 +315,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
                     user = await sync_to_async(UserRegister.objects.get)(
-                        pd=request.user.id
+                        pk=request.user.id
                     )
                     user.is_active = False
                     user.save(update_fields=["is_active"])
@@ -400,7 +400,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
                     user = await sync_to_async(UserRegister.objects.get)(
-                        pd=request.user.id
+                        pk=request.user.id
                     )
                     user.is_active = False
                     user.save(update_fields=["is_active"])
@@ -509,7 +509,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
                     user = await sync_to_async(UserRegister.objects.get)(
-                        pd=request.user.id
+                        pk=request.user.id
                     )
                     user.is_active = False
                     user.save(update_fields=["is_active"])
