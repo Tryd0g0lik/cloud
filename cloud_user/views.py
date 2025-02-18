@@ -12,7 +12,7 @@ from django.core.cache import (cache)
 from django.contrib.auth import authenticate, login
 from rest_framework import (viewsets, generics, status)
 from rest_framework.response import Response
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse

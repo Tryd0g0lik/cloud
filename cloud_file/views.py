@@ -9,6 +9,7 @@ import os
 
 from asgiref.sync import sync_to_async
 from django.http import (HttpResponse, JsonResponse)
+from django.contrib.auth import login
 from rest_framework import status
 from adrf import viewsets
 from rest_framework.decorators import action
@@ -40,16 +41,24 @@ class FileStorageViewSet(viewsets.ViewSet):
         
         try:
             if request.user.is_authenticated:
-                user_session_client = getattr(request.COOKIES, "user_session")
+                user_session_client = request.COOKIES.get("user_session")
                 # GET use-session from the cache  (our
-                # cecher table from settings.py)
+                # cacher table from settings.py)
                 user_session_db = await sync_to_async(cache.get)(
                     f"user_session_{request.user.id}"
                 )
                 # CHECK THE KEY of USER_SESSION
                 if user_session_db != user_session_client:
-                    return JsonResponse({"data": ["User is not authenticated"]},
-                                        status=status.HTTP_403_FORBIDDEN)
+                    response = JsonResponse(
+                        {"data": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN)
+                    user = await sync_to_async(UserRegister.objects.get)(pd=request.user.id)
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
                 instance = await sync_to_async(get_data_authenticate)(request)
                 
                 # IF USER IS ADMIN - RETURN ALL FILES FROM ALL USERS
@@ -111,17 +120,26 @@ class FileStorageViewSet(viewsets.ViewSet):
         files = []
         try:
             if request.user.is_authenticated:
-                user_session_client = getattr(request.COOKIES, "user_session")
-                # GET use-session from the ceche (our
-                # cecher table from settings.py)
+                user_session_client = request.COOKIES.get("user_session")
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
                 user_session_db = await sync_to_async(cache.get)(
                     f"user_session_{request.user.id}")
                 # CHECK THE SESSION KEY of USER_SESSION
                 if user_session_db != user_session_client:
-                    return JsonResponse(
+                    response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
                         )
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pd=request.user.id
+                        )
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
                 # CHECK USER ID
                 if request.user.id != int(kwargs["pk"]) \
                   and not request.user.is_staff:
@@ -146,11 +164,14 @@ class FileStorageViewSet(viewsets.ViewSet):
                     status_data,
                     status=status_code
                 )
-            elif not request.user.is_authenticated:
-                # NOT LOGGEN IN
-                return JsonResponse({"detail": "User is not authenticated"},
-                    status=status.HTTP_400_BAD_REQUEST
-                    )
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
             
         except Exception as e:
             # ERROR IN SCRIPT
@@ -165,91 +186,105 @@ class FileStorageViewSet(viewsets.ViewSet):
 
     @decorators_CSRFToken(True)
     async def create(self, request):
-        # if not request.META.get("HTTP_X_CSRFTOKEN") or not \
-        #   request.COOKIES.get('csrftoken') or\
-        #   request.COOKIES.get(settings.CSRF_COOKIE_NAME) != request.META.get("HTTP_X_CSRFTOKEN"):
-        #     return JsonResponse(
-        #         {"detail": "CSRF verification failed"}, status=403
-        #         )
-        
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
-        user_session = await sync_to_async(cache.get)(f"user_session_{user_ind}")
-        cache.close()
-        # GET the file's data
+        # GET THE FILE'S DATA from FORM
         file_obj = request.FILES.get('file')
         if not file_obj:
             return JsonResponse({"error": "No file provided"},
                                 status=status.HTTP_400_BAD_REQUEST)
-        if not file_obj or user_session != \
-          getattr(cookie_data, f"user_session"):
-            response = JsonResponse(
-                {"error": "No file provided."},
+        try:
+            if request.user.is_authenticated:
+                user_session_client = request.COOKIES.get('user_session')
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
+                user_session_db = await sync_to_async(cache.get)(
+                    f"user_session_{request.user.id}"
+                )
+                user = await sync_to_async(UserRegister.objects.get)(
+                    pk=request.user.id
+                )
+                # CHECK THE SESSION KEY of USER_SESSION
+                if user_session_db != user_session_client:
+                    response = JsonResponse(
+                        {"data": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
+                """
+                Conservation a one file in serverby by path \
+                'card/<year>/<month>/<day>/< file name >'
+                First, we need to check the duplication file.  For this, we save the file \
+                by path 'card/...'.
+                
+                """
+                time_path = f"card/{user_ind}/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
+                
+                # THE DOCUMENT FILE is TEMPORARY SAVING
+                await sync_to_async(default_storage.save)(f"{time_path}/{file_obj.name}", file_obj)
+                # CHECK ON FILE'S DUPLICATION
+                result_bool = await asyncio.create_task(
+                    FileStorageViewSet
+                    .compare_twoFiles(f"{time_path}/{file_obj.name}",
+                                      int(user_ind),
+                                      FileStorage)
+                )
+                # CREATE A LINE FOR FILE'S DB IF NOT DUPLICATION
+                if not result_bool:
+                    # DELETE THE TEMPORARY FILE (above)
+                    await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
+                    # RE-SAVE A FILE TO SERVER BY
+                    # A PATH 'uploads/<year>/<month>/<day>/< file name >'
+                    time_path = time_path.replace("card/", "uploads/")
+                    file_path = await asyncio.create_task(
+                        sync_to_async(default_storage.save)\
+                            (f"{time_path}/{file_obj.name}", file_obj)
+                    )
+                    file_record = await sync_to_async(FileStorage.objects.create)(
+                        user=user,
+                        original_name=file_obj.name,
+                        size=file_obj.size,
+                        file_path="%s" % file_path,
+                    )
+                    # SERIALIZER
+                    serializer = FileStorageSerializer(file_record)
+                    return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
+                else:
+                    # FOUND THE FILE'S DUPLICATION
+                    await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
+                    # time_path = time_path.replace("card/", "uploads/")
+                    # Get the old file by path 'uploads/<year>/<month>/<day>/< file name >'
+                    # /* --------------- А если файл переименован?? --------------- */
+                    file_old_list = \
+                        await sync_to_async(list)(FileStorage.objects\
+                                                  .filter(original_name=f"{file_obj.name}"))
+                    if len(file_old_list) > 0:
+                        serializer = self.serializer_class(file_old_list[0])
+                        return JsonResponse(serializer.data,
+                                        status=status.HTTP_208_ALREADY_REPORTED)
+                    
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
+        except FileStorage.DoesNotExist as err:
+            # If something what wrong
+            return JsonResponse(
+                {"detail": f"Mistake => {err.__str__()}"},
                 status=status.HTTP_400_BAD_REQUEST
-            )
-            response.set_cookie(
-                "is_active",
-                False,
-                max_age=SESSION_COOKIE_AGE,
-                httponly=SESSION_COOKIE_HTTPONLY,
-                secure=SESSION_COOKIE_SECURE,
-                samesite=SESSION_COOKIE_SAMESITE
-            )
-            return response
-        """
-        Conservation a one file in serverby by path \
-        'card/<year>/<month>/<day>/< file name >'
-        First, we need to check the duplication file.  For this, we save the file \
-        by path 'card/...'.
-        
-        """
-        time_path = f"card/{user_ind}/{datetime.now().year}/{datetime.now().month}/{datetime.now().day}"
-        
-        # SAVE file
-        await sync_to_async(default_storage.save)\
-            (f"{time_path}/{file_obj.name}", file_obj)
-        # CHECK the file on a file's duplication
-        result_bool = await asyncio.create_task(
-            FileStorageViewSet.compare_twoFiles(f"{time_path}/{file_obj.name}", int(user_ind), FileStorage)
-        )
-        # CREATE A LINE in db if NOT duplication
-        if not result_bool:
-            await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
-            time_path = time_path.replace("card/", "uploads/")
-            # Re-save a file ( from over) in server by a path 'uploads/<year>/<month>/<day>/< file name >'
-            file_path = await asyncio.create_task(
-                sync_to_async(default_storage.save)\
-                    (f"{time_path}/{file_obj.name}", file_obj)
-            )
-            user_list = await asyncio.create_task(
-                sync_to_async(list)\
-                    (UserRegister.objects.filter(id=int(user_ind)))
-            )
-            file_record = await sync_to_async(FileStorage.objects.create)(
-                user= user_list[0],
-                original_name=file_obj.name,
-                size=file_obj.size,
-                file_path="%s" % file_path,
-            )
-            serializer = FileStorageSerializer(file_record)
-            return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            # If, we found the file's dupolication
-            await sync_to_async(default_storage.delete)(f"{time_path}/{file_obj.name}")
-        time_path = time_path.replace("card/", "uploads/")
-        # Get the old file by path 'uploads/<year>/<month>/<day>/< file name >'
-        # /* --------------- А если файл переименован?? --------------- */
-        file_old_list = \
-            await sync_to_async(list)(FileStorage.objects\
-                                      .filter(original_name=f"{file_obj.name}"))
-        if len(file_old_list) > 0:
-            serializer = self.serializer_class(file_old_list[0])
-            return JsonResponse(serializer.data,
-                            status=status.HTTP_208_ALREADY_REPORTED)
-        # If something what wrong
-        return JsonResponse({"error": "The wrong, incorrect request"},
-                            status=status.HTTP_400_BAD_REQUEST)
-    
+                )
+        finally:
+            cache.close()
     async def destroy(self, request, *args):
         return sync_to_async(JsonResponse)({"error": "The wrong, incorrect request"})
     
@@ -480,7 +515,10 @@ class FileStorageViewSet(viewsets.ViewSet):
             file_id = request.COOKIES.get("fileId")
             # file_id = getattr(cookie_data, "fileId")
             file_record_list = \
-                await sync_to_async(list)(FileStorage.objects.filter(user_id=int(wargs["pk"])).filter(pk=int(file_id)))
+                await sync_to_async(list)(
+                    FileStorage.objects.filter(user_id=int(wargs["pk"]))
+                    .filter(pk=int(file_id))
+                )
             if len(file_record_list) == 0 :
                 # Get data of line from db
                 # /* -----------  lambda  ----------- */
@@ -501,7 +539,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 )
            
             user_session_fromFile = getattr(cookie_data, "user_session")
-            # GET use-session from the ceche (table from db session)
+            # GET use-session from the cache (table from db session)
             user_session_db = await sync_to_async(cache.get)(
                 f"user_session_{user_ind}"
                 )
