@@ -479,27 +479,80 @@ class FileStorageViewSet(viewsets.ViewSet):
             url_name="comment", methods=['PATCH'])
     @decorators_CSRFToken(True)
     async def update_comment(self, request,  **kwargs):
-        new_comment = json.loads(request.body).get('comment')
-        # http://127.0.0.1:8000/api/v1/files/31/update_comment/
-        file_id = json.loads(request.body).get('fileId')
-        if file_id == None or new_comment == None:
-            return sync_to_async(JsonResponse)(
-                {"error": "User not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
         try:
-            file_record_list = \
-                await sync_to_async(list)(FileStorage.objects.filter(user_id=kwargs["pk"]).filter(pk=int(file_id)))
-            if len(file_record_list) == 0:
+            new_comment = ""
+            file_id = ""
+            # GET DATA FROM REQUEST
+            if hasattr(request, "data"):
+                new_comment = new_comment.replace("", request.data.get('comment'))
+                file_id = file_id.replace("", request.data.get('fileId'))
+            elif hasattr(request, "body"):
+                new_comment = json.loads(request.body).get('comment')
+                file_id = json.loads(request.body).get('fileId')
+            # http://127.0.0.1:8000/api/v1/files/31/update_comment/
+            
+            if not file_id or not new_comment:
                 return sync_to_async(JsonResponse)(
                     {"error": "User not found."},
                     status=status.HTTP_404_NOT_FOUND
                 )
-                
-            file_record_list[0].comment = new_comment
-            await sync_to_async(file_record_list[0].save)()
             
-            return await sync_to_async(JsonResponse)(self.serializer_class(file_record_list[0]).data)
+            if request.user.is_authenticated:
+                user_session_client = request.COOKIES.get("user_session")
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
+                user_session_db = await sync_to_async(cache.get)(
+                    f"user_session_{request.user.id}"
+                )
+                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN
+                if user_session_db != user_session_client and not request.user.is_staff:
+                    response = JsonResponse(
+                        {"data": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pd=request.user.id
+                    )
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
+                # CHECK USER ID
+                if request.user.id != int(kwargs["pk"]) \
+                  and not request.user.is_staff:
+                    return JsonResponse(
+                        {"error": "There is no access"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                # GET FILE BY FILE ID FOR RENAMING
+                file_record_list = \
+                    await sync_to_async(list)(
+                        FileStorage.objects
+                        .filter(user_id=int(kwargs['pk']))
+                        .filter(id=int(file_id))
+                        )
+                # file_record_list = \
+                #     await sync_to_async(list)(FileStorage.objects.filter(user_id=kwargs["pk"]).filter(pk=int(file_id)))
+                if len(file_record_list) == 0:
+                    return sync_to_async(JsonResponse)(
+                        {"detail": "File not found."},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                    
+                file_record_list[0].comment = new_comment
+                await sync_to_async(file_record_list[0].save)(update_fields=["comment"])
+                
+                return await sync_to_async(JsonResponse)(self.serializer_class(file_record_list[0]).data)
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
         except FileStorage.DoesNotExist:
             return await sync_to_async(JsonResponse)(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
