@@ -88,7 +88,30 @@ to user's email. User indicates his email at the registrations moment.")
                 fields=['username'], name='unique_username'
                 )
         ]
-    
+    def __str__(self):
+        return self.username
+    # def create_user(self, email=None, password=None, **extra_fields):
+    #     if not email:
+    #         raise ValueError("The given email must be set")
+    #     email = self.normalize_email(email)
+    #     user = self.model(email=email, **extra_fields)
+    #     user.set_password(password)
+    #     user.save(using=self._db)
+    #     return user
+    #
+    # def create_superuser(self, username, email=None, password=None, **extra_fields):
+    #     email = self.normalize_email(email)
+    #     user = self.model(email=email, **extra_fields)
+    #     user.set_password(password)
+    #     user.save(using=self._db)
+    #
+    #     if hasattr("is_staff",extra_fields):
+    #         extra_fields.setdefault("is_staff", True)
+    #     if hasattr("is_superuser", extra_fields):
+    #         extra_fields.setdefault("is_superuser", True)
+    #     # if hasattr("is_active", extra_fields):
+    #     #     extra_fields.setdefault("is_active", False)
+    #     return self._create_user(username, email, password, **extra_fields)
     
     @property
     def is_authenticated(self) -> bool:

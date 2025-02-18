@@ -40,6 +40,7 @@ Dcz логика создания, авторизации и выхода пол
 Если FALSE, меняем:
 - `is_activated` на TRUE;
 - `is_active` на TRUE.
+
 ### Password !!!
 /* ------ Есть заглушка ------ */
 В django поступает 1 пароль из фронта. \
@@ -117,10 +118,19 @@ API: `api/v1/users/patch/<int:pk>/` \
 
 Сам сигнал, для отправки сообщения отправляем через \
 `views.py::send_message`.  
-## Logout
+### Logout
 Через метод `PATCH`, переменная `is_active` (из `requestBody`) имеет \
 значение `False`. 
 API: `api/v1/users/patch/<int:pk>/`
+
+### AnonymousUser 
+При активации и деактивации пользователя, поступившие данные из клиента проходят проверку:
+ - проверку hash-паролей;
+ - проверку email (данная проверка имеет смысл, когда запрос к серверу\
+отправляется при наличии 'index' в cookie клиента. Хотя... можно убрать\
+`cloud_user/views.py::UserPatchViews.update_cell`);
+ - затем `login(request, user)`.
+
 ## COOKIE
 1. В БД `cacher` ключи `user_session` для cookie.\
 Основное назначение это определение пользователя - как index пользователя. \

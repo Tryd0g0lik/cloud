@@ -72,7 +72,7 @@ class UserPatchSerializer(serializers.ModelSerializer):
         """
         
         
-        instance = super().update(instance, validated_data)
+        # instance = super().update(instance, validated_data)
         instance = get_fields_response(self)
         
         return instance

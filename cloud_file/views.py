@@ -8,85 +8,85 @@ from typing import TypedDict
 import os
 
 from asgiref.sync import sync_to_async
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt, csrf_protect, \
-    requires_csrf_token
-from django.middleware.csrf import CsrfViewMiddleware, get_token
+from django.http import (HttpResponse, JsonResponse)
 from rest_framework import status
 from adrf import viewsets
-from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.cache import cache
-from django.utils.decorators import method_decorator
 
 from cloud.cookies import Cookies
-# from django.views.decorators.csrf import csrf_exempt
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
 from cloud_user.models import UserRegister
-from project.settings import SESSION_COOKIE_AGE, SESSION_COOKIE_HTTPONLY, \
-    SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE
+from project.settings import (SESSION_COOKIE_AGE, SESSION_COOKIE_HTTPONLY, \
+    SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE)
 
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
-from datetime import datetime, timezone
+from datetime import datetime
 from project import decorators_CSRFToken
-
-
-
-
-
-
-
-class Kwargs(TypedDict):
-    pk: int
-class PKStr(TypedDict):
-    pk: str
+from project import use_CSRFToken
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
 
     @decorators_CSRFToken(True)
-    async def list(self, request, *args, **kwargs: Kwargs) -> JsonResponse:
+    async def list(self, request, *args, **kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
         files = []
+        
         try:
-            instance = await sync_to_async(get_data_authenticate)(request)
-            files = await sync_to_async(list)(
-                FileStorage.objects.filter(
-                    user_id=int(instance.id)
-                    ))
-            if len(files) == 0:
-                status_data = {"data": []}
-                status_code=status.HTTP_200_OK
+            if request.user.is_authenticated:
+                user_session_client = getattr(request.COOKIES, "user_session")
+                # GET use-session from the ceche (table from db session)
+                user_session_db = await sync_to_async(cache.get)(
+                    f"user_session_{request.user.id}"
+                )
+                # CHECK THE KEY of SESSION
+                if user_session_db != user_session_client:
+                    return JsonResponse({"data": []},
+                                        status=status.HTTP_403_FORBIDDEN)
+                instance = await sync_to_async(get_data_authenticate)(request)
+                
+                # IF USER IS ADMIN - RETURN ALL FILES FROM ALL USERS
+                if request.user.is_staff:
+                    files = await sync_to_async(list)(FileStorage.objects.all())
+                elif not request.user.is_staff:
+                    # #
+                    files = await sync_to_async(list)(FileStorage.objects\
+                                                .filter(user_id=int(instance.id)))
+                else:
+                    files = []
+                # USER HAVE NOT FILES - RETURN EMPTY LIST
+                if len(files) == 0:
+                    status_data = {"data": []}
+                    status_code=status.HTTP_200_OK
+                    return JsonResponse(
+                        status_data,
+                        status=status_code
+                        )
+                # SERIALIZER
+                serializer = self.serializer_class(files, many=True)
+                status_data = serializer.data
+                if "[" in str(serializer.data):
+                    status_data = {"data": list(serializer.data)}
                 return JsonResponse(
                     status_data,
                     status=status_code
                     )
-            # /* -----------  lambda  ----------- */
-            user_is_staff = await sync_to_async(lambda: files[0].user.is_staff)()
-            if user_is_staff :
-                # Если администратор, получаем файлы всех пользователей
-                files = await sync_to_async(list)(FileStorage.objects.all())
-            elif not user_is_staff and int(kwargs["pk"]) == int(instance.id) :
-                # Получаем файлы только текущего пользователя
-                files = await sync_to_async(list)(FileStorage.objects\
-                                            .filter(user_id=int(instance.id)))
             else:
-                files = []
-            serializer = self.serializer_class(files, many=True)
-            status_data = serializer.data
-            if "[" in str(serializer.data):
-                status_data = {"data": list(serializer.data)}
-            return JsonResponse(
-                status_data,
-                status=status_code
-                )
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                    )
         except Exception as e:
+            # ERROR IN SCRIPT
             status_data = {"error": f"[{self.__class__.list.__name__}]: \
             Mistake => {e.__str__()}"}
             status_code = status.HTTP_400_BAD_REQUEST
@@ -98,7 +98,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             pass
     
     @decorators_CSRFToken(True)
-    async def retrieve(self, request, *args, **kwargs: Kwargs):
+    async def retrieve(self, request, *args, **kwargs):
         """
         Method GET for receive a single position
         :param request:
@@ -110,6 +110,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         status_code = status.HTTP_200_OK
         coockies = request.COOKIES
         csrf = coockies.get("csrftoken")
+        # CHECK CSRF TOKEN
         if use_CSRFToken.state != csrf:
             return JsonResponse({"detail": "CSRF token is invalid"},
                                status=status.HTTP_400_BAD_REQUEST)
@@ -118,7 +119,8 @@ class FileStorageViewSet(viewsets.ViewSet):
         try:
             # GET  data of COOKIE (is_staff_* & user_session_*)
             instance = await sync_to_async(get_data_authenticate)(request)
-            if kwargs["pk"]:
+            if request.user.is_authenticated \
+              and request.user.id == int(kwargs["pk"]):
                 files = await sync_to_async(list)(
                     FileStorage.objects.filter(user_id=int(kwargs["pk"]))
                 )
@@ -139,29 +141,27 @@ class FileStorageViewSet(viewsets.ViewSet):
                         {"error": "There is no access"},
                         status=status.HTTP_400_BAD_REQUEST
                         )
-                
-            else:
-                status_data = {"error": "'pk' is invalid"}
-                return JsonResponse(status_data,
+                serializer = self.serializer_class(files[0])
+                status_data = {"files": [serializer.data]}
+                if type(files) == list and len(files) > 1:
+                    serializer = self.serializer_class(files, many=True)
+                    status_data = {"files": serializer.data}
+
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
+            elif not request.user.is_authenticated:
+                return JsonResponse({"detail": "USer is not authenticated"},
                     status=status.HTTP_400_BAD_REQUEST
                     )
-            serializer = self.serializer_class(files[0])
-            status_data = {"files": [serializer.data]}
-            if type(files) == list and len(files) > 1:
-                serializer = self.serializer_class(files, many=True)
-                status_data = {"files": serializer.data}
-                
             
-            return JsonResponse(
-                status_data,
-                status=status_code
-            )
         except Exception as e:
+            # ERROR IN SCRIPT
             status_data = {
                 "error": f"[{self.__class__.retrieve.__name__}]: \
                        Mistake => {e.__str__()}"}
             status_code = status.HTTP_400_BAD_REQUEST
-        
             return JsonResponse(
                 status_data,
                 status=status_code
