@@ -84,17 +84,25 @@ METHOD: GET, CREATE, PUT, DELETE.
             pass
         
         # GET user ID
-        cookie_data = get_data_authenticate(request)
         cacher = DataCookie()
-        cacher.user_session = cache.get(f"user_session_{cookie_data.id}")
+        cacher.user_session = cache.get(f"user_session_{request.user.id}")
         try:
             if request.user.is_authenticated:
-                # Check presences the 'user_session', 'is_staff' in cacher table of db
-                if request.user.is_staff is not None and \
-                  cacher.user_session is not None and \
-                  cacher.user_session == cache.get(
-                    f"user_session_{cookie_data.id}"
-                ):
+                user_session_client = request.COOKIES.get("user_session")
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
+                user_session_db = cache.get(
+                    f"user_session_{request.user.id}"
+                )
+                # CHECK USER ID
+                if request.user.id != int(kwargs["pk"]) \
+                  and not request.user.is_staff:
+                    return JsonResponse(
+                        {"error": "There is no access"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                # CHECK THE SESSION KEY of USER_SESSION
+                if user_session_db == user_session_client or request.user.is_staff:
                     # Below, check, It is the superuser or not.
                     # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
                     # 'user_settion_{id}' from cacher table of db
@@ -111,8 +119,18 @@ METHOD: GET, CREATE, PUT, DELETE.
                         serializer = UserSerializer(files, many=True)
                         instance = get_fields_response(serializer)
                         return Response(instance)
-                res = {"message": f"[{__name__}::list]: "}
-                return JsonResponse(data=res)
+                else:
+                    response = JsonResponse(
+                        {"data": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    user = UserRegister.objects.get(pk=request.user.id)
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
             else:
                 # NOT LOGGED IN
                 status_data = {"detail": "User is not authenticated"}
@@ -128,24 +146,30 @@ Mistake => f{e.__str__()}"}
                 )
     
     def retrieve(self, request, *args, **kwargs):
-        
-        user_session = request.COOKIES.get(f"user_session")
-        check_bool = check(
-            f"user_session_{kwargs['pk']}", user_session, **kwargs
+        try:
+            user_session = request.COOKIES.get(f"user_session")
+            check_bool = check(
+                f"user_session_{kwargs['pk']}", user_session, **kwargs
             )
-        
-        if not check_bool:
-            return Response(
-                {"message":
-                     f"[{__name__}::{self.__class__.retrieve.__name__}]:\
-Your profile is not activate"}
-                ), 404
-        # if 'pk' in kwargs.keys():
-        instance = super().retrieve(request, *args, **kwargs)
-        instance = get_fields_response(instance)
-        return JsonResponse(instance)
-        # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
     
+            if not check_bool:
+                return Response(
+                    {"message":
+                         f"[{__name__}::{self.__class__.retrieve.__name__}]:\
+            Your profile is not activate"}
+                ), 404
+            # if 'pk' in kwargs.keys():
+            instance = super().retrieve(request, *args, **kwargs)
+            instance = get_fields_response(instance)
+            return JsonResponse(instance)
+            # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
+
+        except Exception as e:
+            return JsonResponse(
+                data={"message": f"[{__name__}::retrieve]: \
+Mistake => f{e.__str__()}"}
+                )
+        
     def dispatch(self, request, *args, **kwargs):
         resp = None
         try:
