@@ -19,15 +19,13 @@ from cloud.cookies import Cookies
 from cloud.hashers import md5_chacker
 from cloud.services import get_data_authenticate
 from cloud_user.models import UserRegister
-from project.settings import (SESSION_COOKIE_AGE, SESSION_COOKIE_HTTPONLY, \
-    SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE)
 
 from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime
 from project import decorators_CSRFToken
-from project import use_CSRFToken
+
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
@@ -557,8 +555,6 @@ class FileStorageViewSet(viewsets.ViewSet):
             return await sync_to_async(JsonResponse)(
                 {"error": "File not found."}, status=status.HTTP_404_NOT_FOUND
             )
-    
-    # @action(detail=True, url_path="download/<int:pk>/", methods=['get'])
     
     @action(detail=True, url_name="download",
             methods=['GET'])
