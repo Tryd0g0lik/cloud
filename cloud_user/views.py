@@ -9,14 +9,15 @@ from datetime import datetime
 from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
+from django.contrib.auth import authenticate, login
 from rest_framework import (viewsets, generics, status)
 from rest_framework.response import Response
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 
-
+from cloud.cookies import Cookies
 from project import decorators_CSRFToken
 
 from cloud_user.tasks import ready, _run_async
@@ -374,6 +375,8 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 elif "password" == item and "email" in data.keys() and \
                   "is_active" in data.keys():
                     authenticity = True if data["email"] == user.email else False
+                    # CHANGE USER AUTHENTICATE (is_active)
+                    login(request, user)
                     if not authenticity:
                         # status code 400
                         response = JsonResponse(
@@ -389,7 +392,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 kwargs[item] = (lambda: data[item])()
           
             
-            # CHANGE THE PROPERTY of the user object.
+            # CHANGE THE PROPERTY OF THE USER OBJECT.
             for item in kwargs.keys():
                 if item == "pk" or item == "id":
                     continue
@@ -401,6 +404,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
             response = JsonResponse(instance, status=200)
             # IF IS_ACTIVE CHANGE
             if "is_active" in data and data["is_active"]:
+                
                 hash_create_user_session(
                     kwargs['pk'],
                     f"user_session_{kwargs['pk']}"
@@ -455,7 +459,6 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
         return response
     
     def patch_change(self, request, *args, **kwargs):
-        
         """
     Возвращает данные для COOKIE ('user_session_{id}')  если\
 json.loads(request.body)["is_active"] == True, and 'is_active'
@@ -533,21 +536,24 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
                     response = UserPatchViews.update_cell(request, *args, **kwargs)
                     return response
                 else:
+                    user = request.user
                     user.is_active = False
                     user.save(update_fields=['is_active'])
+            # MAYBE THE USER SESSION IS NOT CORRECT BUT USER.is_active = True
             response = JsonResponse(
                 {"detail": "Something what wrong! \
-Check the 'user_session' or 'pk'"},
+Check the 'user_session' or 'pk'. \
+The 'user_session' of client and the \
+of ceche (table of db - session) not equals. It's maybe."},
                 status=status.HTTP_400_BAD_REQUEST
                 )
-            response.set_cookie(
-                "is_active",
-                False,
-                max_age=SESSION_COOKIE_AGE,
-                httponly=SESSION_COOKIE_HTTPONLY,
-                secure=SESSION_COOKIE_SECURE,
-                samesite=SESSION_COOKIE_SAMESITE
-            )
+            # GO OUT FROM THE PROFILE
+            cookie = Cookies(kwargs['pk'], response)
+            response = cookie.is_active(is_active_=False)
+            # USER IS NOT ACTIVE
+            user = UserRegister.objects.get(pk=int(kwargs["pk"]))
+            user.is_active =  False if str(False) in response.cookies.get("is_active").value else True
+            user.save(update_fields=['is_active'])
             return response
         except Exception as e:
             return Response(
