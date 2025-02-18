@@ -10,7 +10,7 @@ class Cookies:
 
     def user_session(self,
                      max_age_=SESSION_COOKIE_AGE,
-                     httponly_=str(True),
+                     httponly_=True,
                      secure_=str(SESSION_COOKIE_SECURE),
                      samesite_=SESSION_COOKIE_SAMESITE):
         self.response.set_cookie(f"user_session",
@@ -25,7 +25,7 @@ class Cookies:
         return self.response
     def is_staff(self, is_staff: bool,
                  max_age_=SESSION_COOKIE_AGE,
-                 httponly_=str(True),
+                 httponly_=True,
                  secure_=str(SESSION_COOKIE_SECURE),
                  samesite_=SESSION_COOKIE_SAMESITE
                  ):
@@ -56,7 +56,7 @@ class Cookies:
         return self.response
     def user_index(self,
                 max_age_=SESSION_COOKIE_AGE,
-                httponly_=str(False),
+                httponly_=False,
                 secure_=str(SESSION_COOKIE_SECURE),
                 samesite_=SESSION_COOKIE_SAMESITE
                 ):
@@ -80,7 +80,7 @@ class Cookies:
     def empty_templete(self, key,
                        value,
                        max_age_=SESSION_COOKIE_AGE,
-                       httponly_=str(False),
+                       httponly_=False,
                        secure_=str(SESSION_COOKIE_SECURE),
                        samesite_=SESSION_COOKIE_SAMESITE
                        ):
