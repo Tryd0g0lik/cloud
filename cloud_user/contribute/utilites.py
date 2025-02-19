@@ -60,14 +60,18 @@ def send_activation_notificcation(user) -> bool:
             "host": _host,
              "sign": signer.sign(user.username).replace(":", "_null_")}
         # letter 1
-        subject = render_to_string(template_name= \
-                                       'email/activation_letter_subject.txt',
-                                   context=_context
-                                   )
+        log.info(f"{__text} Create a template for admin")
+        subject = render_to_string(
+            template_name= 'email/activation_letter_subject.txt',
+            context=_context
+            )
         log.info(f"{__text} Create a template for letter the number one ")
         # letter 2
+        file_name = 'email/activation_letter_body.txt'
+        if user.is_superuser:
+            file_name = 'email/activation_admin_letter_body.txt'
         body_text = render_to_string(
-            template_name='email/activation_letter_body.txt',
+            template_name=file_name,
             context=_context
         )
         log.info(f"{__text} Create a template for letter the number two ")

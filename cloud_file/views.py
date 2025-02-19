@@ -535,7 +535,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 #     await sync_to_async(list)(FileStorage.objects.filter(user_id=kwargs["pk"]).filter(pk=int(file_id)))
                 if len(file_record_list) == 0:
                     return sync_to_async(JsonResponse)(
-                        {"detail": "File not found."},
+                        {"detail": "Mistake => File not found."},
                         status=status.HTTP_404_NOT_FOUND
                     )
                     
@@ -545,7 +545,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 return await sync_to_async(JsonResponse)(self.serializer_class(file_record_list[0]).data)
             else:
                 # NOT LOGGED IN
-                status_data = {"detail": "User is not authenticated"}
+                status_data = {"detail": "Mistake => User is not authenticated"}
                 status_code = status.HTTP_401_UNAUTHORIZED
                 return JsonResponse(
                     status_data,

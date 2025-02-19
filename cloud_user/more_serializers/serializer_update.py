@@ -4,7 +4,7 @@ cloud_user/more_serializers/serializer_update.py
 import logging
 from rest_framework import serializers
 from cloud_user.models import UserRegister
-from cloud_user.contribute.services import get_fields_response
+from project.services import get_fields_response
 from logs import configure_logging, Logger
 
 configure_logging(logging.INFO)

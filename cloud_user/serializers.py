@@ -7,8 +7,8 @@ import scrypt
 from base64 import b64encode
 from rest_framework import serializers
 from cloud_user.apps import signal_user_registered
-from cloud_user.models import UserRegister
 from cloud_user.contribute.services import find_superuser
+from cloud_user.models import UserRegister
 from logs import configure_logging, Logger
 from project.settings import SECRET_KEY
 
@@ -54,7 +54,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             # get the text from the basis value
             _text = (_text.split(":"))[0] + ":"
 
-            # Send of Signal. Sends the message with the referral link for
+            # SEND OF SIGNAL. Sends the message with the referral link for
             # user authentication.
             # The *_user/controler_activate.py::user_activate make changes in db.
             # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
