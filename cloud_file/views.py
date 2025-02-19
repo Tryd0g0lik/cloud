@@ -145,10 +145,17 @@ class FileStorageViewSet(viewsets.ViewSet):
                         {"error": "There is no access"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                # GET FILES FROM SINGLE USER
-                files = await sync_to_async(list)(
-                    FileStorage.objects.filter(user_id=int(kwargs["pk"]))
-                )
+                # CHECK THE USER's PERMISSIONS
+                if request.user.is_staff:
+                    # GET FILES FROM ALL USERS
+                    files.extend(await sync_to_async(list)(
+                        FileStorage.objects.all())
+                                 )
+                elif not request.user.is_staff:
+                    # GET FILES FROM SINGLE USER
+                    files.extend(await sync_to_async(list)(
+                        FileStorage.objects.filter(user_id=int(kwargs["pk"]))
+                    ))
                 
                 status_data = {"files": []}
                 # SERIALIZER

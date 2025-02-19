@@ -71,6 +71,7 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
             # CHECK IF USER IS NOT AUTHENTICATED
             if request.method == "POST" and not request.user.is_authenticated:
                 data_request = json.loads(request.body)
+                
                 # SERIALIZER
                 serializer = AdminSerializer(data={**data_request})
                 data_saved = None
