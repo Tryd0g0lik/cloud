@@ -38,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             # Create the new user
             _user.send_messages = True
             _user.is_active = False
-            _user.activated = False
+            _user.is_activated = False
             # Cot czn registrate the superuser of user
             _user.is_superuser = False
             _user.is_staff = False

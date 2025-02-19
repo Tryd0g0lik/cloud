@@ -59,7 +59,7 @@ def send_activation_notificcation(user) -> bool:
         # letter 1
         log.info(f"{__text} Create a template for admin")
         subject = render_to_string(
-            template_name= 'email/activation_letter_subject.txt',
+            template_name='email/activation_letter_subject.txt',
             context=_context
             )
         log.info(f"{__text} Create a template for letter the number one ")

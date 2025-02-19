@@ -25,8 +25,8 @@ class AdminSerializer(serializers.ModelSerializer):
             # CHANGE USER's PROPERTIES
             _user.send_messages = True
             _user.is_active = False
-            _user.activated = False
-            _user.staff = True
+            _user.is_activated = False
+            _user.is_staff = True
             
             # HASH PASSWORD
             b_password = scrypt.hash(
