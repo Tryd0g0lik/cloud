@@ -40,7 +40,7 @@ urlpatterns = [
     path("api/v1/files/", include((urlpatterns_files, "files"), namespace="file")),
     path("api/v1/session/increase/time/", user_update_sessionTime, name="session"),
     
-    path("api/v1/admins/", include((urlpatterns_admin, "admin"), namespace="admin")),
+    path("api/v1/admins/", include((urlpatterns_admin, "admins"), namespace="admins")),
     path("api/v1/admins/choice/", include(routers_admins.urls)),
     # path("admins/login/", vws.main, name="admins")
     # path("api/v1/admins/", include((urlpatterns_admins, "admins"), namespace="admins")),

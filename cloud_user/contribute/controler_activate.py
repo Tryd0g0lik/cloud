@@ -112,11 +112,6 @@ from 'is_activated'."
         _text = (_text.split(":"))[0] + ":"
         user.is_active = True
         user.is_activated = True
-        # if "users" in request.path:
-        #     user.is_staff = False
-        # elif "admins" in request.path:
-        #     user.is_staff = True
-        #     user.is_superuser = True
         user.date_joined = datetime.utcnow()
         user.last_login = datetime.utcnow()
         user.save()

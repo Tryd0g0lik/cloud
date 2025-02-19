@@ -51,10 +51,7 @@ def send_activation_notificcation(user) -> bool:
                         if APP_PROTOKOL else view_url
                         for view_url in [url]]
             _host = url_list[0]
-        # Create the letter
-        # sign = scrypt.encrypt(SECRET_KEY, signer.sign(user.username)
-        #                       .replace(":", "_"),
-        #                      maxtime=120)
+            
         _context: dict = {
             "user": user,
             "host": _host,
