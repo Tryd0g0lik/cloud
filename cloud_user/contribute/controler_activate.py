@@ -98,7 +98,7 @@ code 301.\
         log.info(_text)
         # get the text from the basis value
         _text = (_text.split(":"))[0] + ":"
-        # check of activated
+        # CHECK OF ACTIVATED
         if user.is_activated:
             _text = f"{_text} the object 'user' has 'True' value \
 from 'is_activated'. Redirect. 301"
@@ -115,18 +115,15 @@ from 'is_activated'."
         user.date_joined = datetime.utcnow()
         user.last_login = datetime.utcnow()
         user.save()
-        # /* --------------------- _text = f"{_text} the object 'user' can
-        # not have 'True' value from 'is_activated'." --------------------- */
         # CREATE SIGNER
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session, SESSION_COOKIE_AGE)
-        # cache.set(f"is_staff_{user.id}", user.is_staff, SESSION_COOKIE_AGE) # ????????????????????
-        """ New object has tha `user_session_{id}` variable"""
+        """ New object has the `user_session_{id}` variable"""
         redirect_url = f"{request.scheme}://{request.get_host()}" \
 f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
         response =  HttpResponseRedirect(redirect_url)
         login(request, user)
-        # response.set_cookie(f"user_session_{user.id}",
+        # COOKIE ADD IN RESPONSE
         cookie = Cookies(user.id, response)
         response = cookie.All(user.is_staff, user.is_active)
         
