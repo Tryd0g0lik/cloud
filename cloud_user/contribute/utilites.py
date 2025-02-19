@@ -56,14 +56,14 @@ def send_activation_notificcation(user) -> bool:
             "user": user,
             "host": _host,
              "sign": signer.sign(user.username).replace(":", "_null_")}
-        # letter 1
+        # LETTER 1
         log.info(f"{__text} Create a template for admin")
         subject = render_to_string(
             template_name='email/activation_letter_subject.txt',
             context=_context
             )
         log.info(f"{__text} Create a template for letter the number one ")
-        # letter 2
+        # LETTER 2
         file_name = 'email/activation_letter_body.txt'
         if user.is_superuser:
             file_name = 'email/activation_admin_letter_body.txt'
@@ -72,7 +72,7 @@ def send_activation_notificcation(user) -> bool:
             context=_context
         )
         log.info(f"{__text} Create a template for letter the number two ")
-        # Run the 'email_user' method from basis the User model
+        # RUN THE 'email_user' METHOD FROM BASIS THE uSER MODEL
         # https://docs.djangoproject.com/en/5.1/topics/email/
         user.email_user(subject, body_text)
         _resp_bool = True

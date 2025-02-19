@@ -58,6 +58,8 @@ D работе
 В `controler_activate.py::user_activate` - проверка подписи (`sign` - ниже). \
 Сама функция срабатывает после клике по ссылке из письма юзера.
 
+### Note
+Письмо отправляется на первый хост из списка '`ALLOWED_HOSTS`' ('`settings.py`')  
 ## Signal (Сигнал) - 'sign' 
 Когда создаём сигнал (`cloud_user/contribute/utilites.py` ), к параметру \
 `sign` присваеваем значение. 
