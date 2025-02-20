@@ -107,38 +107,48 @@ METHOD: GET, CREATE, PUT, DELETE.
                     # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
                     # 'user_settion_{id}' from cacher table of db
                     # /* ---------------- cacher.is_staff = True Удалить ---------------- */
-                    if request.user.is_staff:
+                    if request.user.is_staff and hasattr(kwargs, "pk"):
                         # Если администратор, получаем всех пользователей
                         files = UserRegister.objects.all()
                         serializer = UserSerializer(files, many=True)
                         return Response(serializer.data)
-                    else:
+                    elif hasattr(kwargs, "pk"):
                         files = UserRegister.objects.filter(
-                            id=request.user.id
+                            id=int(kwargs["pk"])
                             )
                         serializer = UserSerializer(files, many=True)
                         instance = get_fields_response(serializer)
                         return Response(instance)
-                else:
-                    response = JsonResponse(
-                        {"data": ["User is not authenticated"]},
-                        status=status.HTTP_403_FORBIDDEN
-                    )
+                
+            else:
+                # NOT LOGGED IN
+                response = JsonResponse(
+                    {"data": ["User is not authenticated"]},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                if hasattr(request.user, 'id') and \
+                  getattr(request.user, 'id') != None:
                     user = UserRegister.objects.get(pk=request.user.id)
                     user.is_active = False
                     user.save(update_fields=["is_active"])
                     login(request, user)
-                    cookie = Cookies(request.user.id, response)
-                    response = cookie.is_active(False)
-                    return response
-            else:
-                # NOT LOGGED IN
-                status_data = {"detail": "Mistake => User is not authenticated"}
-                status_code = status.HTTP_401_UNAUTHORIZED
-                return JsonResponse(
-                    status_data,
-                    status=status_code
-                    )
+                elif hasattr(request.COOKIES, "index"):
+                    user = UserRegister.objects.get(
+                        pk=int(getattr(request.COOKIES, "index")))
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                elif hasattr(kwargs, "pk"):
+                    user = UserRegister.objects.get(pk=int(kwargs["pk"]))
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                
+                
+                
+                cookie = Cookies(request.user.id, response)
+                response = cookie.is_active(False)
+                return response
         except Exception as e:
             return JsonResponse(
                 data={"message": f"[{__name__}::list]: \
