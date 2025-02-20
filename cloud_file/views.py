@@ -31,7 +31,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
 
-    @decorators_CSRFToken(True)
+    # @decorators_CSRFToken(True)
     async def list(self, request, *args, **kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -60,12 +60,20 @@ class FileStorageViewSet(viewsets.ViewSet):
                 instance = await sync_to_async(get_data_authenticate)(request)
                 
                 # IF USER IS ADMIN - RETURN ALL FILES FROM ALL USERS
-                if request.user.is_staff:
-                    files = await sync_to_async(list)(FileStorage.objects.all())
-                elif not request.user.is_staff:
+                if request.user.is_staff and hasattr(kwargs, "pk"):
+                    files.extend(await sync_to_async(list)(FileStorage.objects.all()))
+                elif hasattr(request.COOKIES, "index"):
+                    files.extend(await sync_to_async(list)(
+                        FileStorage.objects \
+                            .filter(user_id=int(
+                            getattr(request.COOKIES, "index")
+                        ))
+                    ))
+                elif hasattr(kwargs, "pk"):
                     # #
-                    files = await sync_to_async(list)(FileStorage.objects\
-                                                .filter(user_id=int(instance.id)))
+                    files = await sync_to_async(list)(
+                        FileStorage.objects\
+                            .filter(user_id=int(getattr(kwargs, "pk"))))
                 else:
                     files = []
                 # USER HAVE NOT FILES - RETURN EMPTY LIST
@@ -105,7 +113,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         finally:
             pass
     
-    @decorators_CSRFToken(True)
+    # @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs):
         """
         Method GET for receive a single position
@@ -676,6 +684,3 @@ If we will be  check the one file with itself (and both files will be unchanged)
             return False
         finally:
             pass
-
-
-
