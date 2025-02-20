@@ -145,10 +145,17 @@ class FileStorageViewSet(viewsets.ViewSet):
                         {"error": "There is no access"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                # GET FILES FROM SINGLE USER
-                files = await sync_to_async(list)(
-                    FileStorage.objects.filter(user_id=int(kwargs["pk"]))
-                )
+                # CHECK THE USER's PERMISSIONS
+                if request.user.is_staff:
+                    # GET FILES FROM ALL USERS
+                    files.extend(await sync_to_async(list)(
+                        FileStorage.objects.all())
+                                 )
+                elif not request.user.is_staff:
+                    # GET FILES FROM SINGLE USER
+                    files.extend(await sync_to_async(list)(
+                        FileStorage.objects.filter(user_id=int(kwargs["pk"]))
+                    ))
                 
                 status_data = {"files": []}
                 # SERIALIZER
@@ -308,8 +315,11 @@ class FileStorageViewSet(viewsets.ViewSet):
                 user_session_db = await sync_to_async(cache.get)(
                     f"user_session_{request.user.id}"
                 )
-                # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db != user_session_client and not request.user.is_staff:
+                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN adn CHECK USER ID
+                if (user_session_db != user_session_client and not
+                request.user.is_staff) or (
+                  request.user.id != int(kwargs["pk"])
+                  and not request.user.is_staff):
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
@@ -323,13 +333,6 @@ class FileStorageViewSet(viewsets.ViewSet):
                     cookie = Cookies(request.user.id, response)
                     response = cookie.is_active(False)
                     return response
-                # CHECK USER ID
-                if request.user.id != int(kwargs["pk"]) \
-                  and not request.user.is_staff:
-                    return JsonResponse(
-                        {"error": "There is no access"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
                 # GET FILE'S LIST BY FILE's ID FROM DB
                 file_list = [await asyncio.create_task(
                     sync_to_async(list)(FileStorage.objects.filter(id=index))
@@ -393,8 +396,11 @@ class FileStorageViewSet(viewsets.ViewSet):
                 user_session_db = await sync_to_async(cache.get)(
                     f"user_session_{request.user.id}"
                 )
-                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN
-                if user_session_db != user_session_client and not request.user.is_staff:
+                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN adn CHECK USER ID
+                if (user_session_db != user_session_client and not
+                request.user.is_staff) or(
+                  request.user.id != int(kwargs["pk"])
+                      and not request.user.is_staff):
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
@@ -408,21 +414,13 @@ class FileStorageViewSet(viewsets.ViewSet):
                     cookie = Cookies(request.user.id, response)
                     response = cookie.is_active(False)
                     return response
-                # CHECK USER ID
-                if request.user.id != int(kwargs["pk"]) \
-                  and not request.user.is_staff:
-                    return JsonResponse(
-                        {"error": "There is no access"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                
                 # GET THE FILE BY FILE ID FOR RENAMING
                 file_record_list =\
                     await sync_to_async(list)(FileStorage.objects
-                                              .filter(user_id=int(kwargs['pk']))
                                               .filter(id=int(file_id)))
                 # CHECK THE NEW NAME IF EXISTS
                 file_name_duplication = await sync_to_async(list)(FileStorage.objects
-                                              .filter(user_id=int(kwargs['pk']))
                                               .filter(original_name=new_name))
                 # FOUND OF DUPLICATION
                 if len(file_name_duplication) != 0:
@@ -502,8 +500,11 @@ class FileStorageViewSet(viewsets.ViewSet):
                 user_session_db = await sync_to_async(cache.get)(
                     f"user_session_{request.user.id}"
                 )
-                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN
-                if user_session_db != user_session_client and not request.user.is_staff:
+                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN adn CHECK USER ID
+                if (user_session_db != user_session_client and not
+                request.user.is_staff) or (
+                  request.user.id != int(kwargs["pk"])
+                  and not request.user.is_staff):
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
@@ -517,25 +518,17 @@ class FileStorageViewSet(viewsets.ViewSet):
                     cookie = Cookies(request.user.id, response)
                     response = cookie.is_active(False)
                     return response
-                # CHECK USER ID
-                if request.user.id != int(kwargs["pk"]) \
-                  and not request.user.is_staff:
-                    return JsonResponse(
-                        {"error": "There is no access"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
                 # GET FILE BY FILE ID FOR RENAMING
                 file_record_list = \
                     await sync_to_async(list)(
                         FileStorage.objects
-                        .filter(user_id=int(kwargs['pk']))
                         .filter(id=int(file_id))
                         )
                 # file_record_list = \
                 #     await sync_to_async(list)(FileStorage.objects.filter(user_id=kwargs["pk"]).filter(pk=int(file_id)))
                 if len(file_record_list) == 0:
                     return sync_to_async(JsonResponse)(
-                        {"detail": "File not found."},
+                        {"detail": "Mistake => File not found."},
                         status=status.HTTP_404_NOT_FOUND
                     )
                     
@@ -545,7 +538,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 return await sync_to_async(JsonResponse)(self.serializer_class(file_record_list[0]).data)
             else:
                 # NOT LOGGED IN
-                status_data = {"detail": "User is not authenticated"}
+                status_data = {"detail": "Mistake => User is not authenticated"}
                 status_code = status.HTTP_401_UNAUTHORIZED
                 return JsonResponse(
                     status_data,
@@ -596,7 +589,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     @action(detail=True, url_name="referral_links",
             methods=['GET'])
     @decorators_CSRFToken(True)
-    async def referral_links(self, request, **wargs):
+    async def referral_links(self, request, **kwargs):
         try:
             # GET the user ID from COOKIE
             cookie_data = await sync_to_async(get_data_authenticate)(request)
@@ -605,8 +598,7 @@ class FileStorageViewSet(viewsets.ViewSet):
             # file_id = getattr(cookie_data, "fileId")
             file_record_list = \
                 await sync_to_async(list)(
-                    FileStorage.objects.filter(user_id=int(wargs["pk"]))
-                    .filter(pk=int(file_id))
+                    FileStorage.objects.filter(pk=int(file_id))
                 )
             if len(file_record_list) == 0 :
                 # Get data of line from db
@@ -615,46 +607,31 @@ class FileStorageViewSet(viewsets.ViewSet):
                     {"error": "Check the 'pk"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            # GET old data from db
-            user_id_fromFile = \
-                await asyncio.create_task(
-                    sync_to_async(lambda: file_record_list[0].user.id)()
-                )
-            user_is_staff_fromFile = \
-                await asyncio.create_task(
-                    sync_to_async(
-                    lambda: file_record_list[0].user.is_staff
-                )()
-                )
            
-            user_session_fromFile = getattr(cookie_data, "user_session")
+            user_session_client = getattr(cookie_data, "user_session")
             # GET use-session from the cache (table from db session)
             user_session_db = await sync_to_async(cache.get)(
                 f"user_session_{user_ind}"
-                )
-            
-            # CHECK of user/ This when the user id (from cookie of client)
-            # not equals user id from db
-            if (lambda: user_id_fromFile)() != (lambda: int(user_ind))() and \
-              not user_is_staff_fromFile:
+            )
+            # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN adn CHECK USER ID
+            if (user_session_db != user_session_client and not
+            request.user.is_staff) or (
+              request.user.id != int(kwargs["pk"])
+              and not request.user.is_staff):
                 response = JsonResponse(
-                    {"error": "Permission denied."},
+                    {"data": ["User is not authenticated"]},
                     status=status.HTTP_403_FORBIDDEN
                 )
-                cookie = Cookies((lambda: int(user_ind))(), response)
-                response = cookie.is_active(is_active=False)
+                user = await sync_to_async(UserRegister.objects.get)(
+                    pk=request.user.id
+                )
+                user.is_active = False
+                user.save(update_fields=["is_active"])
+                login(request, user)
+                cookie = Cookies(request.user.id, response)
+                response = cookie.is_active(False)
                 return response
             
-            # CHECK of session/authorisation
-            if user_session_fromFile != user_session_db:
-                response =  JsonResponse(
-                    {"error": "Permission denied."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-                cookie = Cookies((lambda: int(user_ind))(), response)
-                response = cookie.is_active(is_active=False, max_age_=30 * 1000)
-              
-                return response
             # GENERATE a referral link
             download_path = f"/api/v1/files/{file_record_list[0].special_link}/download/"
             

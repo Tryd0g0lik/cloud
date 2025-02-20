@@ -7,8 +7,8 @@ import scrypt
 from base64 import b64encode
 from rest_framework import serializers
 from cloud_user.apps import signal_user_registered
-from cloud_user.models import UserRegister
 from cloud_user.contribute.services import find_superuser
+from cloud_user.models import UserRegister
 from logs import configure_logging, Logger
 from project.settings import SECRET_KEY
 
@@ -35,15 +35,12 @@ class UserSerializer(serializers.ModelSerializer, Logger):
                 raise ValueError()
 
             log.info(_text)
-            # Create the new user
+            # CREATE THE NEW USER
             _user.send_messages = True
             _user.is_active = False
-            _user.activated = False
-            # Cot czn registrate the superuser of user
+            _user.is_activated = False
             _user.is_superuser = False
             _user.is_staff = False
-
-            # /* -----------------временно HASH----------------- */
             b_password = scrypt.hash(
                 f"pbkdf2${str(20000)}${(lambda: validated_data['password'])()}", SECRET_KEY
             ) #.decode('windows-1251')
@@ -54,14 +51,13 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             # get the text from the basis value
             _text = (_text.split(":"))[0] + ":"
 
-            # Send of Signal. Sends the message with the referral link for
-            # user authentication.
+            # SEND OF SIGNAL. SENDS THE MESSAGE with the referral link to
+            # user's email.
             # The *_user/controler_activate.py::user_activate make changes in db.
             # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
             signal_user_registered.send_robust(UserSerializer,
                                                isinstance=_user)
             _text = f"{_text} Signal was sent."
-            # _user = get_fields_response(_user)
             return _user
         except Exception as e:
             _text = f"{_text} Mistake => {e.__str__()}"

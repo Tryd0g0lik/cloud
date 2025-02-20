@@ -16,26 +16,26 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 
 from cloud.cookies import Cookies
+from cloud.hashers import hashpw_password
 from project import decorators_CSRFToken
 
-from cloud_user.tasks import ready, _run_async
 
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
                               SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE,
                               SESSION_COOKIE_HTTPONLY, CSRF_COOKIE_NAME)
 from django.views.decorators.csrf import get_token
-from django.views.decorators.csrf import ensure_csrf_cookie
 from cloud.services import (get_data_authenticate, decrypt_data)
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (check,
                                             hash_create_user_session)
-from cloud.hashers import hashpw_password
+from cloud_user.contribute.services import get_user_cookie
+from cloud_user.tasks import ready, _run_async
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
 
-from cloud_user.contribute.services import (get_fields_response,
-                                            get_user_cookie )
+from project.services import (get_fields_response )
+
 from logs import configure_logging
 
 configure_logging(logging.INFO)
@@ -133,7 +133,7 @@ METHOD: GET, CREATE, PUT, DELETE.
                     return response
             else:
                 # NOT LOGGED IN
-                status_data = {"detail": "User is not authenticated"}
+                status_data = {"detail": "Mistake => User is not authenticated"}
                 status_code = status.HTTP_401_UNAUTHORIZED
                 return JsonResponse(
                     status_data,
@@ -167,7 +167,7 @@ Mistake => f{e.__str__()}"}
 
             else:
                 # NOT LOGGED IN
-                status_data = {"detail": "User is not authenticated"}
+                status_data = {"detail": "Mistake => User is not authenticated"}
                 status_code = status.HTTP_401_UNAUTHORIZED
                 return JsonResponse(
                     status_data,
@@ -239,7 +239,7 @@ Mistake => f{e.__str__()}"}
                 return Response(instance.data, status=200)  # Проверить
             else:
                 # NOT LOGGED IN
-                status_data = {"detail": "User is not authenticated"}
+                status_data = {"detail": "Mistake => User is not authenticated"}
                 status_code = status.HTTP_401_UNAUTHORIZED
                 return JsonResponse(
                     status_data,
@@ -454,7 +454,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                     if not authenticity:
                         # status code 400
                         response = JsonResponse(
-                            {"detail": "Password or email is invalid!"},
+                            {"detail": "Mistake => Password or email is invalid!"},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                         # GET COOKIE
@@ -495,7 +495,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
             response = get_user_cookie(request, response)
             return response
         return JsonResponse(
-            {"detail": "Something what wrong!"},
+            {"detail": "Mistake => Something what wrong!"},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -619,7 +619,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
                 user.save(update_fields=['is_active'])
             # MAYBE THE USER SESSION IS NOT CORRECT BUT USER.is_active = True
             response = JsonResponse(
-                {"detail": "Something what wrong! \
+                {"detail": "Mistake => Something what wrong! \
             Check the 'user_session' or 'pk'. \
             The 'user_session' of client and the \
             of ceche (table of db - session) not equals. It's maybe."},
@@ -666,7 +666,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
             return b64encode(_hash_password).decode()
         except Exception as err:
             return JsonResponse(
-                {"detail": f"Mistake => {e.__str__()}"},
+                {"detail": f"Mistake => {err.__str__()}"},
                 status=status.HTTP_404_NOT_FOUND
             )
     
@@ -713,7 +713,7 @@ def api_get_index(request, **kwargs):
                 )
         else:
             return JsonResponse(
-                {"detail": "Not found"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Mistake => Not found"}, status=status.HTTP_400_BAD_REQUEST
             )
     return JsonResponse({"data": serializers["id"]}, status=status.HTTP_200_OK)
 
