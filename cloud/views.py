@@ -51,6 +51,8 @@ Mistake => {e.__str__()}")
     finally:
         cache.close()
    
+
+
 class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
     queryset = UserRegister.objects.all()
     serializer_class = AdminSerializer
