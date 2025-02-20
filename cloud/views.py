@@ -117,12 +117,9 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
     # @decorators_CSRFToken(True)
     async def list(self, request, *args, **kwargs):
         """
-        TODO: kwargs["pk"] - id пользователя
-        Entrypoint
-        :param request:
-        :param args:
-        :param kwargs:
-        :return:
+        :param args: None
+        :param kwargs: None
+        :return: method return list of users and their files
         """
         pass
         user_list = []
@@ -187,7 +184,11 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
 
     @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs):
-        pass
+        """
+       :param args: None
+       :param kwargs: None
+       :return: method return data of one users and  his files
+               """
         user_list = []
         user_files = []
         # response = super().retrieve(request, *args, **kwargs)
