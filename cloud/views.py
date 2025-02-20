@@ -130,48 +130,27 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             # CHECK IF USER IS AUTHENTICATED
             if request.user.is_authenticated and request.user.is_staff:
-                # GET USER DATA AND FILES OF ONE USER
-                if hasattr(kwargs, "pk") and getattr(kwargs, "pk") != None:
-                    # USER DATA
-                    data_users = await sync_to_async(list)(
-                        UserRegister.objects.filter(pk=int(kwargs["pk"])))
-                    # FILES DATA
-                    files_data = await sync_to_async(list)(
-                            FileStorage.objects.filter(user_id=int(kwargs["pk"])))
-                    # SERIALIZER
-                    serializer_data_user = self.get_serializer(list(data_users), many=True, allow_empty=True)
-                    # GET LIST OF USERS FROM SERIALIZER
-                    data_users_list = await sync_to_async(lambda: serializer_data_user.data)()
-                    user_list.extend(data_users_list)
-        
-                    if len(files_data) > 0:
-                        serializer_data_files = FileStorageSerializer(list(files_data), many=True, allow_empty=True)
-                        # GET LIST OF FILES FROM SERIALIZER
-                        data_files_list = await sync_to_async(lambda: serializer_data_files.data)()
-                        user_files.extend(data_files_list)
-                        
-                else:
-                    # GET ALL USERS
-                    data_users = await sync_to_async(list)(UserRegister.objects.all())
-                    serializer_data_users = self.get_serializer(
-                        list(data_users), many=True, allow_empty=True)
-                    # GET LIST OF USERS FROM SERIALIZER
-                    data_users_list = await sync_to_async(lambda: serializer_data_users.data)()
-                    user_list.extend(data_users_list)
-        #
-                    # GET ALL FILES
-                    data_files = await sync_to_async(list)(
-                            FileStorage.objects.all())
-                    # SERIALIZER ALL FILES
-                    if len(data_files) > 0:
-                        serializer_data_files = FileStorageSerializer(list(data_files), many=True, allow_empty=True)
-                        # GET LIST OF FILES FROM SERIALIZER
-                        data_files_list = await sync_to_async(lambda: serializer_data_files.data)()
-                        user_files.extend(data_files_list)
-                respons = JsonResponse(
+                # GET ALL USERS
+                data_users = await sync_to_async(list)(UserRegister.objects.all())
+                serializer_data_users = self.get_serializer(
+                    list(data_users), many=True, allow_empty=True)
+                # GET LIST OF USERS FROM SERIALIZER
+                data_users_list = await sync_to_async(lambda: serializer_data_users.data)()
+                user_list.extend(data_users_list)
+    #
+                # GET ALL FILES
+                data_files = await sync_to_async(list)(
+                        FileStorage.objects.all())
+                # SERIALIZER ALL FILES
+                if len(data_files) > 0:
+                    serializer_data_files = FileStorageSerializer(list(data_files), many=True, allow_empty=True)
+                    # GET LIST OF FILES FROM SERIALIZER
+                    data_files_list = await sync_to_async(lambda: serializer_data_files.data)()
+                    user_files.extend(data_files_list)
+                response = JsonResponse(
                     data={"users": list(user_list),
                           "files": list(user_files)}, status=status.HTTP_200_OK)
-                return respons
+                return response
             
             else:
                 # NOT LOGGED IN
@@ -193,17 +172,11 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     user.is_active = False
                     user.save(update_fields=["is_active"])
                     login(request, user)
-                elif hasattr(kwargs, "pk"):
-                    user =await sync_to_async(
-                        UserRegister.objects.get)(pk=int(kwargs["pk"]))
-                    user.is_active = False
-                    user.save(update_fields=["is_active"])
-                    login(request, user)
 
                 cookie = Cookies(request.user.id, response)
                 response = cookie.is_active(False)
                 return response
-           
+
         except Exception as e:
             response = \
                 JsonResponse({"detail":
@@ -212,8 +185,102 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                              status=status.HTTP_400_BAD_REQUEST)
             return response
 
-    # @decorators_CSRFToken(True)
+    @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs):
         pass
-        response = super().retrieve(request, *args, **kwargs)
-        return response
+        user_list = []
+        user_files = []
+        # response = super().retrieve(request, *args, **kwargs)
+        try:
+            # GET USER DATA AND FILES OF ONE USER
+            if request.user.is_authenticated and request.user.is_staff:
+                if "pk" in kwargs.keys():
+                    # USER DATA
+                    data_users = await sync_to_async(list)(
+                        UserRegister.objects.filter(pk=int(kwargs["pk"]))
+                    )
+                    # FILES DATA
+                    files_data = await sync_to_async(list)(
+                        FileStorage.objects.filter(user_id=int(kwargs["pk"]))
+                    )
+                    # SERIALIZER
+                    serializer_data_user = self.get_serializer(
+                        list(data_users), many=True, allow_empty=True
+                        )
+                    # GET LIST OF USERS FROM SERIALIZER
+                    data_users_list = await sync_to_async(
+                        lambda: serializer_data_user.data
+                        )()
+                    user_list.extend(data_users_list)
+            
+                    if len(files_data) > 0:
+                        serializer_data_files = FileStorageSerializer(
+                            list(files_data), many=True, allow_empty=True
+                            )
+                        # GET LIST OF FILES FROM SERIALIZER
+                        data_files_list = await sync_to_async(
+                            lambda: serializer_data_files.data
+                            )()
+                        user_files.extend(data_files_list)
+                    response = JsonResponse(
+                        data={"users": list(user_list),
+                              "files": list(user_files)}, status=status.HTTP_200_OK
+                    )
+                    return response
+                else:
+                    # NOT LOGGED IN
+                    response = JsonResponse(
+                        {"detail": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    if hasattr(request.user, 'id') and \
+                      getattr(request.user, 'id') != None:
+                        user = await sync_to_async(
+                            UserRegister.objects.get
+                        )(pk=request.user.id)
+                        user.is_active = False
+                        user.save(update_fields=["is_active"])
+                        login(request, user)
+                    elif hasattr(request.COOKIES, "index"):
+                        user = await sync_to_async(UserRegister.objects.get)(
+                            pk=int(getattr(request.COOKIES, "index"))
+                        )
+                        user.is_active = False
+                        user.save(update_fields=["is_active"])
+                        login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
+            else:
+                # NOT LOGGED IN
+                response = JsonResponse(
+                    {"detail": ["User is not authenticated"]},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                if hasattr(request.user, 'id') and \
+                  getattr(request.user, 'id') != None:
+                    user = await sync_to_async(
+                        UserRegister.objects.get)(pk=request.user.id)
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                elif hasattr(request.COOKIES, "index"):
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pk=int(getattr(request.COOKIES, "index"))
+                    )
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+
+                cookie = Cookies(request.user.id, response)
+                response = cookie.is_active(False)
+                return response
+        except Exception as e:
+            response = \
+                JsonResponse(
+                    {"detail":
+                         f"[{__name__}::{self.__class__.__name__}.\
+{self.list.__name__}]: Mistake => {e.__str__()}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                    )
+            return response
