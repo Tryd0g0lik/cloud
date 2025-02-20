@@ -40,6 +40,7 @@ def decorators_CSRFToken(async_ = False):
                     return JsonResponse({"detail": "CSRF verification failed"}, status=403)
             else:
                 return JsonResponse({"detail": "CSRF verification failed"}, status=403)
+
         if async_:
             @wraps(func)  # Сохраняем имя и документацию оригинальной функции
             async def wrapper(self, request, *args, **kwargs):

@@ -10,7 +10,10 @@ class AdminSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserRegister
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = ["password", "is_activated",
+                                            "email", "send_messages",
+                                            "groups", "user_permissions"]
     
     async def create(self, validated_data):
         pass
@@ -48,3 +51,5 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
         pass
         response = super().update(instance, validated_data)
         return response
+    
+    

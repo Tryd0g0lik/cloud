@@ -3,15 +3,20 @@ import asyncio
 from asgiref.sync import sync_to_async, async_to_sync
 from typing import (NewType, TypedDict, Dict)
 from rest_framework import (status, generics)
+from rest_framework.renderers import JSONRenderer
 from adrf import viewsets
 from rest_framework.decorators import action
 from django.core.cache import cache
+from django.contrib.auth import login
 from django.http.response import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 
+from cloud.cookies import Cookies
 from cloud.serializers import AdminSerializer
 from cloud.services import get_data_authenticate
+from cloud_file.models import FileStorage
+from cloud_file.serializers import FileStorageSerializer
 from cloud_user.models import UserRegister
 from cloud_user.serializers import UserSerializer
 from project import decorators_CSRFToken
@@ -59,7 +64,7 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
     # permission_classes = [
     #
     # ]
-    @decorators_CSRFToken(True)
+    # @decorators_CSRFToken(True)
     async def options(self, request, *args, **kwargs):
         pass
         response = super().options(request, *args, **kwargs)
@@ -108,25 +113,107 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
             return JsonResponse({"detail": f"[{__name__}::{self.__class__.__name__}.{self.create.__name__}]: \
 Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
 
-    @decorators_CSRFToken(True)
-    async def update(self, request, *args, **kwargs):
-        pass
-        response = super().update(request, *args, **kwargs)
-        return response
 
-    @decorators_CSRFToken(True)
-    async def destroy(self, request, *args, **kwargs):
-        pass
-        response = super().destroy(request, *args, **kwargs)
-        return response
-
-    @decorators_CSRFToken(True)
+    # @decorators_CSRFToken(True)
     async def list(self, request, *args, **kwargs):
+        """
+        TODO: kwargs["pk"] - id пользователя
+        Entrypoint
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         pass
-        response = super().list(request, *args, **kwargs)
-        return response
+        user_list = []
+        user_files = []
+        try:
+            # CHECK IF USER IS AUTHENTICATED
+            # if request.user.is_authenticated and request.user.is_staff:
+            # GET USER DATA AND FILES OF ONE USER
+            # if request.method == "POST":
+            if hasattr(kwargs, "pk") and getattr(kwargs, "pk") != None:
+                # USER DATA
+                data_users = await sync_to_async(list)(
+                    UserRegister.objects.filter(pk=int(kwargs["pk"])))
+                # FILES DATA
+                files_data = await sync_to_async(list)(
+                        FileStorage.objects.filter(user_id=int(kwargs["pk"])))
+                # SERIALIZER
+                serializer_data_user = self.get_serializer(list(data_users), many=True, allow_empty=True)
+                # GET LIST OF USERS FROM SERIALIZER
+                data_users_list = await sync_to_async(lambda: serializer_data_user.data)()
+                user_list.extend(data_users_list)
 
-    @decorators_CSRFToken(True)
+                if len(files_data) > 0:
+                    serializer_data_files = FileStorageSerializer(list(files_data), many=True, allow_empty=True)
+                    # GET LIST OF FILES FROM SERIALIZER
+                    data_files_list = await sync_to_async(lambda: serializer_data_files.data)()
+                    user_files.extend(data_files_list)
+                    
+            else:
+                # GET ALL USERS
+                data_users = await sync_to_async(list)(UserRegister.objects.all())
+                serializer_data_users = self.get_serializer(
+                    list(data_users), many=True, allow_empty=True)
+                # GET LIST OF USERS FROM SERIALIZER
+                data_users_list = await sync_to_async(lambda: serializer_data_users.data)()
+                user_list.extend(data_users_list)
+#
+                # GET ALL FILES
+                data_files = await sync_to_async(list)(
+                        FileStorage.objects.all())
+                # SERIALIZER ALL FILES
+                if len(data_files) > 0:
+                    serializer_data_files = FileStorageSerializer(list(data_files), many=True, allow_empty=True)
+                    # GET LIST OF FILES FROM SERIALIZER
+                    data_files_list = await sync_to_async(lambda: serializer_data_files.data)()
+                    user_files.extend(data_files_list)
+            respons = JsonResponse(
+                data={"users": list(user_list),
+                      "files": list(user_files)}, status=status.HTTP_200_OK)
+            return respons
+            # else:
+            #     pass
+            # else:
+            #     # NOT LOGGED IN
+            #     response = JsonResponse(
+            #         {"data": ["User is not authenticated"]},
+            #         status=status.HTTP_403_FORBIDDEN
+            #     )
+            #     if hasattr(request.user, 'id') and \
+            #       getattr(request.user, 'id') != None:
+            #         user = UserRegister.objects.get(pk=request.user.id)
+            #         user.is_active = False
+            #         user.save(update_fields=["is_active"])
+            #         login(request, user)
+            #     elif hasattr(request.COOKIES, "index"):
+            #         user = UserRegister.objects.get(
+            #             pk=int(getattr(request.COOKIES, "index"))
+            #         )
+            #         user.is_active = False
+            #         user.save(update_fields=["is_active"])
+            #         login(request, user)
+            #     elif hasattr(kwargs, "pk"):
+            #         user = UserRegister.objects.get(pk=int(kwargs["pk"]))
+            #         user.is_active = False
+            #         user.save(update_fields=["is_active"])
+            #         login(request, user)
+            #
+            #     cookie = Cookies(request.user.id, response)
+            #     response = cookie.is_active(False)
+            #     return response
+            # # response = super().list(request, *args, **kwargs)
+            # # return response
+        except Exception as e:
+            response = \
+                JsonResponse({"detail":
+                    f"[{__name__}::{self.__class__.__name__}.\
+{self.list.__name__}]: Mistake => {e.__str__()}"},
+                             status=status.HTTP_400_BAD_REQUEST)
+            return response
+
+    # @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs):
         pass
         response = super().retrieve(request, *args, **kwargs)

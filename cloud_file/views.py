@@ -31,7 +31,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
 
-    @decorators_CSRFToken(True)
+    # @decorators_CSRFToken(True)
     async def list(self, request, *args, **kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -61,14 +61,14 @@ class FileStorageViewSet(viewsets.ViewSet):
                 
                 # IF USER IS ADMIN - RETURN ALL FILES FROM ALL USERS
                 if request.user.is_staff and hasattr(kwargs, "pk"):
-                    files = await sync_to_async(list)(FileStorage.objects.all())
+                    files.extend(await sync_to_async(list)(FileStorage.objects.all()))
                 elif hasattr(request.COOKIES, "index"):
-                    files = await sync_to_async(list)(
+                    files.extend(await sync_to_async(list)(
                         FileStorage.objects \
                             .filter(user_id=int(
                             getattr(request.COOKIES, "index")
                         ))
-                    )
+                    ))
                 elif hasattr(kwargs, "pk"):
                     # #
                     files = await sync_to_async(list)(
@@ -113,7 +113,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         finally:
             pass
     
-    @decorators_CSRFToken(True)
+    # @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs):
         """
         Method GET for receive a single position
