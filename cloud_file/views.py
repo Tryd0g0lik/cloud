@@ -60,12 +60,20 @@ class FileStorageViewSet(viewsets.ViewSet):
                 instance = await sync_to_async(get_data_authenticate)(request)
                 
                 # IF USER IS ADMIN - RETURN ALL FILES FROM ALL USERS
-                if request.user.is_staff:
+                if request.user.is_staff and hasattr(kwargs, "pk"):
                     files = await sync_to_async(list)(FileStorage.objects.all())
-                elif not request.user.is_staff:
+                elif hasattr(request.COOKIES, "index"):
+                    files = await sync_to_async(list)(
+                        FileStorage.objects \
+                            .filter(user_id=int(
+                            getattr(request.COOKIES, "index")
+                        ))
+                    )
+                elif hasattr(kwargs, "pk"):
                     # #
-                    files = await sync_to_async(list)(FileStorage.objects\
-                                                .filter(user_id=int(instance.id)))
+                    files = await sync_to_async(list)(
+                        FileStorage.objects\
+                            .filter(user_id=int(getattr(kwargs, "pk"))))
                 else:
                     files = []
                 # USER HAVE NOT FILES - RETURN EMPTY LIST
