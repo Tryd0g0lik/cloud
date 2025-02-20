@@ -684,6 +684,3 @@ If we will be  check the one file with itself (and both files will be unchanged)
             return False
         finally:
             pass
-
-
-
