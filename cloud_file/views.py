@@ -60,7 +60,21 @@ class FileStorageViewSet(viewsets.ViewSet):
                 instance = await sync_to_async(get_data_authenticate)(request)
                 
                 # IF USER IS ADMIN - RETURN ALL FILES FROM ALL USERS
-                if request.user.is_staff and hasattr(kwargs, "pk"):
+                if request.user.is_staff:
+                    if hasattr(kwargs, "pk"):
+                        files = await sync_to_async(list)(
+                            FileStorage.objects.filter(user_id=getattr(kwargs, "pk"))
+                        )
+                        if len(files) == 0:
+                            # SERIALIZER
+                            serializer = self.serializer_class(
+                                files, many=True
+                                )
+                            status_data = serializer.data
+                            return JsonResponse(
+                                status_data,
+                                status=status_code
+                            )
                     files.extend(await sync_to_async(list)(FileStorage.objects.all()))
                 elif hasattr(request.COOKIES, "index"):
                     files.extend(await sync_to_async(list)(
@@ -155,10 +169,20 @@ class FileStorageViewSet(viewsets.ViewSet):
                     )
                 # CHECK THE USER's PERMISSIONS
                 if request.user.is_staff:
-                    # GET FILES FROM ALL USERS
-                    files.extend(await sync_to_async(list)(
-                        FileStorage.objects.all())
-                                 )
+                    if int(kwargs["pk"]):
+                        # GET FILES FROM SINGLE USER
+                        files.extend(
+                            await sync_to_async(list)(
+                                FileStorage.objects.filter(
+                                    user_id=int(kwargs["pk"])
+                                    )
+                            )
+                            )
+                    else:
+                        # GET FILES FROM ALL USERS
+                        files.extend(await sync_to_async(list)(
+                            FileStorage.objects.all())
+                                     )
                 elif not request.user.is_staff:
                     # GET FILES FROM SINGLE USER
                     files.extend(await sync_to_async(list)(

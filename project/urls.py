@@ -34,6 +34,8 @@ urlpatterns = [
     path("users/login/", vws.main, name="main"),
     path("profile/<int:pk>/", vws.main, name="main"),
     path("profile/files/<int:pk>/", vws.main, name="main"),
+    path("admins/to/profile/<int:pk>/", vws.main, name="main"),
+    path("admins/to/profile/files/<int:pk>/", vws.main, name="main"),
     
     path("api/v1/users/", include((urlpatterns_user, "user"), namespace="user")),
     path("api/v1/users/patch/", include(router2.urls)),
