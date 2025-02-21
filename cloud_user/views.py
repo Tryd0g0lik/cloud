@@ -107,10 +107,15 @@ METHOD: GET, CREATE, PUT, DELETE.
                     # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
                     # 'user_settion_{id}' from cacher table of db
                     # /* ---------------- cacher.is_staff = True Удалить ---------------- */
-                    if request.user.is_staff and hasattr(kwargs, "pk"):
+                    if request.user.is_staff:
+                        if hasattr(kwargs, "pk"):
+                            users = UserRegister.objects.filter(pk=int(kwargs["pk"]))
+                            if len(users) > 0:
+                                serializer = UserSerializer(users, many=True)
+                                return Response(serializer.data)
                         # Если администратор, получаем всех пользователей
-                        files = UserRegister.objects.all()
-                        serializer = UserSerializer(files, many=True)
+                        users = UserRegister.objects.all()
+                        serializer = UserSerializer(users, many=True)
                         return Response(serializer.data)
                     elif hasattr(kwargs, "pk"):
                         files = UserRegister.objects.filter(
