@@ -20,7 +20,10 @@ class UserSerializer(serializers.ModelSerializer, Logger):
     log.info("START")
     class Meta:
         model = UserRegister
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = ["password", "is_activated",
+                            "email",  "send_messages",
+                            "groups", "user_permissions"]
         log.info("Meta was!")
     
     

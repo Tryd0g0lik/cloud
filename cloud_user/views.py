@@ -163,6 +163,19 @@ Mistake => f{e.__str__()}"}
     def retrieve(self, request, *args, **kwargs):
         try:
             if request.user.is_authenticated:
+                if request.user.is_staff and ("pk" in kwargs.keys()):
+                    user = UserRegister.objects.filter(pk=int(kwargs["pk"]))
+                    if len(user) == 0:
+                        return JsonResponse(
+                            {"detail":
+                                 f"[{__name__}::{self.__class__.retrieve.__name__}]:\
+Your profile is not activate"}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    user = user[0]
+                    instance = self.get_serializer(user).data
+                    # instance = super().retrieve(request, *args, **kwargs)
+                    # instance = get_fields_response(instance)
+                    return JsonResponse(instance)
                 user_session = request.COOKIES.get(f"user_session")
                 check_bool = check(
                     f"user_session_{kwargs['pk']}", user_session, **kwargs
@@ -527,7 +540,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
         response = super().retrieve(request, *args, **kwargs)
         return response
     
-    @decorators_CSRFToken(False)
+    # @decorators_CSRFToken(False)
     def partial_update(self, request, *args, **kwargs):
         # response  = super().partial_update(request, *args, **kwargs)
         response = self.patch_change(request, *args, **kwargs)
