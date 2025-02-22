@@ -64,14 +64,14 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
     # permission_classes = [
     #
     # ]
-    # @decorators_CSRFToken(True)
+    @decorators_CSRFToken(True)
     async def options(self, request, *args, **kwargs):
         pass
         response = super().options(request, *args, **kwargs)
         return response
     
     
-    # @decorators_CSRFToken(False)
+    @decorators_CSRFToken(True)
     async def create(self, request, *args, **kwargs):
         pass
         try:
@@ -114,7 +114,7 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
 Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-    # @decorators_CSRFToken(True)
+    @decorators_CSRFToken(True)
     async def list(self, request, *args, **kwargs):
         """
         :param args: None
