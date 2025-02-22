@@ -71,7 +71,8 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
         return response
     
     
-    # @decorators_CSRFToken(False)
+    @decorators_CSRFToken(False)
+    @csrf_exempt
     async def create(self, request, *args, **kwargs):
         pass
         try:
@@ -183,6 +184,7 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
             return response
 
     @decorators_CSRFToken(True)
+    @csrf_exempt
     async def retrieve(self, request, *args, **kwargs):
         """
        :param args: None

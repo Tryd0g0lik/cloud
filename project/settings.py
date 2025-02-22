@@ -247,15 +247,26 @@ EMAIL_USE_LOCALTIME = True
 EMAIL_SUBJECT_PREFIX = "activation_from_cloud"
 
 
-# '''Cookie'''
+# '''Session'''
+# https://docs.djangoproject.com/en/4.2/ref/settings/
+SESSION_COOKIE_NAME = None # или ключ "sessionid" для cookie
+SESSION_COOKIE_DOMAIN = None # ALLOWED_HOSTS
+SESSION_COOKIE_PATH = "/"
+# False Куки будут отправляться c HTTP
+SESSION_COOKIE_SECURE = False # True для HTTPS
 SESSION_COOKIE_HTTPONLY = False # CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False # изменить на True !!!!!!!!!!! CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = 'Lax' # CSRF_COOKIE_SAMESITE = 'Lax'  # или 'Strict'
-SESSION_COOKIE_AGE = 86400
+SESSION_COOKIE_AGE = 86400 # 1 day
+SESSION_SAVE_EVERY_REQUEST = True # False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False # True
+# Разрешить отправку куки в CORS-запросах
+SESSION_COOKIE_SAMESITE = None # CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # соххраняем в базу данных
 
 # '''CSRF'''
+CSRF_COOKIE_SECURE = False  # Для локальной разработки (True для HTTPS)
 CSRF_COOKIE_NAME = "csrftoken"
-CSRF_COOKIE_DOMAIN = ALLOWED_HOSTS
+CSRF_COOKIE_SAMESITE = None   # 'Lax' или 'Strict'
+CSRF_COOKIE_DOMAIN = None # ALLOWED_HOSTS
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://127.0.0.1:8080",
@@ -276,6 +287,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://127.0.0.1:59337"
 ]
+"""
+это настройка в Django, которая позволяет включить или отключить передачу учетных данных (например, cookies и аутентификационных данных) при выполнении междоменных запросов. Когда эта настройка установлена в True, сервер указывает клиенту (браузеру), что он разрешает передавать учетные данные вместе с запросом
+"""
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_METHODS = [
@@ -295,7 +309,9 @@ CORS_ALLOW_HEADERS = [
     'origin',
     'user-agent',
     'x-csrftoken',
+    'X-CSRFToken',
     'x-requested-with',
+    'cookie'
 ]
 
 # SESSION/CACHES

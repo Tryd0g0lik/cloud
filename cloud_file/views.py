@@ -10,6 +10,7 @@ import os
 from asgiref.sync import sync_to_async
 from django.http import (HttpResponse, JsonResponse)
 from django.contrib.auth import login
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from adrf import viewsets
 from rest_framework.decorators import action
@@ -328,6 +329,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     @action(detail=True, url_name="delete", methods=["PUT"])
     @decorators_CSRFToken(True)
+    @csrf_exempt
     async def remove(self, request, **kwargs):
         """
         TODO: This is for delete a single file's line from db. .
@@ -397,6 +399,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     @action(detail=True, url_name="rename",
             methods=['post'])
     @decorators_CSRFToken(True)
+    @csrf_exempt
     async def rename(self, request, **kwargs):
         """
         TODO: This is for rename a single file's line from db. .
@@ -506,6 +509,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     @action(detail=True,
             url_name="comment", methods=['PATCH'])
     @decorators_CSRFToken(True)
+    @csrf_exempt
     async def update_comment(self, request,  **kwargs):
         try:
             new_comment = ""
@@ -621,6 +625,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     @action(detail=True, url_name="referral_links",
             methods=['GET'])
     @decorators_CSRFToken(True)
+    @csrf_exempt
     async def referral_links(self, request, **kwargs):
         try:
             # GET the user ID from COOKIE
