@@ -33,33 +33,14 @@ def decorators_CSRFToken(async_ = False):
     def decorator(func):
         @wraps(func)  # Сохраняем имя и документацию оригинальной функции
         def __wrapper(self, request, *args, **kwargs):
-            from django.middleware.csrf import CsrfViewMiddleware
-            from django.core.exceptions import PermissionDenied
-            
-            # if request.META.get('HTTP_X_CSRFTOKEN'):
-            if request.headers.get('X-CSRFToken'):
-                # Получаем CSRF-токен из куки
-                csrf_cookie = request.COOKIES.get('csrftoken')
-                if not csrf_cookie:
-                    raise PermissionDenied("CSRF cookie is missing.")
-                    # Используем встроенный механизм Django для проверки CSRF-токена
-                csrf_middleware = CsrfViewMiddleware()
-                try:
-                    if csrf_middleware._compare_masked_tokens(
-                        request.headers.get('X-CSRFToken'), csrf_cookie
-                        ):
-                        return func(self, request, *args, **kwargs)
-                except Exception as e:
-                    # raise PermissionDenied("CSRF token is invalid.")
-                    return JsonResponse(
-                        {"detail": "CSRF verification failed"}, status=403
-                        )
-                # if request.META.get('HTTP_X_CSRFTOKEN') == use_CSRFToken.state:
-                #     return func(self, request, *args, **kwargs)
-                # else:
-                #     return JsonResponse({"detail": "CSRF verification failed"}, status=403)
+            if request.META.get('HTTP_X_CSRFTOKEN'):
+                if request.META.get('HTTP_X_CSRFTOKEN') == use_CSRFToken.state:
+                    return func(self, request, *args, **kwargs)
+                else:
+                    return JsonResponse({"detail": "CSRF verification failed"}, status=403)
             else:
                 return JsonResponse({"detail": "CSRF verification failed"}, status=403)
+
         if async_:
             @wraps(func)  # Сохраняем имя и документацию оригинальной функции
             async def wrapper(self, request, *args, **kwargs):

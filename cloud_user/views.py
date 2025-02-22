@@ -5,39 +5,37 @@ import scrypt
 import json
 import logging
 from datetime import datetime
-
-from django.contrib.auth.hashers import make_password
 from django.shortcuts import render
 from django.core.cache import (cache)
+from django.contrib.auth import authenticate, login
 from rest_framework import (viewsets, generics, status)
 from rest_framework.response import Response
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import api_view
 from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 
 from cloud.cookies import Cookies
+from cloud.hashers import hashpw_password
 from project import decorators_CSRFToken
 
-from cloud_user.tasks import ready, _run_async
 
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
                               SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE,
                               SESSION_COOKIE_HTTPONLY, CSRF_COOKIE_NAME)
 from django.views.decorators.csrf import get_token
-from django.views.decorators.csrf import ensure_csrf_cookie
 from cloud.services import (get_data_authenticate, decrypt_data)
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.sessions import (check,
                                             hash_create_user_session)
-from cloud.hashers import hashpw_password
+from cloud_user.contribute.services import get_user_cookie
+from cloud_user.tasks import ready, _run_async
 from cloud_user.models import UserRegister
 from cloud_user.more_serializers.serializer_update import UserPatchSerializer
 from cloud_user.serializers import UserSerializer
-import asyncio
 
-from cloud_user.contribute.services import get_fields_response, \
-    get_user_cookie  # , get_user_cookie
+from project.services import (get_fields_response )
+
 from logs import configure_logging
 
 configure_logging(logging.INFO)
@@ -77,9 +75,6 @@ METHOD: GET, CREATE, PUT, DELETE.
     queryset = UserRegister.objects.all()
     serializer_class = UserSerializer
     
-    # permission_classes = [permissions.IsAuthenticated]
-    # permission_classes = [IsAdminUser]
-    
     def options(self, request, *args, **kwargs):
         response = super().options(request, *args, **kwargs)
         return response
@@ -89,34 +84,76 @@ METHOD: GET, CREATE, PUT, DELETE.
             pass
         
         # GET user ID
-        cookie_data = get_data_authenticate(request)
         cacher = DataCookie()
-        cacher.user_session = cache.get(f"user_session_{cookie_data.id}")
-        cacher.is_staff = cache.get(f"is_staff_{cookie_data.id}")
+        cacher.user_session = cache.get(f"user_session_{request.user.id}")
         try:
-            # Check presences the 'user_session', 'is_staff' in cacher table of db
-            if cacher.is_staff is not None and \
-              cacher.user_session is not None and \
-              cacher.user_session == cache.get(
-                f"user_session_{cookie_data.id}"
-                ):
-                # Below, check, It is the superuser or not.
-                # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
-                # 'user_settion_{id}' from cacher table of db
-                # /* ---------------- cacher.is_staff = True Удалить ---------------- */
-                if cacher.is_staff == True:
-                    # Если администратор, получаем всех пользователей
-                    files = UserRegister.objects.all()
-                    serializer = UserSerializer(files, many=True)
-                    return Response(serializer.data)
-                else:
-                    files = UserRegister.objects.filter(id=int(cookie_data.id))
-                    
-                    serializer = UserSerializer(files, many=True)
-                    instance = get_fields_response(serializer)
-                    return Response(instance)
-            res = {"message": f"[{__name__}::list]: "}
-            return JsonResponse(data=res)
+            if request.user.is_authenticated:
+                user_session_client = request.COOKIES.get("user_session")
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
+                user_session_db = cache.get(
+                    f"user_session_{request.user.id}"
+                )
+                # CHECK USER ID
+                if request.user.id != int(kwargs["pk"]) \
+                  and not request.user.is_staff:
+                    return JsonResponse(
+                        {"error": "There is no access"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                # CHECK THE SESSION KEY of USER_SESSION
+                if user_session_db == user_session_client or request.user.is_staff:
+                    # Below, check, It is the superuser or not.
+                    # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
+                    # 'user_settion_{id}' from cacher table of db
+                    # /* ---------------- cacher.is_staff = True Удалить ---------------- */
+                    if request.user.is_staff:
+                        if hasattr(kwargs, "pk"):
+                            users = UserRegister.objects.filter(pk=int(kwargs["pk"]))
+                            if len(users) > 0:
+                                serializer = UserSerializer(users, many=True)
+                                return Response(serializer.data)
+                        # Если администратор, получаем всех пользователей
+                        users = UserRegister.objects.all()
+                        serializer = UserSerializer(users, many=True)
+                        return Response(serializer.data)
+                    elif hasattr(kwargs, "pk"):
+                        files = UserRegister.objects.filter(
+                            id=int(kwargs["pk"])
+                            )
+                        serializer = UserSerializer(files, many=True)
+                        instance = get_fields_response(serializer)
+                        return Response(instance)
+                
+            else:
+                # NOT LOGGED IN
+                response = JsonResponse(
+                    {"data": ["User is not authenticated"]},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                if hasattr(request.user, 'id') and \
+                  getattr(request.user, 'id') != None:
+                    user = UserRegister.objects.get(pk=request.user.id)
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                elif hasattr(request.COOKIES, "index"):
+                    user = UserRegister.objects.get(
+                        pk=int(getattr(request.COOKIES, "index")))
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                elif hasattr(kwargs, "pk"):
+                    user = UserRegister.objects.get(pk=int(kwargs["pk"]))
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                
+                
+                
+                cookie = Cookies(request.user.id, response)
+                response = cookie.is_active(False)
+                return response
         except Exception as e:
             return JsonResponse(
                 data={"message": f"[{__name__}::list]: \
@@ -124,70 +161,110 @@ Mistake => f{e.__str__()}"}
                 )
     
     def retrieve(self, request, *args, **kwargs):
-        
-        user_session = request.COOKIES.get(f"user_session")
-        check_bool = check(
-            f"user_session_{kwargs['pk']}", user_session, **kwargs
-            )
-        
-        if not check_bool:
-            return Response(
-                {"message":
-                     f"[{__name__}::{self.__class__.retrieve.__name__}]:\
-Your profile is not activate"}
-                ), 404
-        # if 'pk' in kwargs.keys():
-        instance = super().retrieve(request, *args, **kwargs)
-        instance = get_fields_response(instance)
-        return JsonResponse(instance)
-        # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
+        try:
+            if request.user.is_authenticated:
+                user_session = request.COOKIES.get(f"user_session")
+                check_bool = check(
+                    f"user_session_{kwargs['pk']}", user_session, **kwargs
+                )
     
+                if not check_bool:
+                    return Response(
+                        {"message":
+                             f"[{__name__}::{self.__class__.retrieve.__name__}]:\
+                            Your profile is not activate"}
+                    ), 404
+                # if 'pk' in kwargs.keys():
+                instance = super().retrieve(request, *args, **kwargs)
+                instance = get_fields_response(instance)
+                return JsonResponse(instance)
+                # /* ----------- Вставить прова и распределить логику СУПЕРЮЗЕРА ----------- */
+
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "Mistake => User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
+        except Exception as e:
+            return JsonResponse(
+                data={"message": f"[{__name__}::retrieve]: \
+Mistake => f{e.__str__()}"}
+                )
+        
     def dispatch(self, request, *args, **kwargs):
         resp = None
         try:
+            # if request.user.is_authenticated:
             resp = super().dispatch(request, *args, **kwargs)
-            
-            # return JsonResponse(resp.data, status=resp.status_code)
-            
             return resp
+            # else:
+            #     # NOT LOGGED IN
+            #     status_data = {"detail": "User is not authenticated"}
+            #     status_code = status.HTTP_401_UNAUTHORIZED
+            #     return JsonResponse(
+            #         status_data,
+            #         status=status_code
+            #     )
         except Exception as e:
             return JsonResponse({}, status=400)
     
     def update(self, request, *args, **kwargs):
         """
-     We can not update the 'is_staff' property.
-    'request.data["is_staff"]' the oll time is False
-    :param request:
-    :param args:
-    :param kwargs:
-    :return:
-    """
-        user_session = request.COOKIES.get(f"user_session_{kwargs['pk']}")
-        check_bool = check(
-            f"user_session_{kwargs['pk']}", user_session, **kwargs
-            )
+         We can not update the 'is_staff' property.
+        'request.data["is_staff"]' the oll time is False
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        try:
+            if request.user.is_authenticated:
+                user_session = request.COOKIES.get(
+                    f"user_session_{kwargs['pk']}"
+                    )
+                check_bool = check(
+                    f"user_session_{kwargs['pk']}", user_session, **kwargs
+                )
+    
+                # We does can not update the 'is_staff' property
+                if json.loads(request.body)["is_staff"]:
+                    json.loads(request.body)["is_staff"] = False
+    
+                if not check_bool:
+                    return Response(
+                        {
+                            "message": f"[{__name__}::{self.__class__.retrieve.__name__}]: \
+                Your profile is not activate"}
+                    ), 404
+                if json.loads(request.body)["is_staff"]:
+                    del json.loads(request.body)["is_staff"]
         
-        # We does can not update the 'is_staff' property
-        if json.loads(request.body)["is_staff"]:
-            json.loads(request.body)["is_staff"] = False
-        
-        if not check_bool:
-            return Response(
-                {
-                    "message": f"[{__name__}::{self.__class__.retrieve.__name__}]: \
-Your profile is not activate"}
-            ), 404
-        if json.loads(request.body)["is_staff"]:
-            del json.loads(request.body)["is_staff"]
-            
-            # data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
-        password = json.loads(request.body)["password"]
-        password_validation(password)
-        hash = hashpw_password(f'pbkdf2${str(20000)}{password}') #.decode("utf-8")
-        json.loads(request.body)["password"] = hash
-        
-        instance = super().update(request, *args, **kwargs)
-        return Response(instance.data, status=200)  # Проверить
+                    # data[item] = f"pbkdf2${str(20000)}{hash.decode('utf-8')}"
+                password = json.loads(request.body)["password"]
+                password_validation(password)
+                hash = hashpw_password(
+                    f'pbkdf2${str(20000)}{password}'
+                    )  # .decode("utf-8")
+                json.loads(request.body)["password"] = hash
+    
+                instance = super().update(request, *args, **kwargs)
+                return Response(instance.data, status=200)  # Проверить
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "Mistake => User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+                return JsonResponse(
+                    status_data,
+                    status=status_code
+                )
+        except Exception as e:
+            return JsonResponse(
+                data={"message": f"[{__name__}::update]: \
+Mistake => f{e.__str__()}"}
+                )
     
     def create(self, request, *args, **kwargs):
         """
@@ -269,16 +346,6 @@ Your profile is not activate"}
             f"user_session_{kwargs['pk']}", user_session, **kwargs
             )
         
-        # CHECK to USER
-        class DataCookie:
-            pass
-        
-        # GET user ID
-        cookie_data = get_data_authenticate(request)
-        cacher = {
-            'user_session': cache.get(f"user_session_{cookie_data.id}"),
-            'is_staff': cache.get(f"is_staff_{cookie_data.id}")
-        }
         
         if not check_bool:
             return Response(
@@ -286,16 +353,39 @@ Your profile is not activate"}
                     "message": f"[{__name__}::{self.__class__.destroy.__name__}]: Not OK"}
                 )
         try:
-            if cacher["is_staff"] and \
-              cacher["user_session"] == cache.get(
-                f"user_session_{cookie_data.id}"
-                ):
-                # Remove the user
-                instance = super().destroy(request, *args, **kwargs)
-                # Remove cache the user
-                cache.delete(f"user_session_{kwargs['pk']}")
-                cache.delete(f"is_staff_{kwargs['pk']}")
-                instance = Response()
+            user_session_client = request.COOKIES.get("user_session")
+            # GET use-session from the cache (our
+            # cacher table from settings.py)
+            user_session_db = cache.get(
+                f"user_session_{request.user.id}"
+            )
+            # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN
+            if user_session_db != user_session_client and not request.user.is_staff:
+                response = JsonResponse(
+                    {"data": ["User is not authenticated"]},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                user = UserRegister.objects.get(
+                    pk=request.user.id
+                )
+                user.is_active = False
+                user.save(update_fields=["is_active"])
+                login(request, user)
+                cookie = Cookies(request.user.id, response)
+                response = cookie.is_active(False)
+                return response
+                # CHECK USER ID
+            if request.user.id != int(kwargs["pk"]) \
+              and not request.user.is_staff:
+                return JsonResponse(
+                    {"error": "There is no access"},
+                    status=status.HTTP_400_BAD_REQUEST)
+            # REMOVE THE USER
+            instance = super().destroy(request, *args, **kwargs)
+            # REMOVE CACHE THE USER
+            cache.delete(f"user_session_{kwargs['pk']}")
+            cache.delete(f"is_staff_{kwargs['pk']}")
+            instance = Response()
         except Exception as e:
             instance = Response(
                 {"message": f"Not Ok.\
@@ -374,10 +464,12 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 elif "password" == item and "email" in data.keys() and \
                   "is_active" in data.keys():
                     authenticity = True if data["email"] == user.email else False
+                    # CHANGE USER AUTHENTICATE (is_active)
+                    login(request, user)
                     if not authenticity:
                         # status code 400
                         response = JsonResponse(
-                            {"detail": "Password or email is invalid!"},
+                            {"detail": "Mistake => Password or email is invalid!"},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                         # GET COOKIE
@@ -389,7 +481,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
                 kwargs[item] = (lambda: data[item])()
           
             
-            # CHANGE THE PROPERTY of the user object.
+            # CHANGE THE PROPERTY OF THE USER OBJECT.
             for item in kwargs.keys():
                 if item == "pk" or item == "id":
                     continue
@@ -401,6 +493,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
             response = JsonResponse(instance, status=200)
             # IF IS_ACTIVE CHANGE
             if "is_active" in data and data["is_active"]:
+                
                 hash_create_user_session(
                     kwargs['pk'],
                     f"user_session_{kwargs['pk']}"
@@ -417,7 +510,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
             response = get_user_cookie(request, response)
             return response
         return JsonResponse(
-            {"detail": "Something what wrong!"},
+            {"detail": "Mistake => Something what wrong!"},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -455,7 +548,6 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
         return response
     
     def patch_change(self, request, *args, **kwargs):
-        
         """
     Возвращает данные для COOKIE ('user_session_{id}')  если\
 json.loads(request.body)["is_active"] == True, and 'is_active'
@@ -469,6 +561,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
         
         # cacher.is_staff = cache.get(f"is_staff_{kwargs['pk']}")
         try:
+
             # Get data from the reqyest body.
             data = json.loads(request.body)
             # GETs the cookie's data how an object from the user's ID
@@ -477,7 +570,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
             if len(user_list) == 0:
                 return Response(
                     {"message": f"[{__name__}]: \
-            Something what wrong. Check the 'pk'."},
+                        Something what wrong. Check the 'pk'."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             cacher = {
@@ -487,18 +580,19 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
             if (not hasattr(cookie_data, "user_session") or (
               hasattr(cookie_data, "user_session") and
               not cacher["user_session"]
-            ) or (hasattr(cookie_data, "user_session") != cacher["user_session"])) and \
+            ) or (hasattr(cookie_data, "user_session") != cacher[
+                "user_session"])) and \
               len((data.keys())) > 0:
                 # LOOK THE PASSWORD if TRUE
                 if "password" in data.keys():
                     # Comparing password of the user
                     _hash_password = self.hash_password(
                         (lambda: data["password"])()
-                        )
+                    )
                     if user_list[0].password != _hash_password:
                         return Response(
                             {"message": f"[{__name__}]: \
-    Something what wrong. Check the 'password'."},
+                Something what wrong. Check the 'password'."},
                             status=status.HTTP_400_BAD_REQUEST
                         )
                     """
@@ -508,49 +602,55 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
                     body = json.loads(request.body)
                     body["password"] = user_list[0].password
                     request.body = json.dumps(body)
-                    response = UserPatchViews.update_cell(request, *args, **kwargs)
+                    response = UserPatchViews.update_cell(
+                        request, *args, **kwargs
+                        )
                     return response
-          
-                # COMPARE a COOKIE KEY if the not have the password.
-                # if cacher['user_session'] and cookie_data.user_session:
+
+            # else:
+            # OLD of VERSIONS
+            # user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
+            user_session = cacher["user_session"]
+            # .decode('ISO-8859-1')
+            if cookie_data.user_session == (
+            user_session) and request.method.lower() == "patch":
+                user_session = request.COOKIES.get(f"user_session")
+                # CHECK a COOKIE KEY ?????????????????
+                check_bool = check(
+                    f"user_session_{kwargs['pk']}", user_session, **kwargs
+                )
+                if not check_bool:
+                    return Response(
+                        {"message": f"[{__name__}]: \
+            Something what wrong. Check the 'pk'."}
+                    )
+                response = UserPatchViews.update_cell(
+                    request, *args, **kwargs
+                    )
+                return response
             else:
-                user = user_list[0]
-                # OLD of VERSIONS
-                # user_session = scrypt.hash(cacher["user_session"], SECRET_KEY)
-                user_session = cacher["user_session"]
-                # .decode('ISO-8859-1')
-                if cookie_data.user_session == (user_session) and request.method.lower() == "patch":
-                    user_session = request.COOKIES.get(f"user_session")
-                    # CHECK a COOKIE KEY ?????????????????
-                    check_bool = check(
-                        f"user_session_{kwargs['pk']}", user_session, **kwargs
-                        )
-                    if not check_bool:
-                        return Response(
-                            {"message": f"[{__name__}]: \
-    Something what wrong. Check the 'pk'."}
-                        )
-                    response = UserPatchViews.update_cell(request, *args, **kwargs)
-                    return response
-                else:
-                    user.is_active = False
-                    user.save(update_fields=['is_active'])
+                user = request.user
+                user.is_active = False
+                user.save(update_fields=['is_active'])
             # MAYBE THE USER SESSION IS NOT CORRECT BUT USER.is_active = True
             response = JsonResponse(
-                {"detail": "Something what wrong! \
-Check the 'user_session' or 'pk'. \
-The 'user_session' of client and the \
-of ceche (table of db - session) not equals. It's maybe."},
+                {"detail": "Mistake => Something what wrong! \
+            Check the 'user_session' or 'pk'. \
+            The 'user_session' of client and the \
+            of ceche (table of db - session) not equals. It's maybe."},
                 status=status.HTTP_400_BAD_REQUEST
-                )
+            )
             # GO OUT FROM THE PROFILE
             cookie = Cookies(kwargs['pk'], response)
             response = cookie.is_active(is_active_=False)
             # USER IS NOT ACTIVE
             user = UserRegister.objects.get(pk=int(kwargs["pk"]))
-            user.is_active =  False if str(False) in response.cookies.get("is_active").value else True
+            user.is_active = False if str(False) in response.cookies.get(
+                "is_active"
+                ).value else True
             user.save(update_fields=['is_active'])
             return response
+        
         except Exception as e:
             return Response(
                 {
@@ -570,14 +670,20 @@ of ceche (table of db - session) not equals. It's maybe."},
     :param password: str. Pure password from user's request.
     :return: str. Hash of password.
     """
-        from base64 import b64encode
-        # _hash_password = scrypt.hash(f"pbkdf2${str(20000)}${(lambda: password)()}",
-        #                 SECRET_KEY).decode(encode)
-        _hash_password = scrypt.hash(
-            f"pbkdf2${str(20000)}${(lambda: password)()}", SECRET_KEY
-        )
-        #.replace(r"[ \t\v\r\n\f]+", "") ##.replace("\n", "").replace(r" ", "")
-        return b64encode(_hash_password).decode()
+        try:
+            from base64 import b64encode
+            # _hash_password = scrypt.hash(f"pbkdf2${str(20000)}${(lambda: password)()}",
+            #                 SECRET_KEY).decode(encode)
+            _hash_password = scrypt.hash(
+                f"pbkdf2${str(20000)}${(lambda: password)()}", SECRET_KEY
+            )
+            # .replace(r"[ \t\v\r\n\f]+", "") ##.replace("\n", "").replace(r" ", "")
+            return b64encode(_hash_password).decode()
+        except Exception as err:
+            return JsonResponse(
+                {"detail": f"Mistake => {err.__str__()}"},
+                status=status.HTTP_404_NOT_FOUND
+            )
     
     def put(self, request, *args, **kwargs):
         json.loads(request.body)["Message"] = "Not Ok"
@@ -622,7 +728,7 @@ def api_get_index(request, **kwargs):
                 )
         else:
             return JsonResponse(
-                {"detail": "Not found"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Mistake => Not found"}, status=status.HTTP_400_BAD_REQUEST
             )
     return JsonResponse({"data": serializers["id"]}, status=status.HTTP_200_OK)
 
