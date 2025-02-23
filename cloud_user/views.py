@@ -17,8 +17,7 @@ from django.http import JsonResponse
 
 from cloud.cookies import Cookies
 from cloud.hashers import hashpw_password
-from project import decorators_CSRFToken
-
+from project import decorators_CSRFToken, use_CSRFToken
 
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
                               SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE,
@@ -37,7 +36,26 @@ from cloud_user.serializers import UserSerializer
 from project.services import (get_fields_response )
 
 from logs import configure_logging
+from django.middleware.csrf import CsrfViewMiddleware
+from django.core.exceptions import PermissionDenied
 
+class CustomCsrfMiddleware(CsrfViewMiddleware):
+    """"
+    This is a custom middleware for CSRF token.
+     It is for change to the settings.MIDDLEWARE."django.middleware.csrf.CsrfViewMiddleware",
+    """
+    def process_view(self, request, callback, callback_args, callback_kwargs):
+        if request.method == 'PATCH' or request.method == 'POST' \
+          or request.method == 'PUT' or request.method == 'DELETE':
+            csrf_token = request.headers.get('X-CSRFToken')
+            if not csrf_token or not use_CSRFToken.state:
+                raise PermissionDenied("CSRF token is missing.")
+            if csrf_token != use_CSRFToken.state:
+                raise PermissionDenied("CSRF token is invalid.")
+            return self._accept(request)
+        else:
+            return super().process_view(request, callback, callback_args, callback_kwargs)
+        
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
@@ -163,6 +181,19 @@ Mistake => f{e.__str__()}"}
     def retrieve(self, request, *args, **kwargs):
         try:
             if request.user.is_authenticated:
+                if request.user.is_staff and ("pk" in kwargs.keys()):
+                    user = UserRegister.objects.filter(pk=int(kwargs["pk"]))
+                    if len(user) == 0:
+                        return JsonResponse(
+                            {"detail":
+                                 f"[{__name__}::{self.__class__.retrieve.__name__}]:\
+Your profile is not activate"}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    user = user[0]
+                    instance = self.get_serializer(user).data
+                    # instance = super().retrieve(request, *args, **kwargs)
+                    # instance = get_fields_response(instance)
+                    return JsonResponse(instance)
                 user_session = request.COOKIES.get(f"user_session")
                 check_bool = check(
                     f"user_session_{kwargs['pk']}", user_session, **kwargs
@@ -527,7 +558,7 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
         response = super().retrieve(request, *args, **kwargs)
         return response
     
-    @decorators_CSRFToken(False)
+    # @decorators_CSRFToken(False)
     def partial_update(self, request, *args, **kwargs):
         # response  = super().partial_update(request, *args, **kwargs)
         response = self.patch_change(request, *args, **kwargs)
@@ -627,6 +658,12 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
                 response = UserPatchViews.update_cell(
                     request, *args, **kwargs
                     )
+                return response
+            elif request.user.is_staff:
+                # ADMIN CHANGE DATA OF USER
+                response = UserPatchViews.update_cell(
+                    request, *args, **kwargs
+                )
                 return response
             else:
                 user = request.user

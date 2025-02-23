@@ -32,7 +32,7 @@ class FileStorageViewSet(viewsets.ViewSet):
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
 
-    # @decorators_CSRFToken(True)
+    # 
     async def list(self, request, *args, **kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -128,7 +128,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         finally:
             pass
     
-    # @decorators_CSRFToken(True)
+    # 
     async def retrieve(self, request, *args, **kwargs):
         """
         Method GET for receive a single position
@@ -222,7 +222,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status=status_code
                 )
 
-    @decorators_CSRFToken(True)
+    
     async def create(self, request):
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
@@ -328,8 +328,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     
     @action(detail=True, url_name="delete", methods=["PUT"])
-    @decorators_CSRFToken(True)
-    @csrf_exempt
     async def remove(self, request, **kwargs):
         """
         TODO: This is for delete a single file's line from db. .
@@ -398,8 +396,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     @action(detail=True, url_name="rename",
             methods=['post'])
-    @decorators_CSRFToken(True)
-    @csrf_exempt
     async def rename(self, request, **kwargs):
         """
         TODO: This is for rename a single file's line from db. .
@@ -508,8 +504,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     #
     @action(detail=True,
             url_name="comment", methods=['PATCH'])
-    @decorators_CSRFToken(True)
-    @csrf_exempt
     async def update_comment(self, request,  **kwargs):
         try:
             new_comment = ""
@@ -624,8 +618,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     @action(detail=True, url_name="referral_links",
             methods=['GET'])
-    @decorators_CSRFToken(True)
-    @csrf_exempt
     async def referral_links(self, request, **kwargs):
         try:
             # GET the user ID from COOKIE
