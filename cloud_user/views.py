@@ -504,14 +504,17 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
             instance = get_fields_response(instance)
             response = JsonResponse(instance, status=200)
             # IF IS_ACTIVE CHANGE
-            if "is_active" in data and data["is_active"]:
+            if "is_active" in data:
+                if data["is_active"]:
                 
-                hash_create_user_session(
-                    kwargs['pk'],
-                    f"user_session_{kwargs['pk']}"
-                )
-                user_list[0].last_login = datetime.now()
-                user_list[0].save(update_fields=["last_login"])
+                    hash_create_user_session(
+                        kwargs['pk'],
+                        f"user_session_{kwargs['pk']}"
+                    )
+                    user_list[0].last_login = datetime.now()
+                    user_list[0].save(update_fields=["last_login"])
+                elif not data["is_active"]:
+                    login(request, user_list[0])
             else:
                 cache.delete(f"user_session_{kwargs['pk']}")
                 # cache.delete(f"user_superuser_{kwargs['pk']}")

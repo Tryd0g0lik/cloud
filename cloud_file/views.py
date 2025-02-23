@@ -243,18 +243,24 @@ class FileStorageViewSet(viewsets.ViewSet):
                     pk=request.user.id
                 )
                 # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db != user_session_client and not request.user.is_staff:
+                if user_session_db != user_session_client:
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
                     )
                     
                     user.is_active = False
-                    user.save(update_fields=["is_active"])
+                    await  sync_to_async(user.save)(update_fields=["is_active"])
                     login(request, user)
                     cookie = Cookies(request.user.id, response)
                     response = cookie.is_active(False)
                     return response
+                # if request.user.is_staff:
+                #     response = JsonResponse(
+                #         {"data": ["You not allowed to created a file for this profile"]},
+                #         status=status.HTTP_403_FORBIDDEN
+                #     )
+                #     return response
                 """
                 Conservation a one file in serverby by path \
                 'card/<year>/<month>/<day>/< file name >'
