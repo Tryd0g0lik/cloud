@@ -19,8 +19,7 @@ from cloud_file.models import FileStorage
 from cloud_file.serializers import FileStorageSerializer
 from cloud_user.models import UserRegister
 from cloud_user.serializers import UserSerializer
-from project import decorators_CSRFToken
-from project.services import get_fields_response
+# from project.services import get_fields_response
 
 
 @csrf_exempt
@@ -64,14 +63,11 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
     # permission_classes = [
     #
     # ]
-    @decorators_CSRFToken(True)
     async def options(self, request, *args, **kwargs):
         pass
         response = super().options(request, *args, **kwargs)
         return response
-    
-    
-    @decorators_CSRFToken(True)
+
     async def create(self, request, *args, **kwargs):
         pass
         try:
@@ -113,8 +109,6 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
             return JsonResponse({"detail": f"[{__name__}::{self.__class__.__name__}.{self.create.__name__}]: \
 Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
 
-
-    @decorators_CSRFToken(True)
     async def list(self, request, *args, **kwargs):
         """
         :param args: None
@@ -182,7 +176,6 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                              status=status.HTTP_400_BAD_REQUEST)
             return response
 
-    @decorators_CSRFToken(True)
     async def retrieve(self, request, *args, **kwargs):
         """
        :param args: None

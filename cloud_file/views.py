@@ -10,6 +10,7 @@ import os
 from asgiref.sync import sync_to_async
 from django.http import (HttpResponse, JsonResponse)
 from django.contrib.auth import login
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from adrf import viewsets
 from rest_framework.decorators import action
@@ -24,14 +25,14 @@ from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime
-from project import decorators_CSRFToken
+
 
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
 
-    # @decorators_CSRFToken(True)
+    # 
     async def list(self, request, *args, **kwargs) -> JsonResponse:
         status_data: [dict, list] = []
         status_code = status.HTTP_200_OK
@@ -127,7 +128,7 @@ class FileStorageViewSet(viewsets.ViewSet):
         finally:
             pass
     
-    # @decorators_CSRFToken(True)
+    # 
     async def retrieve(self, request, *args, **kwargs):
         """
         Method GET for receive a single position
@@ -221,7 +222,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 status=status_code
                 )
 
-    @decorators_CSRFToken(True)
+    
     async def create(self, request):
         cookie_data = await sync_to_async(get_data_authenticate)(request)
         user_ind = getattr(cookie_data, "id")
@@ -242,18 +243,24 @@ class FileStorageViewSet(viewsets.ViewSet):
                     pk=request.user.id
                 )
                 # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db != user_session_client and not request.user.is_staff:
+                if user_session_db != user_session_client:
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN
                     )
                     
                     user.is_active = False
-                    user.save(update_fields=["is_active"])
+                    await  sync_to_async(user.save)(update_fields=["is_active"])
                     login(request, user)
                     cookie = Cookies(request.user.id, response)
                     response = cookie.is_active(False)
                     return response
+                # if request.user.is_staff:
+                #     response = JsonResponse(
+                #         {"data": ["You not allowed to created a file for this profile"]},
+                #         status=status.HTTP_403_FORBIDDEN
+                #     )
+                #     return response
                 """
                 Conservation a one file in serverby by path \
                 'card/<year>/<month>/<day>/< file name >'
@@ -327,7 +334,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     
     @action(detail=True, url_name="delete", methods=["PUT"])
-    @decorators_CSRFToken(True)
     async def remove(self, request, **kwargs):
         """
         TODO: This is for delete a single file's line from db. .
@@ -396,7 +402,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     @action(detail=True, url_name="rename",
             methods=['post'])
-    @decorators_CSRFToken(True)
     async def rename(self, request, **kwargs):
         """
         TODO: This is for rename a single file's line from db. .
@@ -505,7 +510,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     #
     @action(detail=True,
             url_name="comment", methods=['PATCH'])
-    @decorators_CSRFToken(True)
     async def update_comment(self, request,  **kwargs):
         try:
             new_comment = ""
@@ -620,7 +624,6 @@ class FileStorageViewSet(viewsets.ViewSet):
     
     @action(detail=True, url_name="referral_links",
             methods=['GET'])
-    @decorators_CSRFToken(True)
     async def referral_links(self, request, **kwargs):
         try:
             # GET the user ID from COOKIE

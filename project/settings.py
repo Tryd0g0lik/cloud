@@ -38,11 +38,6 @@ SECRET_KEY = SECRET_KEY_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-"""
-To the first host from the 'ALLOWED_HOSTS' sends  letter for
-user's email activation (look to the 'send_activation_notificcation' function).
-'cloud_user/contribute/utilites.py'
-"""
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
@@ -71,14 +66,14 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    # "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    
+    "project.csrf.CustomCsrfMiddleware",
 ]
 # From MIDDLEWARE = []
 # https://docs.djangoproject.com/en/4.2/ref/middleware/#django.middleware.cache.FetchFromCacheMiddleware

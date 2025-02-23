@@ -20,31 +20,43 @@ class UserSerializer(serializers.ModelSerializer, Logger):
     log.info("START")
     class Meta:
         model = UserRegister
-        fields = "__all__"
+        # fields = "__all__"
+        exclude = ["password", "is_activated",
+                            "email",  "send_messages",
+                            "groups", "user_permissions"]
         log.info("Meta was!")
-    
-    
+
+
     def create(self, validated_data):
         _text = f"[{self.print_class_name()}.\
 {self.create.__name__}]:"
         user = None
         try:
-            _user = UserRegister.objects.create(**validated_data)
+            # Устанавливаем флаг для включения исключенных полей
+            
+            
+            # _user = UserRegister.objects.create(**validated_data)
+            _user = super().create(validated_data)
             if not _user:
                 _text = f"{_text} Something what wrong!"
                 raise ValueError()
-
+            
             log.info(_text)
             # CREATE THE NEW USER
+            
+            
+            b_password = scrypt.hash(
+                f"pbkdf2${str(20000)}${self.initial_data['password']}",
+                SECRET_KEY
+            )  # .decode('windows-1251')
+            _user.password = b64encode(b_password).decode()
+            _user.email = self.initial_data["email"]
             _user.send_messages = True
             _user.is_active = False
             _user.is_activated = False
             _user.is_superuser = False
             _user.is_staff = False
-            b_password = scrypt.hash(
-                f"pbkdf2${str(20000)}${(lambda: validated_data['password'])()}", SECRET_KEY
-            ) #.decode('windows-1251')
-            _user.password = b64encode(b_password).decode()
+            
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)

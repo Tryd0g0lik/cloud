@@ -36,6 +36,7 @@ urlpatterns_user = [
     path("", csrftoken),
     path("choice/name/", api_get_index),
     path("choice/", include(router.urls)),
+    path("patch/", include(router2.urls)),
     
     
     
