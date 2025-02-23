@@ -17,7 +17,7 @@ from django.http import JsonResponse
 
 from cloud.cookies import Cookies
 from cloud.hashers import hashpw_password
-from project import decorators_CSRFToken, use_CSRFToken
+
 
 from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
                               SESSION_COOKIE_SECURE, SESSION_COOKIE_SAMESITE,
@@ -36,26 +36,7 @@ from cloud_user.serializers import UserSerializer
 from project.services import (get_fields_response )
 
 from logs import configure_logging
-from django.middleware.csrf import CsrfViewMiddleware
-from django.core.exceptions import PermissionDenied
 
-class CustomCsrfMiddleware(CsrfViewMiddleware):
-    """"
-    This is a custom middleware for CSRF token.
-     It is for change to the settings.MIDDLEWARE."django.middleware.csrf.CsrfViewMiddleware",
-    """
-    def process_view(self, request, callback, callback_args, callback_kwargs):
-        if request.method == 'PATCH' or request.method == 'POST' \
-          or request.method == 'PUT' or request.method == 'DELETE':
-            csrf_token = request.headers.get('X-CSRFToken')
-            if not csrf_token or not use_CSRFToken.state:
-                raise PermissionDenied("CSRF token is missing.")
-            if csrf_token != use_CSRFToken.state:
-                raise PermissionDenied("CSRF token is invalid.")
-            return self._accept(request)
-        else:
-            return super().process_view(request, callback, callback_args, callback_kwargs)
-        
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 log.info("START")
@@ -67,7 +48,7 @@ def csrftoken(request):
     if (request.method != "GET"):
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST)
     csrf_token_value = get_token(request)
-    # GET 'csrftoken' for a 'decorators_CSRFToken' decorator
+    # GET 'csrftoken'
     use_CSRFToken.set_state(csrf_token_value)
     response = JsonResponse(
         {"csrftoken": csrf_token_value}, status=status.HTTP_200_OK
@@ -558,7 +539,6 @@ class UserPatchViews(generics.RetrieveUpdateAPIView, viewsets.GenericViewSet):
         response = super().retrieve(request, *args, **kwargs)
         return response
     
-    # @decorators_CSRFToken(False)
     def partial_update(self, request, *args, **kwargs):
         # response  = super().partial_update(request, *args, **kwargs)
         response = self.patch_change(request, *args, **kwargs)

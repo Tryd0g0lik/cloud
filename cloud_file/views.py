@@ -25,7 +25,7 @@ from .models import FileStorage
 from .serializers import FileStorageSerializer
 from django.core.files.storage import default_storage
 from datetime import datetime
-from project import decorators_CSRFToken
+
 
 class FileStorageViewSet(viewsets.ViewSet):
     # permission_classes = [permissions.IsAuthenticated]

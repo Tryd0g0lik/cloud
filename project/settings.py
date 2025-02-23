@@ -73,7 +73,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
-    "cloud_user.views.CustomCsrfMiddleware"
+    "project.csrf.CustomCsrfMiddleware",
 ]
 # From MIDDLEWARE = []
 # https://docs.djangoproject.com/en/4.2/ref/middleware/#django.middleware.cache.FetchFromCacheMiddleware
