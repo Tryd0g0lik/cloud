@@ -34,9 +34,6 @@ urlpatterns = [
     path("users/login/", vws.main, name="main"),
     path("profile/<int:pk>/", vws.main, name="main"),
     path("profile/files/<int:pk>/", vws.main, name="main"),
-    path("admins/registration/", vws.main, name="main"),
-    path("admins/to/profile/<int:pk>/", vws.main, name="main"),
-    path("admins/to/profile/files/<int:pk>/", vws.main, name="main"),
     
     path("api/v1/users/", include((urlpatterns_user, "user"), namespace="user")),
     # path("api/v1/users/patch/", include(router2.urls)),
@@ -44,6 +41,10 @@ urlpatterns = [
     path("api/v1/session/increase/time/", user_update_sessionTime, name="session"),
     
     path("api/v1/admins/", include((urlpatterns_admin, "admins"), namespace="admins")),
+    path("admins/registration/", vws.main, name="main"),
+    path("admins/to/profile/<int:pk>/", vws.main, name="main"),
+    path("admins/to/profile/files/<int:pk>/", vws.main, name="main"),
+    
     # path("api/v1/admins/choice/", include(routers_admins.urls)),
     # path("admins/login/", vws.main, name="admins")
     # path("api/v1/admins/", include((urlpatterns_admins, "admins"), namespace="admins")),
