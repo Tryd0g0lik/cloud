@@ -34,6 +34,7 @@ urlpatterns = [
     path("users/login/", vws.main, name="main"),
     path("profile/<int:pk>/", vws.main, name="main"),
     path("profile/files/<int:pk>/", vws.main, name="main"),
+    path("admins/registration/", vws.main, name="main"),
     path("admins/to/profile/<int:pk>/", vws.main, name="main"),
     path("admins/to/profile/files/<int:pk>/", vws.main, name="main"),
     

@@ -318,25 +318,17 @@ Mistake => f{e.__str__()}"}
         # password_byte = make_password(data["password"].encode("utf-8"))
         password_byte = data["password"].encode("utf-8")
         # data["password"] = password_byte
+        _user_doublication = UserRegister.objects.filter(email=data["email"])
+        if len(_user_doublication) > 0:
+            response = JsonResponse({"detail": "User Duplicate" }, status=400)
+            return response
         serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             serializer.save()
         else:
             return Response(serializer.errors, status=400)
             # instance = super().create(request, *args, **kwargs)
-        """
-            def create(self, request, *args, **kwargs):
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data, status=status.HTTP_201_CREATED,
-                headers=headers
-                )
-                
-                create eбопть из насле дия. Пароль сделать  - бинарный!!
-        """
+        
         # instance = super().create(request, *args, **kwargs)
         # request.data['password'] = make_password(request.data['password'])
         instance = get_fields_response(serializer)
@@ -717,7 +709,7 @@ json.loads(request.body)["is_active"] == True, and 'is_active'
 def api_get_index(request, **kwargs):
     """
   Received the request to restore the index by email of user.\
-  URL contein the user of email, but only  the email address is encrypted.\
+  URL contain the user of email, but only  the email address is encrypted.\
   The sub-function 'decrypt_data' contain algorithm for decryption.\
   :param request: method GET. URL contain one parameter of email address..
   :param kwargs: empty.
@@ -757,7 +749,6 @@ def main(request, pk=None):
     if request.method.lower() == "get":
         template = "users/index.html"
         title = "Главная"
-        context_ = {"page_name": title}
         response = render(request, template, {})
         # GET COOKIE
         response = get_user_cookie(request, response)

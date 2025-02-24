@@ -34,7 +34,6 @@ class UserSerializer(serializers.ModelSerializer, Logger):
         try:
             # Устанавливаем флаг для включения исключенных полей
             
-            
             # _user = UserRegister.objects.create(**validated_data)
             _user = super().create(validated_data)
             if not _user:
@@ -55,7 +54,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             _user.is_active = False
             _user.is_activated = False
             _user.is_superuser = False
-            _user.is_staff = False
+            _user.is_staff = self.initial_data["is_staff"]
             
             _user.save()
             _text = f"{_text} Saved the new user."
