@@ -281,6 +281,7 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
         
     @action(detail=True, url_name="delete", methods=["PUT"])
     async def remove(self, request, *args, **kwargs):
+        from django.core.files.storage import default_storage
         status_data = {}
         status_code = status.HTTP_204_NO_CONTENT
         # GET FILE'S ID FROM LIST
@@ -322,8 +323,20 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                         {"error": "'pk' invalid"},
                         status=status.HTTP_400_BAD_REQUEST
                         )
+                # RECIEVE USERS"S FILES FROM DB
+                files_of_user = \
+                    await sync_to_async(list)(
+                        FileStorage.objects.filter(user__in=user_list)
+                    )
                 # CREATE TASK OF ASYNC
                 tasks = []
+                for file in files_of_user:
+                    tasks.append(
+                        sync_to_async(default_storage.delete)(f"{file.file_path}")
+                    )
+                await asyncio.gather(*tasks)
+                tasks.clear()
+                    # tasks.append(sync_to_async(file.delete)())
                 for user in user_list:
                     # tasks.append(
                     #     sync_to_async(default_storage.delete)(
@@ -331,7 +344,7 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     #         )
                     # )
                     tasks.append(sync_to_async(user.delete)())
-                # RUN THE DELETE USERS (ALL TASKS)
+                # RUN THE DELETE FILES AND USERS (ALL TASKS)
                 await asyncio.gather(*tasks)
                 status_code = status.HTTP_204_NO_CONTENT
             else:
