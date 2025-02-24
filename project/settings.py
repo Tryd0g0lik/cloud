@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
-
+import logging
 import cloud.models
 from dotenv_ import (
     SECRET_KEY_,
@@ -24,7 +24,7 @@ from dotenv_ import (
     EMAIL_HOST_USER_,
     EMAIL_HOST_PASSWORD_
                      )
-
+from django.core.mail import send_mail
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -200,7 +200,22 @@ WEBPACK_LOADER ={
 #         'STATS_FILE': os.path.join(BASE_DIR, 'bundles\\webpack-stats.json')
 #     })
 #
-
+# '''Logging'''
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+}
 
 # EMAIL_BACKEND in down for a product
 # https://docs.djangoproject.com/en/4.2/topics/email/#smtp-backend
@@ -211,18 +226,18 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-from-email
-DEFAULT_FROM_EMAIL = f"smtp.{EMAIL_HOST_USER_}"
+# DEFAULT_FROM_EMAIL = f"smtp.{EMAIL_HOST_USER_}"
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_HOST
 # EMAIL_HOST = 'smtp.example.com' # Замените на адрес вашего SMTP-сервера
 # EMAIL_HOST = 'mail.privateemail.com'
-EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_HOST =  'smtp.yandex.ru'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_PORT
-EMAIL_PORT = f'{EMAIL_PORT_}' # APP_SERVER_PORT
-
+EMAIL_PORT = 465 # 465
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-host-user
 EMAIL_HOST_USER = f'{EMAIL_HOST_USER_}'
 # EMAIL_HOST_USER = 'noreply@custom-tools.online'
+
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-host-password
 EMAIL_HOST_PASSWORD = f'{EMAIL_HOST_PASSWORD_}'
 
@@ -237,10 +252,9 @@ EMAIL_TIMEOUT = 60
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_USE_LOCALTIME
 EMAIL_USE_LOCALTIME = True
-# Настройки мыла, с которого идёт рассылка
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-subject-prefix
-EMAIL_SUBJECT_PREFIX = "activation_from_cloud"
+# EMAIL_SUBJECT_PREFIX = "activation_from_cloud"
 
 
 # '''Cookie'''

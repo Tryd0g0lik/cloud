@@ -11,8 +11,8 @@ from dotenv_ import (APP_SERVER_HOST,
 from logs import configure_logging
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
-
-
+from django.core.mail import send_mail
+from project import settings
 log.info("START")
 # Integer signature
 signer = Signer()
@@ -73,7 +73,9 @@ def send_activation_notificcation(user) -> bool:
         log.info(f"{__text} Create a template for letter the number two ")
         # RUN THE 'email_user' METHOD FROM BASIS THE uSER MODEL
         # https://docs.djangoproject.com/en/5.1/topics/email/
-        user.email_user(subject, body_text) # "work80@mail.ru", ["work80@mail.ru"],  fail_silently=False,
+        user.email_user(subject,
+                        body_text,)
+        
         _resp_bool = True
         __text = f"{__text} Message send by email of the user."
     except Exception as e:
