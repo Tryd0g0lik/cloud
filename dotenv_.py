@@ -11,8 +11,8 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST", "127.0.0.1")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "123")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "cloud")
-EMAIL_PORT_ = os.getenv("EMAIL_PORT", "587")
-EMAIL_HOST_USER_ = os.getenv("EMAIL_PORT", "")
+EMAIL_PORT_ = os.getenv("EMAIL_PORT", "587") # 1025
+EMAIL_HOST_USER_ = os.getenv("EMAIL_HOST_USER_", "")
 EMAIL_HOST_PASSWORD_ = os.getenv("EMAIL_HOST_PASSWORD", "")
 DSN = f"postgresql://{POSTGRES_USER}:\
 {POSTGRES_PASSWORD}@\

@@ -204,11 +204,11 @@ WEBPACK_LOADER ={
 
 # EMAIL_BACKEND in down for a product
 # https://docs.djangoproject.com/en/4.2/topics/email/#smtp-backend
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND in down for a development
 
 # https://docs.djangoproject.com/en/4.2/topics/email/#console-backend
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-from-email
 DEFAULT_FROM_EMAIL = f"smtp.{EMAIL_HOST_USER_}"
@@ -216,6 +216,7 @@ DEFAULT_FROM_EMAIL = f"smtp.{EMAIL_HOST_USER_}"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_HOST
 # EMAIL_HOST = 'smtp.example.com' # Замените на адрес вашего SMTP-сервера
 # EMAIL_HOST = 'mail.privateemail.com'
+EMAIL_HOST = 'smtp.mail.ru'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-EMAIL_PORT
 EMAIL_PORT = f'{EMAIL_PORT_}' # APP_SERVER_PORT
 
@@ -226,10 +227,10 @@ EMAIL_HOST_USER = f'{EMAIL_HOST_USER_}'
 EMAIL_HOST_PASSWORD = f'{EMAIL_HOST_PASSWORD_}'
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-use-ssl
-# EMAIL_USE_SSL = True  # если порт 465
+EMAIL_USE_SSL = True  # если порт 465
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-use-tls
-EMAIL_USE_TLS = False
+# EMAIL_USE_TLS = False
 # EMAIL_USE_TLS = True  # если порт 587
 # https://docs.djangoproject.com/en/4.2/ref/settings/#email-timeout
 EMAIL_TIMEOUT = 60
