@@ -278,3 +278,68 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     status=status.HTTP_400_BAD_REQUEST
                     )
             return response
+        
+    @action(detail=True, url_name="delete", methods=["PUT"])
+    async def remove(self, request, *args, **kwargs):
+        status_data = {}
+        status_code = status.HTTP_204_NO_CONTENT
+        # GET FILE'S ID FROM LIST
+        files_id_list = json.loads(request.body)["users"]
+        try:
+            if request.user.is_authenticated:
+                user_session_client = request.COOKIES.get("user_session")
+                # GET use-session from the cache (our
+                # cacher table from settings.py)
+                user_session_db = await sync_to_async(cache.get)(
+                    f"user_session_{request.user.id}"
+                )
+                # USER IS NOT AUTHENTICATED
+                if (user_session_db != user_session_client and not
+                request.user.is_staff) or (
+                  request.user.id != int(kwargs["pk"])
+                  and not request.user.is_staff):
+                    response = JsonResponse(
+                        {"data": ["User is not authenticated"]},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pk=request.user.id
+                    )
+                    # DEACTIVATION
+                    user.is_active = False
+                    user.save(update_fields=["is_active"])
+                    login(request, user)
+                    cookie = Cookies(request.user.id, response)
+                    response = cookie.is_active(False)
+                    return response
+                # GET USER's'S LIST BY USER's ID FROM DB
+                user_list = [await asyncio.create_task(
+                    sync_to_async(list)(UserRegister.objects.filter(id=index))
+                ) for index in files_id_list]
+                user_list = [arr[0] for arr in user_list]
+                if len(user_list) == 0:
+                    return sync_to_async(JsonResponse)(
+                        {"error": "'pk' invalid"},
+                        status=status.HTTP_400_BAD_REQUEST
+                        )
+                # CREATE TASK OF ASYNC
+                tasks = []
+                for user in user_list:
+                    # tasks.append(
+                    #     sync_to_async(default_storage.delete)(
+                    #         f"{user.file_path}"
+                    #         )
+                    # )
+                    tasks.append(sync_to_async(user.delete)())
+                # RUN THE DELETE USERS (ALL TASKS)
+                await asyncio.gather(*tasks)
+                status_code = status.HTTP_204_NO_CONTENT
+            else:
+                # NOT LOGGED IN
+                status_data = {"detail": "User is not authenticated"}
+                status_code = status.HTTP_401_UNAUTHORIZED
+        except Exception as e:
+            status_data = {"error": f"Mistake => {e.__str__()}"}
+            status_code = status.HTTP_404_NOT_FOUND
+        finally:
+            return JsonResponse(status_data, status=status_code)

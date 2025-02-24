@@ -353,7 +353,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 user_session_db = await sync_to_async(cache.get)(
                     f"user_session_{request.user.id}"
                 )
-                # CHECK THE SESSION KEY of USER_SESSION  AND ADMIN adn CHECK USER ID
+                # USER IS NOT AUTHENTICATED
                 if (user_session_db != user_session_client and not
                 request.user.is_staff) or (
                   request.user.id != int(kwargs["pk"])
@@ -365,6 +365,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                     user = await sync_to_async(UserRegister.objects.get)(
                         pk=request.user.id
                     )
+                    # DEACTIVATION
                     user.is_active = False
                     user.save(update_fields=["is_active"])
                     login(request, user)
@@ -375,7 +376,7 @@ class FileStorageViewSet(viewsets.ViewSet):
                 file_list = [await asyncio.create_task(
                     sync_to_async(list)(FileStorage.objects.filter(id=index))
                 ) for index in files_id_list]
-                file_list = [file[0] for file in file_list]
+                file_list = [arr[0] for arr in file_list]
                 if len(file_list) == 0:
                     return sync_to_async(JsonResponse)({"error": "'pk' invalid"},
                                         status=status.HTTP_400_BAD_REQUEST)
