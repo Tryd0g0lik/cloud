@@ -1,14 +1,18 @@
 """
 cloud_user/more_serializers/serializer_update.py
 """
+
 import logging
+
 from rest_framework import serializers
+
 from cloud_user.models import UserRegister
+from logs import configure_logging
 from project.services import get_fields_response
-from logs import configure_logging, Logger
 
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
+
 
 class UserPatchSerializer(serializers.ModelSerializer):
     """
@@ -26,14 +30,12 @@ class UserPatchSerializer(serializers.ModelSerializer):
              "date_joined": "2025-01-03T13:01:53.238635+07:00"
            }
    """
+
     class Meta:
         model = UserRegister
         fields = "__all__"
-    
-    
-    
+
     def update(self, instance, validated_data: [list, dict]) -> object:
-        ## Отработать с cookie
         """
         TODO: This for a PATCH method. For update data of single cell or more cells.
             Method: PATCH
@@ -54,7 +56,7 @@ class UserPatchSerializer(serializers.ModelSerializer):
                     "token": < string >
                 }
             ```
-           
+
         :return instance: object \
         ```json
             {
@@ -70,12 +72,8 @@ class UserPatchSerializer(serializers.ModelSerializer):
             }
         '''
         """
-        
-        
+
         # instance = super().update(instance, validated_data)
         instance = get_fields_response(self)
-        
+
         return instance
-    
-    
-    

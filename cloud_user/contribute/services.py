@@ -2,23 +2,26 @@
 cloud_user/serializers.py
 Not more functions
 """
-import scrypt
-import requests
-from cloud_user.models import UserRegister
-from django.core.cache import (cache)
-from cloud_user.contribute.sessions import (check,
-                                            hash_create_user_session)
 
-def find_superuser()-> [object, None]:
+import requests
+import scrypt
+from django.core.cache import cache
+
+from cloud_user.contribute.sessions import check, hash_create_user_session
+from cloud_user.models import UserRegister
+
+
+def find_superuser() -> [object, None]:
     """
-    TODO: Checker. It checks, we have a superuser in db or not/
-'True' if haves a superuser or 'False'
-    :return: object or None
+        TODO: Checker. It checks, we have a superuser in db or not/
+    'True' if haves a superuser or 'False'
+        :return: object or None
     """
     superuser_list = UserRegister.objects.filter(is_superuser=True)
     if len(superuser_list) > 0:
         return superuser_list[0]
     return None
+
 
 # def get_fields_response(obj,
 #                         exclude_instance=[]
@@ -58,9 +61,9 @@ def find_superuser()-> [object, None]:
 #     return new_instance
 
 
-def get_user_cookie(request: type(requests),
-                    response: type(requests.models.Response),
-                    **kwargs) -> type(requests.models.Response):
+def get_user_cookie(
+    request: type(requests), response: type(requests.models.Response), **kwargs
+) -> type(requests.models.Response):
     """
     From the request we receive an index of user. Then, to the response add the\
     cookie data:
@@ -72,17 +75,21 @@ def get_user_cookie(request: type(requests),
     :param response: for the web client.
     :return:
     """
-    from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE, \
-                                  SESSION_COOKIE_SECURE,
+    from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE,
+                                  SESSION_COOKIE_HTTPONLY,
                                   SESSION_COOKIE_SAMESITE,
-                                  SESSION_COOKIE_HTTPONLY)
+                                  SESSION_COOKIE_SECURE)
+
     user_list = []
-    index = request.COOKIES.get("index") if \
-        request.COOKIES.get("index") else \
-        (kwargs["pk"] if 'pk' in kwargs else None)
-        # index = request.COOKIES.get("index")
+    index = (
+        request.COOKIES.get("index")
+        if request.COOKIES.get("index")
+        else (kwargs["pk"] if "pk" in kwargs else None)
+    )
+    # index = request.COOKIES.get("index")
     if not index:
         import re
+
         index_list = re.findall(r"\d+", request.path)
         if len(index_list) > 0:
             index = index_list[-1]
@@ -97,9 +104,7 @@ def get_user_cookie(request: type(requests),
         # OLD of VERTION S
         response.set_cookie(
             f"user_session",
-            cache.get(
-                f"user_session_{index}"
-            ),
+            cache.get(f"user_session_{index}"),
             # scrypt.hash(
             #     cache.get(
             #         f"user_session_{index}"
@@ -108,7 +113,7 @@ def get_user_cookie(request: type(requests),
             max_age=SESSION_COOKIE_AGE,
             httponly=True,
             secure=SESSION_COOKIE_SECURE,
-            samesite=SESSION_COOKIE_SAMESITE
+            samesite=SESSION_COOKIE_SAMESITE,
         )
         response.set_cookie(
             f"is_staff",
@@ -116,21 +121,22 @@ def get_user_cookie(request: type(requests),
             max_age=SESSION_COOKIE_AGE,
             httponly=SESSION_COOKIE_HTTPONLY,
             secure=SESSION_COOKIE_SECURE,
-            samesite=SESSION_COOKIE_SAMESITE
+            samesite=SESSION_COOKIE_SAMESITE,
         )
         response.set_cookie(
-            f"is_active", user_list[0].is_active,
+            f"is_active",
+            user_list[0].is_active,
             max_age=SESSION_COOKIE_AGE,
             httponly=SESSION_COOKIE_HTTPONLY,
             secure=SESSION_COOKIE_SECURE,
-            samesite=SESSION_COOKIE_SAMESITE
+            samesite=SESSION_COOKIE_SAMESITE,
         )
         response.set_cookie(
-            "index", index,
+            "index",
+            index,
             max_age=SESSION_COOKIE_AGE,
             httponly=SESSION_COOKIE_HTTPONLY,
             secure=SESSION_COOKIE_SECURE,
-            samesite=SESSION_COOKIE_SAMESITE
+            samesite=SESSION_COOKIE_SAMESITE,
         )
     return response
-

@@ -1,16 +1,15 @@
-import json
 import asyncio
-from asgiref.sync import sync_to_async, async_to_sync
-from typing import (NewType, TypedDict, Dict)
-from rest_framework import (status, generics)
-from rest_framework.renderers import JSONRenderer
+import json
+from typing import TypedDict
+
 from adrf import viewsets
-from rest_framework.decorators import action
-from django.core.cache import cache
+from asgiref.sync import sync_to_async
 from django.contrib.auth import login
+from django.core.cache import cache
 from django.http.response import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_protect, csrf_exempt
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework import generics, status
+from rest_framework.decorators import action
 
 from cloud.cookies import Cookies
 from cloud.serializers import AdminSerializer
@@ -18,8 +17,6 @@ from cloud.services import get_data_authenticate
 from cloud_file.models import FileStorage
 from cloud_file.serializers import FileStorageSerializer
 from cloud_user.models import UserRegister
-from cloud_user.serializers import UserSerializer
-# from project.services import get_fields_response
 
 
 @csrf_exempt
@@ -38,10 +35,11 @@ def user_update_sessionTime(request):
     response = JsonResponse({"message": "Not OK"})
     if request.method != "PATCH":
         return response
-    
+
     # Get new type
     class SessionData_Type(TypedDict):
         time: int
+
     try:
         # Get user's Id from COOKIE
         instance = get_data_authenticate(request)
@@ -50,19 +48,18 @@ def user_update_sessionTime(request):
         cache.touch(f"is_staff_{instance.id}", data["time"] * 2)
         return JsonResponse({"message": "OK"})
     except Exception as e:
-        raise ValueError(f"[{__name__}::{user_update_sessionTime.__name__}]: \
-Mistake => {e.__str__()}")
+        raise ValueError(
+            f"[{__name__}::{user_update_sessionTime.__name__}]: \
+Mistake => {e.__str__()}"
+        )
     finally:
         cache.close()
-   
 
 
 class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
     queryset = UserRegister.objects.all()
     serializer_class = AdminSerializer
-    # permission_classes = [
-    #
-    # ]
+
     async def options(self, request, *args, **kwargs):
         pass
         response = super().options(request, *args, **kwargs)
@@ -74,7 +71,7 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
             # CHECK IF USER IS NOT AUTHENTICATED
             if request.method == "POST" and not request.user.is_authenticated:
                 data_request = json.loads(request.body)
-                
+
                 # SERIALIZER
                 serializer = AdminSerializer(data={**data_request})
                 data_saved = None
@@ -83,31 +80,47 @@ class AdminView(viewsets.ModelViewSet, generics.GenericAPIView):
                     data_saved = await serializer.create(serializer.validated_data)
                     pass
                     # await serializer.save()
-                    
+
                 else:
                     # IF SERIALIZER"s DATA NOT VALID
-                    return JsonResponse(serializer.errors,
-                                        status=status.HTTP_400_BAD_REQUEST)
+                    return JsonResponse(
+                        serializer.errors, status=status.HTTP_400_BAD_REQUEST
+                    )
                 pass
-                if (data_saved):
+                if data_saved:
                     exclude_instance = []
                     if len(exclude_instance) == 0:
-                        exclude_instance = ["_state", "password", "is_activated",
-                                            "email", "send_messages",
-                                            "groups", "user_permissions"]
+                        exclude_instance = [
+                            "_state",
+                            "password",
+                            "is_activated",
+                            "email",
+                            "send_messages",
+                            "groups",
+                            "user_permissions",
+                        ]
                     new_instance = {}
                     for k, v in dict(data_saved.__dict__).items():
                         if k in exclude_instance:
                             continue
                         new_instance[f"{k}"] = v
-                    return await sync_to_async(JsonResponse)(data={**new_instance}, status=status.HTTP_200_OK)
+                    return await sync_to_async(JsonResponse)(
+                        data={**new_instance}, status=status.HTTP_200_OK
+                    )
             else:
                 # IF USER IS AUTHENTICATED FRO REQUEST
-                return JsonResponse({"detail": "Check the user from REQUEST"},
-                                    status=status.HTTP_400_BAD_REQUEST)
+                return JsonResponse(
+                    {"detail": "Check the user from REQUEST"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         except Exception as err:
-            return JsonResponse({"detail": f"[{__name__}::{self.__class__.__name__}.{self.create.__name__}]: \
-Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse(
+                {
+                    "detail": f"[{__name__}::{self.__class__.__name__}.{self.create.__name__}]: \
+Mistake => {err.__str__()}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     async def list(self, request, *args, **kwargs):
         """
@@ -124,35 +137,42 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                 # GET ALL USERS
                 data_users = await sync_to_async(list)(UserRegister.objects.all())
                 serializer_data_users = self.get_serializer(
-                    list(data_users), many=True, allow_empty=True)
+                    list(data_users), many=True, allow_empty=True
+                )
                 # GET LIST OF USERS FROM SERIALIZER
-                data_users_list = await sync_to_async(lambda: serializer_data_users.data)()
+                data_users_list = await sync_to_async(
+                    lambda: serializer_data_users.data
+                )()
                 user_list.extend(data_users_list)
-    #
+                #
                 # GET ALL FILES
-                data_files = await sync_to_async(list)(
-                        FileStorage.objects.all())
+                data_files = await sync_to_async(list)(FileStorage.objects.all())
                 # SERIALIZER ALL FILES
                 if len(data_files) > 0:
-                    serializer_data_files = FileStorageSerializer(list(data_files), many=True, allow_empty=True)
+                    serializer_data_files = FileStorageSerializer(
+                        list(data_files), many=True, allow_empty=True
+                    )
                     # GET LIST OF FILES FROM SERIALIZER
-                    data_files_list = await sync_to_async(lambda: serializer_data_files.data)()
+                    data_files_list = await sync_to_async(
+                        lambda: serializer_data_files.data
+                    )()
                     user_files.extend(data_files_list)
                 response = JsonResponse(
-                    data={"users": list(user_list),
-                          "files": list(user_files)}, status=status.HTTP_200_OK)
+                    data={"users": list(user_list), "files": list(user_files)},
+                    status=status.HTTP_200_OK,
+                )
                 return response
-            
+
             else:
                 # NOT LOGGED IN
                 response = JsonResponse(
                     {"detail": ["User is not authenticated"]},
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_403_FORBIDDEN,
                 )
-                if hasattr(request.user, 'id') and \
-                  getattr(request.user, 'id') != None:
-                    user = await sync_to_async(
-                        UserRegister.objects.get)(pk=request.user.id)
+                if hasattr(request.user, "id") and getattr(request.user, "id") != None:
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pk=request.user.id
+                    )
                     user.is_active = False
                     user.save(update_fields=["is_active"])
                     login(request, user)
@@ -169,19 +189,21 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                 return response
 
         except Exception as e:
-            response = \
-                JsonResponse({"detail":
-                    f"[{__name__}::{self.__class__.__name__}.\
-{self.list.__name__}]: Mistake => {e.__str__()}"},
-                             status=status.HTTP_400_BAD_REQUEST)
+            response = JsonResponse(
+                {
+                    "detail": f"[{__name__}::{self.__class__.__name__}.\
+{self.list.__name__}]: Mistake => {e.__str__()}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
             return response
 
     async def retrieve(self, request, *args, **kwargs):
         """
-       :param args: None
-       :param kwargs: None
-       :return: method return data of one users and  his files
-               """
+        :param args: None
+        :param kwargs: None
+        :return: method return data of one users and  his files
+        """
         user_list = []
         user_files = []
         # response = super().retrieve(request, *args, **kwargs)
@@ -200,38 +222,40 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     # SERIALIZER
                     serializer_data_user = self.get_serializer(
                         list(data_users), many=True, allow_empty=True
-                        )
+                    )
                     # GET LIST OF USERS FROM SERIALIZER
                     data_users_list = await sync_to_async(
                         lambda: serializer_data_user.data
-                        )()
+                    )()
                     user_list.extend(data_users_list)
-            
+
                     if len(files_data) > 0:
                         serializer_data_files = FileStorageSerializer(
                             list(files_data), many=True, allow_empty=True
-                            )
+                        )
                         # GET LIST OF FILES FROM SERIALIZER
                         data_files_list = await sync_to_async(
                             lambda: serializer_data_files.data
-                            )()
+                        )()
                         user_files.extend(data_files_list)
                     response = JsonResponse(
-                        data={"users": list(user_list),
-                              "files": list(user_files)}, status=status.HTTP_200_OK
+                        data={"users": list(user_list), "files": list(user_files)},
+                        status=status.HTTP_200_OK,
                     )
                     return response
                 else:
                     # NOT LOGGED IN
                     response = JsonResponse(
                         {"detail": ["User is not authenticated"]},
-                        status=status.HTTP_403_FORBIDDEN
+                        status=status.HTTP_403_FORBIDDEN,
                     )
-                    if hasattr(request.user, 'id') and \
-                      getattr(request.user, 'id') != None:
-                        user = await sync_to_async(
-                            UserRegister.objects.get
-                        )(pk=request.user.id)
+                    if (
+                        hasattr(request.user, "id")
+                        and getattr(request.user, "id") != None
+                    ):
+                        user = await sync_to_async(UserRegister.objects.get)(
+                            pk=request.user.id
+                        )
                         user.is_active = False
                         user.save(update_fields=["is_active"])
                         login(request, user)
@@ -249,12 +273,12 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                 # NOT LOGGED IN
                 response = JsonResponse(
                     {"detail": ["User is not authenticated"]},
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_403_FORBIDDEN,
                 )
-                if hasattr(request.user, 'id') and \
-                  getattr(request.user, 'id') != None:
-                    user = await sync_to_async(
-                        UserRegister.objects.get)(pk=request.user.id)
+                if hasattr(request.user, "id") and getattr(request.user, "id") != None:
+                    user = await sync_to_async(UserRegister.objects.get)(
+                        pk=request.user.id
+                    )
                     user.is_active = False
                     user.save(update_fields=["is_active"])
                     login(request, user)
@@ -270,18 +294,19 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                 response = cookie.is_active(False)
                 return response
         except Exception as e:
-            response = \
-                JsonResponse(
-                    {"detail":
-                         f"[{__name__}::{self.__class__.__name__}.\
-{self.list.__name__}]: Mistake => {e.__str__()}"},
-                    status=status.HTTP_400_BAD_REQUEST
-                    )
+            response = JsonResponse(
+                {
+                    "detail": f"[{__name__}::{self.__class__.__name__}.\
+{self.list.__name__}]: Mistake => {e.__str__()}"
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
             return response
-        
+
     @action(detail=True, url_name="delete", methods=["PUT"])
     async def remove(self, request, *args, **kwargs):
         from django.core.files.storage import default_storage
+
         status_data = {}
         status_code = status.HTTP_204_NO_CONTENT
         # GET FILE'S ID FROM LIST
@@ -295,13 +320,14 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     f"user_session_{request.user.id}"
                 )
                 # USER IS NOT AUTHENTICATED
-                if (user_session_db != user_session_client and not
-                request.user.is_staff) or (
-                  request.user.id != int(kwargs["pk"])
-                  and not request.user.is_staff):
+                if (
+                    user_session_db != user_session_client and not request.user.is_staff
+                ) or (
+                    request.user.id != int(kwargs["pk"]) and not request.user.is_staff
+                ):
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
-                        status=status.HTTP_403_FORBIDDEN
+                        status=status.HTTP_403_FORBIDDEN,
                     )
                     user = await sync_to_async(UserRegister.objects.get)(
                         pk=request.user.id
@@ -314,20 +340,21 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     response = cookie.is_active(False)
                     return response
                 # GET USER's'S LIST BY USER's ID FROM DB
-                user_list = [await asyncio.create_task(
-                    sync_to_async(list)(UserRegister.objects.filter(id=index))
-                ) for index in files_id_list]
+                user_list = [
+                    await asyncio.create_task(
+                        sync_to_async(list)(UserRegister.objects.filter(id=index))
+                    )
+                    for index in files_id_list
+                ]
                 user_list = [arr[0] for arr in user_list]
                 if len(user_list) == 0:
                     return sync_to_async(JsonResponse)(
-                        {"error": "'pk' invalid"},
-                        status=status.HTTP_400_BAD_REQUEST
-                        )
-                # RECIEVE USERS"S FILES FROM DB
-                files_of_user = \
-                    await sync_to_async(list)(
-                        FileStorage.objects.filter(user__in=user_list)
+                        {"error": "'pk' invalid"}, status=status.HTTP_400_BAD_REQUEST
                     )
+                # RECIEVE USERS"S FILES FROM DB
+                files_of_user = await sync_to_async(list)(
+                    FileStorage.objects.filter(user__in=user_list)
+                )
                 # CREATE TASK OF ASYNC
                 tasks = []
                 for file in files_of_user:
@@ -336,7 +363,7 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     )
                 await asyncio.gather(*tasks)
                 tasks.clear()
-                    # tasks.append(sync_to_async(file.delete)())
+                # tasks.append(sync_to_async(file.delete)())
                 for user in user_list:
                     # tasks.append(
                     #     sync_to_async(default_storage.delete)(
@@ -380,13 +407,14 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     f"user_session_{request.user.id}"
                 )
                 # USER IS NOT AUTHENTICATED
-                if (user_session_db != user_session_client and not
-                request.user.is_staff) or (
-                  request.user.id != int(kwargs["pk"])
-                  and not request.user.is_staff):
+                if (
+                    user_session_db != user_session_client and not request.user.is_staff
+                ) or (
+                    request.user.id != int(kwargs["pk"]) and not request.user.is_staff
+                ):
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
-                        status=status.HTTP_403_FORBIDDEN
+                        status=status.HTTP_403_FORBIDDEN,
                     )
                     user = await sync_to_async(UserRegister.objects.get)(
                         pk=request.user.id
@@ -400,42 +428,52 @@ Mistake => {err.__str__()}"}, status=status.HTTP_400_BAD_REQUEST)
                     return response
                 # CHOICE of USER'S LIST BY USER's ID FROM DB.
                 # These users were chosen as a new admin.
-                list_selected_users = [await asyncio.create_task(
-                    sync_to_async(list)(UserRegister.objects.filter(id=index))
-                ) for index in files_id_list]
+                list_selected_users = [
+                    await asyncio.create_task(
+                        sync_to_async(list)(UserRegister.objects.filter(id=index))
+                    )
+                    for index in files_id_list
+                ]
                 list_selected_users = [arr[0] for arr in list_selected_users]
                 if len(list_selected_users) == 0:
                     return sync_to_async(JsonResponse)(
-                        {"error": "'pk' invalid"},
-                        status=status.HTTP_400_BAD_REQUEST
-                        )
+                        {"error": "'pk' invalid"}, status=status.HTTP_400_BAD_REQUEST
+                    )
                 # CHOICE OF USERS WHO HAVE
                 # AN ADMIN STATUS (proporties the is_staff === Ture)
-                list_have_admin_status = \
-                    await sync_to_async(list)(
-                        UserRegister.objects.filter(is_staff=True)
-                    )
-                list_have_admin_status =\
-                    [ user  for user in list_have_admin_status if user.id != request.user.id]
-                list_users_were_removed_status = \
-                    [user for user in list_have_admin_status
-                     if user not in list_selected_users]
+                list_have_admin_status = await sync_to_async(list)(
+                    UserRegister.objects.filter(is_staff=True)
+                )
+                list_have_admin_status = [
+                    user
+                    for user in list_have_admin_status
+                    if user.id != request.user.id
+                ]
+                list_users_were_removed_status = [
+                    user
+                    for user in list_have_admin_status
+                    if user not in list_selected_users
+                ]
                 # CREATE TASK FOR DELETE THE ADMIN'S STATUS OF USERS
                 tasks = []
                 for user in list_users_were_removed_status:
+
                     @sync_to_async
                     def admin_status_false():
                         user.is_staff = False
                         user.is_superuser = False
                         user.save(update_fields=["is_staff", "is_superuser"])
+
                     tasks.append(asyncio.create_task(admin_status_false()))
                 # CREATE TASK FOR ADD THE ADMIN'S STATUS OF USERS
                 for user in list_selected_users:
+
                     @sync_to_async
                     def admin_status_true():
                         user.is_staff = False if user.is_staff else True
                         user.is_superuser = False if user.is_superuser else True
                         user.save(update_fields=["is_staff", "is_superuser"])
+
                     tasks.append(asyncio.create_task(admin_status_true()))
                 await asyncio.gather(*tasks)
                 tasks.clear()

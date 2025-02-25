@@ -1,6 +1,4 @@
-def get_fields_response(obj,
-                        exclude_instance=[]
-                        ):
+def get_fields_response(obj, exclude_instance=[]):
     """
     TODO: This is function for returning the set of fields. They are sending \
 in response for the client.
@@ -23,9 +21,14 @@ in response for the client.
      ```
    """
     if len(exclude_instance) == 0:
-        exclude_instance = ["password", "is_activated",
-                            "email",  "send_messages",
-                            "groups", "user_permissions"]
+        exclude_instance = [
+            "password",
+            "is_activated",
+            "email",
+            "send_messages",
+            "groups",
+            "user_permissions",
+        ]
     new_instance = {}
     for k, v in dict(obj.data).items():
         if k in exclude_instance:

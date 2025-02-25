@@ -1,4 +1,4 @@
-from django.urls import (path, include)
+from django.urls import include, path
 from rest_framework import routers
 
 from cloud.views import AdminView
@@ -13,5 +13,4 @@ urlpatterns_admin = [
     # path("", include(routers.urls)),
     path("activate/<str:sign>/", user_activate, name="admin_activate"),
     path("choice/", include(routers.urls)),
-    
 ]

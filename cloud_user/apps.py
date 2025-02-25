@@ -7,10 +7,9 @@ the total app.
 
 import logging
 
-
-
 from django.apps import AppConfig
 from django.dispatch import Signal
+
 from cloud_user.contribute.utilites import send_activation_notificcation
 from logs import configure_logging
 
@@ -21,6 +20,7 @@ log.info("START")
 
 class CloudUserConfig(AppConfig):
     """Basis registration of app the cloud_user"""
+
     default_auto_field = "django.db.models.BigAutoField"
     name = "cloud_user"
     verbose_name = "Профиль пользователя"
@@ -32,7 +32,8 @@ class CloudUserConfig(AppConfig):
 signal_user_registered = Signal(use_caching=False)
 log.info(f"{__name__} Signal WAS STARTED")
 
-def user_registered_dispatcher(sender, **kwargs)-> bool:
+
+def user_registered_dispatcher(sender, **kwargs) -> bool:
     """
     TODO: This is a handler of signal. Send an activation message by \
         the user email.\
@@ -54,9 +55,11 @@ def user_registered_dispatcher(sender, **kwargs)-> bool:
         res_boll = send_activation_notificcation(kwargs["isinstance"])
         _resp_bool = True
         if not res_boll:
-            raise ValueError(f"{__text} Mistake => \
-'send_activation_notificcation' - something what wrong.")
-            
+            raise ValueError(
+                f"{__text} Mistake => \
+'send_activation_notificcation' - something what wrong."
+            )
+
         __text = f"{__text} The activation message was added"
     except Exception as e:
         __text = f"{__text} Mistake => {e.__str__()}"
@@ -70,11 +73,9 @@ def user_registered_dispatcher(sender, **kwargs)-> bool:
         log.info(__text)
         return _resp_bool
 
-signal_user_registered.connect(weak=False,
-                               receiver=user_registered_dispatcher)
+
+signal_user_registered.connect(weak=False, receiver=user_registered_dispatcher)
 
 # After connect
 # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
 # Find the line where, it has sub-string 'signal_user_registered.send(....)'
-
-

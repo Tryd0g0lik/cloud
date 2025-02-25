@@ -2,8 +2,8 @@
 
 import django.contrib.auth.models
 import django.contrib.auth.validators
-from django.db import migrations, models
 import django.utils.timezone
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -29,8 +29,7 @@ class Migration(migrations.Migration):
                 ),
                 ("password", models.CharField(max_length=128, verbose_name="password")),
                 (
-                    ""
-                    "last_login",
+                    "" "last_login",
                     models.DateTimeField(
                         blank=True, null=True, verbose_name="last login"
                     ),

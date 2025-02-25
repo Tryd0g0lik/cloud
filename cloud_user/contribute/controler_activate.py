@@ -11,33 +11,33 @@ the function (below).
 
 
 """
+
 import logging
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
+
+from django.contrib.auth import login
+from django.core.cache import cache
 from django.core.signing import BadSignature
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.core.cache import cache
-from django.contrib.auth import login
+from rest_framework import status
+
 from cloud.cookies import Cookies
 from cloud_user.contribute.sessions import create_signer
 from cloud_user.contribute.utilites import signer
 from cloud_user.models import UserRegister
-from rest_framework import status
-from dotenv_ import (
-    URL_REDIRECT_IF_NOTGET_AUTHENTICATION,
-    URL_REDIRECT_IF_GET_AUTHENTICATION
-)
-import scrypt
+from dotenv_ import (URL_REDIRECT_IF_GET_AUTHENTICATION,
+                     URL_REDIRECT_IF_NOTGET_AUTHENTICATION)
 from logs import configure_logging
-from project.settings import (SESSION_COOKIE_HTTPONLY, SESSION_COOKIE_SECURE,
-                              SESSION_COOKIE_SAMESITE, SESSION_COOKIE_AGE,
-                              SECRET_KEY)
+from project.settings import SESSION_COOKIE_AGE
+
 configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 
 
 """Срабатывает по запросы урла который содержит подпись"""
+
+
 def user_activate(request, sign):
     """
     TODO: From the *_user/serializers.py::UserSerializer.create the message \
@@ -84,9 +84,11 @@ code 301.\
         _text = f"{_text} Mistake => 'BadSignature': {e.__str__()}"
         # return redirect("/", permanent=True,)
         # https://docs.djangoproject.com/en/5.1/ref/request-response/#httpresponse-objects
-        
-        return HttpResponseRedirect(redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
-                                    status=status.HTTP_400_BAD_REQUEST)
+
+        return HttpResponseRedirect(
+            redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     # https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/#get-object-or-404
     try:
         user = get_object_or_404(UserRegister, username=username)
@@ -94,7 +96,7 @@ code 301.\
             _text = f"{_text} Get 'user': {user.__dict__.__str__()}"
             # logging, it if return error
         except Exception as e:
-            _text = f"{_text} Get 'user': {user.__str__()}"
+            _text = f"{_text} Get 'user': {e.__str__()}"
         log.info(_text)
         # get the text from the basis value
         _text = (_text.split(":"))[0] + ":"
@@ -102,8 +104,10 @@ code 301.\
         if user.is_activated:
             _text = f"{_text} the object 'user' has 'True' value \
 from 'is_activated'. Redirect. 301"
-            response = HttpResponseRedirect(redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
-                                            status=status.HTTP_400_BAD_REQUEST)
+            response = HttpResponseRedirect(
+                redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
             return response
         _text = f"{_text} the object 'user' can not have 'True' value \
 from 'is_activated'."
@@ -119,24 +123,27 @@ from 'is_activated'."
         user_session = create_signer(user)
         cache.set(f"user_session_{user.id}", user_session, SESSION_COOKIE_AGE)
         """ New object has the `user_session_{id}` variable"""
-        redirect_url = f"{request.scheme}://{request.get_host()}" \
-f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
-        response =  HttpResponseRedirect(redirect_url)
+        redirect_url = (
+            f"{request.scheme}://{request.get_host()}"
+            f"{URL_REDIRECT_IF_GET_AUTHENTICATION}"
+        )
+        response = HttpResponseRedirect(redirect_url)
         login(request, user)
         # COOKIE ADD IN RESPONSE
         cookie = Cookies(user.id, response)
         response = cookie.All(user.is_staff, user.is_active)
-        
+
         return response
 
     except Exception as e:
         _text = f"{_text} Mistake => {e.__str__()}"
-        return  HttpResponseRedirect(
-            redirect_to=f"{request.scheme}://{request.get_host()}/", # redirect_url
-            status=400) # status
+        return HttpResponseRedirect(
+            redirect_to=f"{request.scheme}://{request.get_host()}/",  # redirect_url
+            status=400,
+        )  # status
     finally:
         if "Mistake" in _text:
             log.error(_text)
         else:
-            _text = 'Ok'
+            _text = "Ok"
             log.info(_text)

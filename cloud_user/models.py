@@ -1,15 +1,12 @@
 """
 cloud_user/models.py
 """
+
+from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core import validators as val
-from django.core.exceptions import ValidationError
-# Create your models here.
-from django.contrib.auth.models import AbstractUser
 
-
-# Create your models here.
 
 class UserRegister(AbstractUser):
     """
@@ -35,20 +32,25 @@ class UserRegister(AbstractUser):
        :param groups:
        :param  password: str. Max length of characters is 128 and min is 3.
        """
-    last_name = models.CharField(_("last name"), max_length=150, null=True,
-                                 blank=True)
-    first_name = models.CharField(_("first name"), max_length=150, null=True,
-                                  blank=True)
-    email = models.EmailField(help_text=_("email address"),
-                              blank=False,
-                              unique=True,)
+
+    last_name = models.CharField(_("last name"), max_length=150, null=True, blank=True)
+    first_name = models.CharField(
+        _("first name"), max_length=150, null=True, blank=True
+    )
+    email = models.EmailField(
+        help_text=_("email address"),
+        blank=False,
+        unique=True,
+    )
     groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='%(class)s_groups',
+        "auth.Group",
+        related_name="%(class)s_groups",
         blank=True,
-        help_text=_('The groups this user belongs to. A user will get all permissions '
-'granted to each of their groups.'),
-        verbose_name='groups'
+        help_text=_(
+            "The groups this user belongs to. A user will get all permissions "
+            "granted to each of their groups."
+        ),
+        verbose_name="groups",
     )
     # password = models.BinaryField(_("password"),
     #                               max_length=128,
@@ -59,37 +61,39 @@ class UserRegister(AbstractUser):
     #                               unique=False,
     #                               )
     user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='%(class)s_user_permissions',
+        "auth.Permission",
+        related_name="%(class)s_user_permissions",
         # Уникальное имя для обратной связи
         blank=True,
-        help_text=_('Specific permissions for this user.'),
-        verbose_name='user permissions'
+        help_text=_("Specific permissions for this user."),
+        verbose_name="user permissions",
     )
     is_activated = models.BooleanField(
         default=False,
-        verbose_name=_('After activation'),
-        help_text=_("Part of the user registration. Message \
-is sending to the email. В сообщении ссылка для подтверждения пользователя."),
+        verbose_name=_("After activation"),
+        help_text=_(
+            "Part of the user registration. Message \
+is sending to the email. В сообщении ссылка для подтверждения пользователя."
+        ),
     )
     send_messages = models.BooleanField(
         default=False,
-        verbose_name='Слать оповещение',
-        help_text=_("Part is registration of new user.It is message sending \
-to user's email. User indicates his email at the registrations moment.")
+        verbose_name="Слать оповещение",
+        help_text=_(
+            "Part is registration of new user.It is message sending \
+to user's email. User indicates his email at the registrations moment."
+        ),
     )
-    
+
     class Meta(AbstractUser.Meta):
-        indexes = [
-            models.Index(fields=["is_activated"], name="activated_index")
-        ]
+        indexes = [models.Index(fields=["is_activated"], name="activated_index")]
         constraints = [
-            models.UniqueConstraint(
-                fields=['username'], name='unique_username'
-                )
+            models.UniqueConstraint(fields=["username"], name="unique_username")
         ]
+
     def __str__(self):
         return self.username
+
     # def create_user(self, email=None, password=None, **extra_fields):
     #     if not email:
     #         raise ValueError("The given email must be set")
@@ -112,7 +116,7 @@ to user's email. User indicates his email at the registrations moment.")
     #     # if hasattr("is_active", extra_fields):
     #     #     extra_fields.setdefault("is_active", False)
     #     return self._create_user(username, email, password, **extra_fields)
-    
+
     @property
     def is_authenticated(self) -> bool:
         """
@@ -132,13 +136,8 @@ to user's email. User indicates his email at the registrations moment.")
             return True
         return False
 
-def validate_no_spaces( value):
+
+def validate_no_spaces(value):
     if " " in value:
         raise ValidationError("Spaces are not allowed")
     return value
-    
-  
-   
-        
-    
-

@@ -15,13 +15,15 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path, include
+
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
 from .views import FileStorageViewSet
 
 router = DefaultRouter()
-router.register(r'', FileStorageViewSet, basename='file-storage')
-router.register(r'<int:pk>/', FileStorageViewSet, basename='file-user')
+router.register(r"", FileStorageViewSet, basename="file-storage")
+router.register(r"<int:pk>/", FileStorageViewSet, basename="file-user")
 # router.register("download/<int:pk>/", FileStorageViewSet,
 #                 basename='file_download')
 # router.register("rename/<int:pk>", FileStorageViewSet, basename='file_rename')
@@ -29,5 +31,5 @@ router.register(r'<int:pk>/', FileStorageViewSet, basename='file-user')
 #                 basename='referral_link')
 
 urlpatterns_files = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

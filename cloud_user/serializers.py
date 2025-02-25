@@ -2,14 +2,17 @@
 cloud_user/serializers.py
 Here is a serializer fot user registration
 """
+
 import logging
-import scrypt
 from base64 import b64encode
+
+import scrypt
 from rest_framework import serializers
+
 from cloud_user.apps import signal_user_registered
 from cloud_user.contribute.services import find_superuser
 from cloud_user.models import UserRegister
-from logs import configure_logging, Logger
+from logs import Logger, configure_logging
 from project.settings import SECRET_KEY
 
 configure_logging(logging.INFO)
@@ -18,35 +21,35 @@ log = logging.getLogger(__name__)
 
 class UserSerializer(serializers.ModelSerializer, Logger):
     log.info("START")
+
     class Meta:
         model = UserRegister
         # fields = "__all__"
-        exclude = ["password", "is_activated",
-                            "email",  "send_messages",
-                            "groups", "user_permissions"]
+        exclude = [
+            "password",
+            "is_activated",
+            "email",
+            "send_messages",
+            "groups",
+            "user_permissions",
+        ]
         log.info("Meta was!")
-
 
     def create(self, validated_data):
         _text = f"[{self.print_class_name()}.\
 {self.create.__name__}]:"
-        user = None
         try:
             # Устанавливаем флаг для включения исключенных полей
-            
-            # _user = UserRegister.objects.create(**validated_data)
             _user = super().create(validated_data)
             if not _user:
                 _text = f"{_text} Something what wrong!"
                 raise ValueError()
-            
+
             log.info(_text)
             # CREATE THE NEW USER
-            
-            
+
             b_password = scrypt.hash(
-                f"pbkdf2${str(20000)}${self.initial_data['password']}",
-                SECRET_KEY
+                f"pbkdf2${str(20000)}${self.initial_data['password']}", SECRET_KEY
             )  # .decode('windows-1251')
             _user.password = b64encode(b_password).decode()
             _user.email = self.initial_data["email"]
@@ -55,7 +58,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             _user.is_activated = False
             _user.is_superuser = False
             _user.is_staff = self.initial_data["is_staff"]
-            
+
             _user.save()
             _text = f"{_text} Saved the new user."
             log.info(_text)
@@ -66,8 +69,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
             # user's email.
             # The *_user/controler_activate.py::user_activate make changes in db.
             # https://docs.djangoproject.com/en/4.2/topics/signals/#sending-signals
-            signal_user_registered.send_robust(UserSerializer,
-                                               isinstance=_user)
+            signal_user_registered.send_robust(UserSerializer, isinstance=_user)
             _text = f"{_text} Signal was sent."
             return _user
         except Exception as e:
@@ -83,7 +85,7 @@ class UserSerializer(serializers.ModelSerializer, Logger):
 
     def update(self, instance, validated_data):
         superuser = find_superuser()
-        if superuser: # ????? What the logic?
+        if superuser:  # ????? What the logic?
             superuser_id = superuser.id
             instance = None
             if validated_data["id"] == superuser_id:
