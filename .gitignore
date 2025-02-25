@@ -273,3 +273,5 @@ archive
 frontend
 **/bundles
 !.browserslistrc
+swagger
+docker*
