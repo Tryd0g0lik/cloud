@@ -6,7 +6,7 @@ backend и frontend должны располагаться в одном ядр
 **Команда**
 ```js
 pre-commit run --all-files // Чистим код
-git commit -am "нщгк сщььуте  " --no-verify // флаг - отключаем авто-проверку куда перед комментарием
+git commit -am "your comment  " --no-verify // флаг - отключаем авто-проверку куда перед комментарием
 ```
 # CLOUD_USER
 1. Настраивая файл `settings.py` меняем базовую модель `User` на `UserRegister`. \

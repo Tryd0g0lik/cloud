@@ -1,0 +1,79 @@
+services:
+  db:
+    container_name: cloud_db
+    image: postgres:alpine
+#    environment:
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      # ограничиваем процессор место занимаемо на сервере для db
+      resources:
+        limits:
+          # ограничения
+          cpus: '0.5'
+          memory: 1G
+    networks:
+      - backend
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  cloud:
+    container_name: app_cloud
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    command:
+      - bash
+      - -c
+      - |
+        python3 ./manage.py collectstatic --noinput
+        python3 ./manage.py makemigrations
+        python3 ./manage.py migrate
+        gunicorn -b 0.0.0.0:8000 project.wsgi:application
+    ports:
+      - "8000:8000"
+#    environment:
+#      - DATABASE_URL=postgresql://postgres:123@db:5432/lybrary # Замените на ваши данные
+    volumes:
+      - ./cloud_user/static:/app/cloud_useer/static
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+      - frontend
+  nginx:
+    container_name: app_nginx
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ../../cloud_user/static:/app/cloud_useer/static
+    depends_on:
+      - cloud
+    restart: on-failure
+    networks:
+      - frontend
+
+volumes:
+  # 'pgdata:' просто оставляем место по умолчанию
+#  pgdata:
+  # использовать внешний том volume, не создаем новый, рассчитываем на существующий
+  postgres_data:
+    external: true
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
