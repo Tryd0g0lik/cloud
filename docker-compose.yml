@@ -30,6 +30,8 @@ services:
       context: .
       dockerfile: Dockerfile
     image: app_cloud:cloud_image
+    env_file:
+      - .env
     working_dir: /app
     command:
       - bash

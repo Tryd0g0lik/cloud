@@ -1,6 +1,7 @@
 python-dotenv>=1.0.1
 bcrypt>=4.2.1
 scrypt>=0.8.27
+requests
 pycryptodome>=3.21.0
 django-cors-headers==4.6.0
 asyncio>=3.4.3
