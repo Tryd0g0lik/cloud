@@ -29,6 +29,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: app_cloud:cloud_image
     working_dir: /app
     command:
       - bash
@@ -55,10 +56,11 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
+    image: app_nginx:nginx_image
     ports:
       - "80:80"
     volumes:
-      - ../../cloud_user/static:/app/cloud_useer/static
+      - ./cloud_user/static:/app/cloud_useer/static
     depends_on:
       - cloud
     restart: on-failure

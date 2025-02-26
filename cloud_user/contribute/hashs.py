@@ -13,7 +13,7 @@ log.info("START")
 
 
 class Hash:
-    def __init__(self, user_id: int | str | None = None):
+    def __init__(self, user_id = None):
         """
         :param live_time: int. It is the live time of the session hash. \
         Default the value is 86400.
