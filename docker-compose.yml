@@ -40,13 +40,13 @@ services:
         python3 ./manage.py collectstatic --noinput
         python3 ./manage.py makemigrations
         python3 ./manage.py migrate
-        gunicorn -b 0.0.0.0:8000 project.wsgi:application
+        gunicorn -b 127.0.0.1:8000 project.wsgi:application
     ports:
       - "8000:8000"
 #    environment:
 #      - DATABASE_URL=postgresql://postgres:123@db:5432/lybrary # Замените на ваши данные
     volumes:
-      - ./cloud_user/static:/app/cloud_useer/static
+      - ./cloud_user/static:/app/cloud_user/static
     depends_on:
       db:
         condition: service_healthy
@@ -62,7 +62,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./cloud_user/static:/app/cloud_useer/static
+      - ./cloud_user/static:/app/cloud_user/static
     depends_on:
       - cloud
     restart: on-failure
