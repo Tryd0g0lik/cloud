@@ -74,9 +74,9 @@ services:
       - frontend
   nginx:
     container_name: app_nginx
-#    build:
-#      context: docker/nginx
-#      dockerfile: Dockerfile
+    build:
+      context: docker/nginx
+      dockerfile: Dockerfile
     image: app_nginx:nginx_image
     ports:
       - "80:80"
