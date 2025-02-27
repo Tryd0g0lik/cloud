@@ -20,10 +20,27 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cloud"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+  pgadmin:
+    container_name: app_pgadmin
+    image: dpage/pgadmin4:7.8
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    networks:
+      - backend
   cloud:
     container_name: app_cloud
     build:
@@ -37,16 +54,18 @@ services:
       - bash
       - -c
       - |
-        python3 ./manage.py collectstatic --noinput
-        python3 ./manage.py makemigrations
-        python3 ./manage.py migrate
-        gunicorn -b 127.0.0.1:8000 project.wsgi:application
+        python3 manage.py collectstatic --noinput
+        python3 manage.py makemigrations
+        python3 manage.py migrate
+        gunicorn -b 0.0.0.0:8000 project.wsgi:application
     ports:
       - "8000:8000"
 #    environment:
 #      - DATABASE_URL=postgresql://postgres:123@db:5432/lybrary # Замените на ваши данные
     volumes:
       - ./cloud_user/static:/app/cloud_user/static
+      - ./templates/users:/app/templates/users
+      - .:/app
     depends_on:
       db:
         condition: service_healthy
@@ -55,14 +74,15 @@ services:
       - frontend
   nginx:
     container_name: app_nginx
-    build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
+#    build:
+#      context: docker/nginx
+#      dockerfile: Dockerfile
     image: app_nginx:nginx_image
     ports:
       - "80:80"
     volumes:
       - ./cloud_user/static:/app/cloud_user/static
+      - ./templates/users:/app/templates/users
     depends_on:
       - cloud
     restart: on-failure

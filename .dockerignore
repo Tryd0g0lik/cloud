@@ -57,3 +57,9 @@ archive
 .vscode
 .husky
 logs_server.txt
+.pylintrc
+.pre-commit-config.yaml
+.editorconfig
+.coveragerc
+.browserslistrc
+.flake8

@@ -13,13 +13,13 @@ WORKDIR /app
 # RUN apt-get clean
 # RUN rm -rf /var/lib/apt/lists/*
 # Копируем и устанавливаем Python-зависимости --default-timeout=100
-#  --default-timeout=30 --index-url https://pypi.tuna.tsinghua.edu.cn/simple
+#  --default-timeout=30 --upgared --index-url https://pypi.tuna.tsinghua.edu.cn/simple
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn --no-cache-dir
 RUN pip install scrypt --no-cache-dir
-
+RUN mkdir -p media && mkdir -p media/cards && mkdir -p media/uploads
 
 # Копируем исходный код приложения
 COPY . .
@@ -28,4 +28,4 @@ COPY . .
 EXPOSE 8000
 
 # Запускаем приложение с помощью Gunicorn
-CMD ["gunicorn", "-b", "127.0.0.1:8000", "project.wsgi:application"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "project.wsgi:application"]

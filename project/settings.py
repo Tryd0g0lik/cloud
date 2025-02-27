@@ -134,23 +134,20 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 MIGRATION_MODULES = {
-    "cloud_user": "cloud_user.migrations",
-    "cloud_file": "cloud_file.migrations",
+    "cloud_user": "app.cloud_user.migrations",
+    "cloud_file": "app.cloud_file.migrations",
     # 'cloud': 'cloud.migrations',
 }
 STATICFILES_DIRS = [
-    # os.path.join(BASE_DIR, 'cloud\\static'),
     ("cloud_user_static", os.path.join(BASE_DIR, "cloud_user/static")),
-    # ("cloud_user_static", os.path.join(BASE_DIR, '..\\frontend\\dist\\static')),
-    # os.path.join(BASE_DIR, 'cloud_file\\static'),
 ]
 
-# STATIC_ROOT = os.path.join(BASE_DIR, "static")
-STATIC_URL = os.environ.get("STATIC_URL", "static/")
+STATIC_URL = os.environ.get("STATIC_URL", "cloud_user/static")
+# STATIC_ROOT = os.path.join(BASE_DIR,  "cloud_user/static")
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 
-# MEDIA_URL = 'media/'
+MEDIA_URL = 'media/'
 # STATIC_URL = "static/"
 
 # Default primary key field type
