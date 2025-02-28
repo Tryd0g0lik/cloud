@@ -275,3 +275,4 @@ frontend
 !.browserslistrc
 swagger
 
+gunicorn.service
