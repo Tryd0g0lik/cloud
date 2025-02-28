@@ -60,7 +60,7 @@ services:
         gunicorn -b 0.0.0.0:8000 project.wsgi:application
     ports:
       - "8000:8000"
-#    environment:
+#    environment: python3 manage.py collectstatic --noinput
 #      - DATABASE_URL=postgresql://postgres:123@db:5432/lybrary # Замените на ваши данные
     volumes:
       - ./cloud_user/static:/app/cloud_user/static
