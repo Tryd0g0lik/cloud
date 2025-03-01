@@ -1,5 +1,5 @@
 # Используем официальный образ Python
-FROM python:3.10
+FROM python:3.10 as builback
 RUN apt-get update && apt install -y python3-venv
 # Устанавливаем переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -15,10 +15,10 @@ WORKDIR /app
 # Копируем и устанавливаем Python-зависимости --default-timeout=100
 #  --default-timeout=30 --upgared --index-url https://pypi.tuna.tsinghua.edu.cn/simple
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install gunicorn --no-cache-dir
-RUN pip install scrypt --no-cache-dir
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt &&\
+    pip install gunicorn --no-cache-dir &&\
+    pip install scrypt --no-cache-dir
 RUN mkdir -p media && mkdir -p media/cards && mkdir -p media/uploads
 
 # Копируем исходный код приложения

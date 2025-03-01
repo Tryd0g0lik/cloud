@@ -41,6 +41,9 @@ services:
           cpus: '0.5'
     networks:
       - backend
+    depends_on:
+      - db
+      - cloud
   cloud:
     container_name: app_cloud
     build:
@@ -54,7 +57,7 @@ services:
       - bash
       - -c
       - |
-        python3 manage.py collectstatic --noinput
+        python3 manage.py collectstatic --no-input
         python3 manage.py makemigrations
         python3 manage.py migrate
         gunicorn -b 0.0.0.0:8000 project.wsgi:application
@@ -81,7 +84,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./cloud_user/static:/app/cloud_user/static
+      - ./cloud_user/static/:/app/cloud_user/static/
       - ./templates/users:/app/templates/users
     depends_on:
       - cloud
@@ -95,6 +98,7 @@ volumes:
   # использовать внешний том volume, не создаем новый, рассчитываем на существующий
   postgres_data:
     external: true
+
 
 networks:
   backend:

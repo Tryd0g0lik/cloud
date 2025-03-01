@@ -4,6 +4,7 @@ RUN rm -rf /etc/nginx/conf.d/default.conf || echo "default.conf не сущес�
 RUN mkdir -p /etc/nginx/conf.d
 
 # Копируем конфигурацию Nginx
-COPY default.conf /etc/nginx/conf.d
-# Открываем порт для Nginx
-# EXPOSE 80
+#COPY --from=builback /templates/users/ /usr/share/nginx/html/
+COPY default.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
