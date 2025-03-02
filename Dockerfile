@@ -1,6 +1,9 @@
 # Используем официальный образ Python
-FROM python:3.10 as builback
-RUN apt-get update && apt install -y python3-venv
+FROM python:3.10-slim as builback
+RUN apt update && \
+    apt install -y python3-venv &&\
+    apt install -y python3-pip
+RUN apt update && apt install -y git
 # Устанавливаем переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -8,6 +11,9 @@ ENV PWDEBUG=1
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
+RUN mkdir -p media &&\
+    mkdir -p media/cards &&\
+    mkdir -p media/uploads
 #RUN apt-get update
 # # RUN apt-get install -y build-essential libssl-dev
 # RUN apt-get clean
@@ -19,7 +25,7 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt &&\
     pip install gunicorn --no-cache-dir &&\
     pip install scrypt --no-cache-dir
-RUN mkdir -p media && mkdir -p media/cards && mkdir -p media/uploads
+
 
 # Копируем исходный код приложения
 COPY . .

@@ -144,11 +144,13 @@ STATICFILES_DIRS = [
 
 # STATIC_URL = os.environ.get("STATIC_URL", "cloud_user/static")
 STATIC_ROOT = os.path.join(BASE_DIR,  "cloud_user/static")
+# STATIC_ROOT = "/cloud_user/static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
+# MEDIA_ROOT = "/media/"
 
 
 MEDIA_URL = 'media/'
-STATIC_URL = "/static/"
+STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
