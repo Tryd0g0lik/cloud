@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = SECRET_KEY_
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -139,18 +139,19 @@ MIGRATION_MODULES = {
     # 'cloud': 'cloud.migrations',
 }
 STATICFILES_DIRS = [
+    # ("cloud_user_static", os.path.join(BASE_DIR, "cloud_user\\static")),
     # "/app/cloud_user/static",
 ]
 
-# STATIC_URL = os.environ.get("STATIC_URL", "cloud_user/static")
 STATIC_ROOT = os.path.join(BASE_DIR,  "cloud_user/static")
+STATIC_URL = os.environ.get("STATIC_URL", "static/")
 # STATIC_ROOT = "/cloud_user/static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 # MEDIA_ROOT = "/media/"
 
 
-MEDIA_URL = 'media/'
-STATIC_URL = "static/"
+# MEDIA_URL = 'media/'
+# STATIC_URL = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -162,28 +163,28 @@ AUTH_USER_MODEL = "cloud_user.UserRegister"
 
 
 # WEBPACK
-# WEBPACK_LOADER = {
-#     "DEFAULT": {
-#         "CACHE": not DEBUG,
-#         # 'BUNDLE_DIR_NAME': '..\\frontend\\src\\bundles',
-#         "BUNDLE_DIR_NAME": "cloud_user\\static\\bundles",
-#         "STATS_FILE": os.path.join(
-#             BASE_DIR, "cloud_user\\static\\bundles\\webpack-stats.json"
-#         ),
-#         # 'STATS_FILE': os.path.join(BASE_DIR, '..\\frontend\\src\\bundles\\webpack-stats.json'),
-#         "POLL_INTERVAL": 0.1,
-#         "TIMEOUT": None,
-#         "TEST": {
-#             "NAME": "test_cloud",
-#         },
-#         "IGNORE": [
-#             # '.+\.map$'
-#             r".+\.hot-update.js",
-#             r".+\.map",
-#         ],
-#         "LOADER_CLASS": "webpack_loader.loader.WebpackLoader",
-#     }
-# }
+WEBPACK_LOADER = {
+    "DEFAULT": {
+        "CACHE": not DEBUG,
+        # 'BUNDLE_DIR_NAME': '..\\frontend\\src\\bundles',
+        "BUNDLE_DIR_NAME": "cloud_user\\static\\bundles",
+        "STATS_FILE": os.path.join(
+            BASE_DIR, "cloud_user\\static\\bundles\\webpack-stats.json"
+        ),
+        # 'STATS_FILE': os.path.join(BASE_DIR, '..\\frontend\\src\\bundles\\webpack-stats.json'),
+        "POLL_INTERVAL": 0.1,
+        "TIMEOUT": None,
+        "TEST": {
+            "NAME": "test_cloud",
+        },
+        "IGNORE": [
+            # '.+\.map$'
+            r".+\.hot-update.js",
+            r".+\.map",
+        ],
+        "LOADER_CLASS": "webpack_loader.loader.WebpackLoader",
+    }
+}
 # if not DEBUG:
 #     WEBPACK_LOADER['DEFAULT'].update({
 #         'BUNDLE_DIR_NAME': 'bundles\\',
