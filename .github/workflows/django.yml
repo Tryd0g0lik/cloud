@@ -30,6 +30,9 @@ jobs:
       EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
       REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
       REACT_APP_SERVER_PORT: ${{ secrets.REACT_APP_SERVER_PORT }}
+      DEPLOY_HOST: ${{ secret.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secret.DEPLOY_USER }}
+      DEPLOY_KEY: ${{ secret.DEPLOY_KEY }}
     services:
       postgres_main:
         image: postgres:14
@@ -65,6 +68,14 @@ jobs:
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+    - name: Deploy on Server # Развертываем на сервере
+      uses: appleboy/ssh-action@v0.1.4
+      with:
+        host: ${{ env.DEPLOY_HOST }}
+        username: ${{ env.DEPLOY_USER }}
+        key: ${{ env.DEPLOY_KEY }}
+
+
 #    - name: Run tests
 #      env:
 #        SECRET_KEY: ${{ env.SECRET_KEY }}
