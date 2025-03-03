@@ -14,10 +14,10 @@ isort>=5.13.2
 black>=24.10.0
 postgres>=4.0
 psycopg2-binary>=2.9.10
-sqlalchemy==2.0.36
+sqlalchemy>=2.0.36
 wtforms>=3.2.1
-django-bootstrap4==24.4
-djangorestframework==3.15.2
-Django==4.2.17
+django-bootstrap4>=24.4
+djangorestframework>=3.15.2
+Django>=4.2.17
 django-webpack-loader>=3.1.1
 adrf>=0.1.9
