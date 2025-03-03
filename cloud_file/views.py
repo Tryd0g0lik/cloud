@@ -13,7 +13,7 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth import login
 from django.core.cache import cache
 from django.core.files.storage import default_storage
-from django.http import HttpResponse, JsonResponse
+from django.http import (HttpResponse, JsonResponse)
 from rest_framework import status
 from rest_framework.decorators import action
 
@@ -27,7 +27,6 @@ from .serializers import FileStorageSerializer
 
 
 class FileStorageViewSet(viewsets.ViewSet):
-    # permission_classes = [permissions.IsAuthenticated]
     queryset = FileStorage.objects.all()
     serializer_class = FileStorageSerializer
 
