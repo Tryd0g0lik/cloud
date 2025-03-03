@@ -28,9 +28,9 @@ jobs:
       EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
       REACT_APP_SERVER_URL: ${{ secrets.REACT_APP_SERVER_URL }}
       REACT_APP_SERVER_PORT: ${{ secrets.REACT_APP_SERVER_PORT }}
-      DEPLOY_HOST: ${{ secret.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secret.DEPLOY_USER }}
-      DEPLOY_PASSWORD: ${{ secret.DEPLOY_PASSWORD }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
     services:
       postgres_main:
         image: postgres:15
@@ -40,7 +40,7 @@ jobs:
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
         ports:
           - 5432:5432
-        options:
+        options: >-
           --health-cmd pg_isready
           --health-interval 5s
           --health-timeout 5s
