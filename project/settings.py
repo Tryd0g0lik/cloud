@@ -143,15 +143,15 @@ STATICFILES_DIRS = [
     # "/app/cloud_user/static",
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR,  "cloud_user/static")
+STATIC_ROOT = os.path.join(BASE_DIR,  "static")
 STATIC_URL = os.environ.get("STATIC_URL", "static/")
-# STATIC_ROOT = "/cloud_user/static/"
+# STATIC_URL = "static/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 # MEDIA_ROOT = "/media/"
 
 
 # MEDIA_URL = 'media/'
-# STATIC_URL = "static/"
+#
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -258,6 +258,7 @@ SESSION_COOKIE_AGE = 86400
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_DOMAIN = ALLOWED_HOSTS
 CSRF_TRUSTED_ORIGINS = [
+    "http://80.78.242.36",
     "http://127.0.0.1:8000",
     "http://127.0.0.1:8080",
     "http://localhost:8080",
@@ -271,6 +272,7 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ORIGIN_ALLOW_ALL = False
 # Или разрешить только определённые домены
 CORS_ALLOWED_ORIGINS = [
+    "http://80.78.242.36",
     "http://localhost:8080",
     "http://localhost:8000",
     "http://127.0.0.1:8080",

@@ -1,4 +1,4 @@
-
+python-dotenv
 bcrypt>=4.2.1
 scrypt>=0.8.27
 requests

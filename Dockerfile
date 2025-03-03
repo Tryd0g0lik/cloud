@@ -1,9 +1,9 @@
 # Используем официальный образ Python
-FROM python:3.10-slim as builback
-RUN apt update && \
-    apt install -y python3-venv &&\
-    apt install -y python3-pip
-RUN apt update && apt install -y git
+FROM python:3.10
+RUN apt-get update
+#RUN apt install python3-venv
+RUN apt-get install -y python3-pip
+RUN apt-get update && apt-get install -y git
 # Устанавливаем переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1

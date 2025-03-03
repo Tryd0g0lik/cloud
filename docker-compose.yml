@@ -57,7 +57,7 @@ services:
       - bash
       - -c
       - |
-        python3 manage.py collectstatic --no-input
+        python3 manage.py collectstatic --noinput
         python3 manage.py makemigrations
         python3 manage.py migrate
         gunicorn -b 0.0.0.0:8000 project.wsgi:application
@@ -66,7 +66,7 @@ services:
 #    environment: python3 manage.py collectstatic --noinput
 #      - DATABASE_URL=postgresql://postgres:123@db:5432/lybrary # Замените на ваши данные
     volumes:
-      - static_volume:/app/cloud_user/static
+      - static_volume:/app/static
 #      - ./cloud_user/static:/app/cloud_user/static/
 #      - ./templates/users:/app/templates/users
       - template_volume:/app/templates/users
@@ -87,7 +87,7 @@ services:
       # - "80:80"
        - '${NGINX_EXTERNAL_PORT}:80'
     volumes:
-      - static_volume:/app/cloud_user/static
+      - static_volume:/app/static
 #      - ./cloud_user/static:/app/cloud_user/static/
 #      - ./templates/users:/app/templates/users
       - template_volume:/app/templates/users
