@@ -11,8 +11,6 @@ on:
 jobs:
   build: # любое название
     runs-on: ubuntu-20.04 # ubuntu-latest
-    # env: # или идем в  settings.Secrets_and_Variables.Actions.Repository_secrets
-    #  SECRET_KEY: 'django-insecure-..'
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
@@ -34,7 +32,7 @@ jobs:
       DEPLOY_USER: ${{ secret.DEPLOY_USER }}
       DEPLOY_KEY: ${{ secret.DEPLOY_KEY }}
     services:
-      postgres_main:
+      postgres:
         image: postgres:14
         env:
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
@@ -44,7 +42,7 @@ jobs:
           - 5432:5432
         options:
           --health-cmd pg_isready # command to check health
-          --health-interval 10 # 10 everal second
+          --health-interval 10 # 10 seconds avery
           --health-timeout 5 # 5 second
     strategy:
       max-parallel: 4
@@ -68,7 +66,7 @@ jobs:
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
-    - name: Deploy on Server # Развертываем на сервере
+    - name: Deploy on Server
       uses: appleboy/ssh-action@v0.1.4
       with:
         host: ${{ env.DEPLOY_HOST }}
