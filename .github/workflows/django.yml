@@ -5,12 +5,23 @@ name: Django CI
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
+#  pull_request:
+#    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      chosen-os:
+        required: true
+        type: choice
+        options:
+          - Windows
+          - Ubuntu-20.04
 jobs:
-  build: # любое название
-    runs-on: ubuntu-20.04 # ubuntu-latest
+  build:
+    runs-on: [self-hosted, "${{ inputs.chosen-os }}"]
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [ '3.10.16' ]
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
@@ -45,11 +56,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.10]
-
     steps:
     - name: Checkout repository to the changes
       uses: actions/checkout@v3
