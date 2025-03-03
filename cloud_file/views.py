@@ -59,20 +59,23 @@ class FileStorageViewSet(viewsets.ViewSet):
                     cookie = Cookies(request.user.id, response)
                     response = cookie.is_active(False)
                     return response
-                instance = await sync_to_async(get_data_authenticate)(request)
 
                 # IF USER IS ADMIN - RETURN ALL FILES FROM ALL USERS
                 if request.user.is_staff:
                     if hasattr(kwargs, "pk"):
                         files = await sync_to_async(list)(
-                            FileStorage.objects.filter(user_id=getattr(kwargs, "pk"))
+                            FileStorage.objects.filter(user_id=getattr(kwargs,
+                                                                       "pk"))
                         )
                         if len(files) == 0:
                             # SERIALIZER
-                            serializer = self.serializer_class(files, many=True)
+                            serializer = self.serializer_class(files,
+                                                               many=True)
                             status_data = serializer.data
-                            return JsonResponse(status_data, status=status_code)
-                    files.extend(await sync_to_async(list)(FileStorage.objects.all()))
+                            return JsonResponse(status_data,
+                                                status=status_code)
+                    files.extend(
+                        await sync_to_async(list)(FileStorage.objects.all()))
                 elif hasattr(request.COOKIES, "index"):
                     files.extend(
                         await sync_to_async(list)(
@@ -83,8 +86,10 @@ class FileStorageViewSet(viewsets.ViewSet):
                     )
                 elif hasattr(kwargs, "pk"):
                     # #
-                    files = await sync_to_async(list)(
-                        FileStorage.objects.filter(user_id=int(getattr(kwargs, "pk")))
+                    files = \
+                        await sync_to_async(list)(
+                            FileStorage.objects.filter(user_id=int(
+                                getattr(kwargs, "pk")))
                     )
                 else:
                     files = []
@@ -135,7 +140,8 @@ class FileStorageViewSet(viewsets.ViewSet):
                     f"user_session_{request.user.id}"
                 )
                 # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db != user_session_client and not request.user.is_staff:
+                if user_session_db != user_session_client and \
+                  not request.user.is_staff:
                     response = JsonResponse(
                         {"data": ["User is not authenticated"]},
                         status=status.HTTP_403_FORBIDDEN,
@@ -161,19 +167,22 @@ class FileStorageViewSet(viewsets.ViewSet):
                         # GET FILES FROM SINGLE USER
                         files.extend(
                             await sync_to_async(list)(
-                                FileStorage.objects.filter(user_id=int(kwargs["pk"]))
+                                FileStorage.objects.filter(user_id=int(
+                                    kwargs["pk"]))
                             )
                         )
                     else:
                         # GET FILES FROM ALL USERS
                         files.extend(
-                            await sync_to_async(list)(FileStorage.objects.all())
+                            await sync_to_async(list)(
+                                FileStorage.objects.all())
                         )
                 elif not request.user.is_staff:
                     # GET FILES FROM SINGLE USER
                     files.extend(
                         await sync_to_async(list)(
-                            FileStorage.objects.filter(user_id=int(kwargs["pk"]))
+                            FileStorage.objects.filter(user_id=int(
+                                kwargs["pk"]))
                         )
                     )
 

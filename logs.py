@@ -10,7 +10,8 @@ import threading
 import time
 
 
-def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> None:
+def configure_logging(level: int = logging.INFO, log_file="log_putout.log") \
+  -> None:
     """
     For a beginning work
     :param level:
@@ -35,14 +36,16 @@ def configure_logging(level: int = logging.INFO, log_file="log_putout.log") -> N
     console_handler.setLevel(level)
     # Форматирование логов
     formatter = logging.Formatter(
-        "[%(asctime)s %(msecs)d] %(funcName)s %(module)s : %(lineno)d %(levelname)s - %(message)s"
+        "[%(asctime)s %(msecs)d] %(funcName)s %(module)s : \
+%(lineno)d %(levelname)s - %(message)s"
     )
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
     # Настройка корневого логгера
     logging.basicConfig(level=level, handlers=[file_handler, console_handler])
     # Запуск проверки файла логов в отдельном потоке
-    threading.Thread(target=check_log_file, args=(log_file,), daemon=True).start()
+    threading.Thread(target=\
+                         check_log_file, args=(log_file,), daemon=True).start()
 
 
 def check_log_file(log_file: str) -> None:
@@ -61,7 +64,8 @@ def check_log_file(log_file: str) -> None:
                     with open(log_file, "w", encoding="utf-8") as f:
                         f.truncate()
                     logging.info(
-                        "Лог-файл был обнулен, так как количество строк превысило 3000."
+                        "Лог-файл был обнулен, так как количество строк \
+превысило 3000."
                     )
         except Exception as e:
             logging.error(f"Ошибка при проверке лог-файла: {e}")

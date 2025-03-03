@@ -171,7 +171,7 @@ WEBPACK_LOADER = {
         "STATS_FILE": os.path.join(
             BASE_DIR, "cloud_user\\static\\bundles\\webpack-stats.json"
         ),
-        # 'STATS_FILE': os.path.join(BASE_DIR, '..\\frontend\\src\\bundles\\webpack-stats.json'),
+
         "POLL_INTERVAL": 0.1,
         "TIMEOUT": None,
         "TEST": {
@@ -250,7 +250,7 @@ EMAIL_USE_LOCALTIME = True
 
 # '''Cookie'''
 SESSION_COOKIE_HTTPONLY = False  # CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # изменить на True !!!!!!!!!!! CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False  # изменить на True CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = "Lax"  # CSRF_COOKIE_SAMESITE = 'Lax'  # или 'Strict'
 SESSION_COOKIE_AGE = 86400
 
@@ -328,18 +328,23 @@ PASSWORD_HASHERS = [
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME":
+            "django.contrib.auth.password_validation.\
+UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME":
+            "django.contrib.auth.password_validation.MinimumLengthValidator",
         "OPTIONS": {
             "min_length": 3,
         },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME":
+            "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME":
+            "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]

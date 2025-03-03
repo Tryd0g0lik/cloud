@@ -47,7 +47,8 @@ def csrftoken(request):
     csrf_token_value = get_token(request)
     # GET 'csrftoken'
     use_CSRFToken.set_state(csrf_token_value)
-    response = JsonResponse({"csrftoken": csrf_token_value}, status=status.HTTP_200_OK)
+    response = JsonResponse({"csrftoken": csrf_token_value},
+                            status=status.HTTP_200_OK)
     # ADD THE 'csrftoken' to RESPONSE for COOKIE
     response.set_cookie(
         CSRF_COOKIE_NAME,
@@ -89,20 +90,25 @@ METHOD: GET, CREATE, PUT, DELETE.
                 # cacher table from settings.py)
                 user_session_db = cache.get(f"user_session_{request.user.id}")
                 # CHECK USER ID
-                if request.user.id != int(kwargs["pk"]) and not request.user.is_staff:
+                if request.user.id != int(kwargs["pk"]) and \
+                  not request.user.is_staff:
                     return JsonResponse(
                         {"error": "There is no access"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 # CHECK THE SESSION KEY of USER_SESSION
-                if user_session_db == user_session_client or request.user.is_staff:
+                if user_session_db == user_session_client or \
+                  request.user.is_staff:
                     # Below, check, It is the superuser or not.
-                    # Check, 'user_settion_{id}' secret key from COOCIE is aquils to
+                    # Check, 'user_settion_{id}' secret key from COOCIE
+                    # is aquils to
                     # 'user_settion_{id}' from cacher table of db
-                    # /* ---------------- cacher.is_staff = True Удалить ---------------- */
+                    # /* ---------------- cacher.is_staff = True Удалить
+                    # ---------------- */
                     if request.user.is_staff:
                         if hasattr(kwargs, "pk"):
-                            users = UserRegister.objects.filter(pk=int(kwargs["pk"]))
+                            users = UserRegister.objects.filter(pk=int(
+                                kwargs["pk"]))
                             if len(users) > 0:
                                 serializer = UserSerializer(users, many=True)
                                 return Response(serializer.data)
@@ -111,7 +117,8 @@ METHOD: GET, CREATE, PUT, DELETE.
                         serializer = UserSerializer(users, many=True)
                         return Response(serializer.data)
                     elif hasattr(kwargs, "pk"):
-                        files = UserRegister.objects.filter(id=int(kwargs["pk"]))
+                        files = UserRegister.objects.filter(id=int(
+                            kwargs["pk"]))
                         serializer = UserSerializer(files, many=True)
                         instance = get_fields_response(serializer)
                         return Response(instance)
@@ -122,7 +129,8 @@ METHOD: GET, CREATE, PUT, DELETE.
                     {"data": ["User is not authenticated"]},
                     status=status.HTTP_403_FORBIDDEN,
                 )
-                if hasattr(request.user, "id") and getattr(request.user, "id") != None:
+                if hasattr(request.user, "id") and\
+                  getattr(request.user, "id") != None:
                     user = UserRegister.objects.get(pk=request.user.id)
                     user.is_active = False
                     user.save(update_fields=["is_active"])
@@ -243,8 +251,9 @@ Mistake => f{e.__str__()}"
                     return (
                         Response(
                             {
-                                "message": f"[{__name__}::{self.__class__.retrieve.__name__}]: \
-                Your profile is not activate"
+                                "message": f"[{__name__}\
+::{self.__class__.retrieve.__name__}]: \
+Your profile is not activate"
                             }
                         ),
                         404,
@@ -264,7 +273,8 @@ Mistake => f{e.__str__()}"
                 return Response(instance.data, status=200)  # Проверить
             else:
                 # NOT LOGGED IN
-                status_data = {"detail": "Mistake => User is not authenticated"}
+                status_data = \
+                    {"detail": "Mistake => User is not authenticated"}
                 status_code = status.HTTP_401_UNAUTHORIZED
                 return JsonResponse(status_data, status=status_code)
         except Exception as e:
