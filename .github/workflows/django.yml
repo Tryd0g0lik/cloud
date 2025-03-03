@@ -5,16 +5,16 @@ name: Django CI
 on:
   push:
     branches: [ "master" ]
-#  pull_request:
-#    branches: [ "master" ]
+  pull_request:
+   branches: [ "master" ]
 
 jobs:
   build:
-    runs-on: [Ubuntu-20.04, Windows]
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [ '3.10.16' ]
+    runs-on: Ubuntu-20.04 # [Ubuntu-20.04, Windows]
+    # strategy:
+    #   max-parallel: 4
+    #   matrix:
+    #     python-version: [ '3.10.16' ]
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
@@ -67,7 +67,7 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
     - name: Deploy on Server
-      uses: appleboy/ssh-action@v0.1.4
+      uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ env.DEPLOY_HOST }}
         username: ${{ env.DEPLOY_USER }}
