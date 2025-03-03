@@ -1,3 +1,7 @@
+"""
+cloud_user/contribute/hashs.py
+"""
+
 import logging
 from copy import copy
 
@@ -13,7 +17,12 @@ log.info("START")
 
 
 class Hash:
-    def __init__(self, user_id = None):
+    """
+    This class is used to generate the session hash. \
+    It is the user session hash.
+    """
+
+    def __init__(self, user_id=None):
         """
         :param live_time: int. It is the live time of the session hash. \
         Default the value is 86400.
@@ -43,12 +52,13 @@ is None.
                 session_key = f"user_session_{user_id}"
             self.__user_session = self.__cache.get(session_key.split())
         except Exception as e:
-            print(
-                f"[{self.__class__.get_session_hash.__name__}]:\
-            Mistake => {e.__str__()}"
+            log.error(
+                "[%s]:\
+Mistake => %s",
+                (self.__class__.set_session_hash.__name__, str(e)),
             )
-        finally:
-            return self.__user_session
+
+        return self.__user_session
 
     async def set_session_hash(
         self,
@@ -70,27 +80,32 @@ database model.
         try:
 
             log.info(
-                f"[{self.__class__.set_session_hash.__name__}]: \
-START"
+                f"[%s]: \
+START",
+                self.__class__.set_session_hash.__name__,
             )
             user_id = user_id if user_id else self.__user_id
             log.info(
-                f"[{self.__class__.set_session_hash.__name__}]: \
-user_id => {user_id}"
+                "[%s]: \
+user_id => {user_id}",
+                self.__class__.set_session_hash.__name__,
             )
             await sync_to_async(hash_create_user_session)(
                 user_id, session_key, copy(self.live_time)
             )
             log.info(
-                f"[{self.__class__.set_session_hash.__name__}]: \
-END"
+                f"[%s]: \
+END",
+                self.__class__.set_session_hash.__name__,
             )
         except Exception as e:
             print(
-                f"[{self.__class__.set_session_hash.__name__}]:\
-Mistake => {e.__str__()}"
+                "[%s]:\
+Mistake => %s",
+                (self.__class__.set_session_hash.__name__, str(e)),
             )
             log.error(
-                f"[{self.__class__.set_session_hash.__name__}]:\
- Mistake => {e.__str__()}"
+                "[%s]:\
+Mistake => %s",
+                (self.__class__.set_session_hash.__name__, str(e)),
             )
