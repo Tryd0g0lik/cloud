@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: [Windows, Ubuntu-20.04]
+    runs-on: [Ubuntu-20.04, Windows]
     strategy:
       max-parallel: 4
       matrix:
@@ -73,6 +73,8 @@ jobs:
         username: ${{ env.DEPLOY_USER }}
         password: ${{ env.DEPLOY_PASSWORD }}
         script: | 
+          su denis
+          cd /home/denis
           expect /home/denis/cloud/expect.sh
 
 
