@@ -64,7 +64,7 @@ jobs:
     #   uses: CodeThreat/codethreat-github-action@v1.025
     - name: Check by PEP8 of standard
       run: |
-        flake8 . --count --config=flake8 --max-line-length=80 --show-source --statistics
+        flake8 . --count --config=.flake8 --show-source --statistics
     - name: Deploy on Server
       uses: appleboy/ssh-action@v1.0.0
       with:
