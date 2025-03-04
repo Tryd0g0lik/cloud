@@ -2,7 +2,8 @@
 disable=
     R0903,
     W0718,
-    R1705
+    R1705,
+    E0401
 ignore-path=
     project_root.settings.py
 # Максимальная глубина наследования

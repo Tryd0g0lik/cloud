@@ -8,7 +8,7 @@ the email-message \
 to the user email. \
 Email contains the tokken-link. When user presses by the token-link, this run \
 the function (below).
-
+Срабатывает по запросы урла который содержит подпись
 
 """
 
@@ -35,9 +35,6 @@ configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
 
 
-"""Срабатывает по запросы урла который содержит подпись"""
-
-
 def user_activate(request, sign):
     """
     TODO: From the *_user/serializers.py::UserSerializer.create the message \
@@ -50,9 +47,11 @@ the var 'URL_REDIRECT_IF_GET_AUTHENTICATION'. Plus, variables:
 - user.is_activated = True (of table 'UserRegister').
 \
 Response (of HttpResponseRedirect)  has data for the cookie. Data of \
-variable `user_session_{id}` and 'is_staff__{id}'. It is more info in README::COOKIE.
+variable `user_session_{id}` and 'is_staff__{id}'. It is \
+more info in README::COOKIE.
 1. The user is registered on the site.\
-2. The function is `send_activation_notification` from` app.py` sends an email with a tkene link to the user email address.\
+2. The function is `send_activation_notification` from` app.py` sends \
+an email with a tkene link to the user email address.\
 3. The user presses on a token link.\
 4. The function is `user_activate`.\
 5. The function `user_activate` processes the URL requests \
@@ -70,50 +69,58 @@ code 301.\
  the activation page.\
 12. If an error occurs, the function returns redirecting with a code of 400.\
     :param request:\
-    :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'\
+    :param sign: str. It is 'sign' of signer from the url 'activate/<str:sign>'
     :return:
     """
     _text = f"[{user_activate.__name__}]:"
     username = None
     try:
-        log.info(f"{_text} START")
+        log.info("%s START", _text)
         sign = str(sign).replace("_null_", ":")
         username = signer.unsign(sign)
-        log.info(f"{_text} Get '_first_name': {username.__str__()} ")
+        log.info("%s Get '_first_name': %s ", (_text, username))
     except BadSignature as e:
-        _text = f"{_text} Mistake => 'BadSignature': {e.__str__()}"
+        _text = " %s Mistake => 'BadSignature': %s", (_text, e)
         # return redirect("/", permanent=True,)
-        # https://docs.djangoproject.com/en/5.1/ref/request-response/#httpresponse-objects
+        # https://docs.djangoproject.com/en/5.1/ref/request-response
+        # /#httpresponse-objects
 
         return HttpResponseRedirect(
             redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
             status=status.HTTP_400_BAD_REQUEST,
         )
-    # https://docs.djangoproject.com/en/5.1/topics/http/shortcuts/#get-object-or-404
+    # https://docs.djangoproject.com/en/5.1/topics/http
+    # /shortcuts/#get-object-or-404
     try:
         user = get_object_or_404(UserRegister, username=username)
         try:
-            _text = f"{_text} Get 'user': {user.__dict__.__str__()}"
+            _text = "%s Get 'user': %s", (_text, user.__dict__.__str__())
             # logging, it if return error
         except Exception as e:
-            _text = f"{_text} Get 'user': {e.__str__()}"
+            _text = " %s Get 'user': %s", (_text, e)
         log.info(_text)
         # get the text from the basis value
-        _text = (_text.split(":"))[0] + ":"
+        _text = (str(_text).split(":"))[0] + ":"
         # CHECK OF ACTIVATED
         if user.is_activated:
-            _text = f"{_text} the object 'user' has 'True' value \
-from 'is_activated'. Redirect. 301"
+            _text = (
+                " %s the object 'user' has 'True' value \
+from 'is_activated'. Redirect. 301",
+                _text,
+            )
             response = HttpResponseRedirect(
                 redirect_to=f"{URL_REDIRECT_IF_NOTGET_AUTHENTICATION}",
                 status=status.HTTP_400_BAD_REQUEST,
             )
             return response
-        _text = f"{_text} the object 'user' can not have 'True' value \
-from 'is_activated'."
+        _text = (
+            " %s the object 'user' can not have 'True' value \
+from 'is_activated'.",
+            _text,
+        )
         log.info(_text)
         # get the text from the basis value
-        _text = (_text.split(":"))[0] + ":"
+        _text = (str(_text).split(":"))[0] + ":"
         user.is_active = True
         user.is_activated = True
         user.date_joined = datetime.utcnow()
@@ -136,9 +143,9 @@ from 'is_activated'."
         return response
 
     except Exception as e:
-        _text = f"{_text} Mistake => {e.__str__()}"
+        _text = f"{_text} Mistake => {str(e)}"
         return HttpResponseRedirect(
-            redirect_to=f"{request.scheme}://{request.get_host()}/",  # redirect_url
+            redirect_to=f"{request.scheme}://{request.get_host()}/",
             status=400,
         )  # status
     finally:
