@@ -77,15 +77,14 @@ Mistake => 'user_list' empty. 'pk' invalid.",
         log.error(
             "[%s::%s]: \
 Mistake => %s: %s",
-            (__name__, hash_check_user_session.__name__, type(e), str(e)),
+            (__name__, hash_check_user_session.__name__ % (type(e), str(e))),
         )
         raise ValueError(
             "[%s::%s]: \
 Mistake => %s: %s",
-            (__name__, hash_check_user_session.__name__, type(e), str(e)),
+            (__name__, hash_check_user_session.__name__ % (type(e), str(e))),
         ) from e
-    finally:
-        return status_bool
+    return status_bool
 
 
 def hash_create_user_session(pk: int, session_key: str, live_time: int = 86400):
@@ -140,15 +139,15 @@ cache.set was successful",
     except Exception as e:
         log.error(
             "[%s::%s]: Mistake => %s: %s",
-            (__name__, hash_create_user_session.__name__, type(e), str(e)),
+            (__name__, hash_create_user_session.__name__ % (type(e), str(e))),
         )
         raise ValueError(
             "[%s::%s]: Mistake => %s: %s",
-            (__name__, hash_create_user_session.__name__, type(e), str(e)),
+            (__name__, hash_create_user_session.__name__ % (type(e), str(e))),
         ) from e
     finally:
         log.info("[%s::hash_create_user_session]: END", __name__)
-        return status_bool
+    return status_bool
 
 
 def check(session_key: str, session_val: str, **kwargs) -> False:
@@ -194,8 +193,8 @@ not session_key_value_checker",
     except Exception as e:
         raise ValueError(
             "[%s::%s]: \
-Mistake => %s: %s",
-            (__name__, check.__name__, type(e), str(e)),
+Mistake => %s: %s"
+            % (__name__, check.__name__, type(e), str(e)),
         ) from e
     finally:
         log.info("[%s::%s]: END", (__name__, check.__name__))
@@ -219,7 +218,7 @@ value is the 86400 hours.
         log.info("[%s::%s]: status_bool: %s", (__name__, update.__name__, status_bool))
     except Exception as e:
         log.error(
-            "[%s::%s]: Mistake => %s: %s", (__name__, update.__name__, type(e), str(e))
+            "[%s::%s]: Mistake => %s: %s" % (__name__, update.__name__, type(e), str(e))
         )
         raise ValueError(
             "[%s::%s]: Mistake => %s: %s", (__name__, update.__name__, type(e), str(e))
