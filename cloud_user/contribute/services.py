@@ -2,13 +2,15 @@
 cloud_user/serializers.py
 Not more functions
 """
+import re
 
 import requests
-import scrypt
 from django.core.cache import cache
 
-from cloud_user.contribute.sessions import check, hash_create_user_session
+from cloud_user.contribute.sessions import hash_create_user_session
 from cloud_user.models import UserRegister
+from project.settings import (SESSION_COOKIE_AGE, SESSION_COOKIE_HTTPONLY,
+                              SESSION_COOKIE_SAMESITE, SESSION_COOKIE_SECURE)
 
 
 def find_superuser() -> [object, None]:
@@ -23,46 +25,8 @@ def find_superuser() -> [object, None]:
     return None
 
 
-# def get_fields_response(obj,
-#                         exclude_instance=[]
-#                         ):
-#     """
-#     TODO: This is function for returning the set of fields. They are sending \
-# in response for the client.
-#     :param exclude_instance: list. This for the fields exclude. Bu default is \
-#     ["password", "is_activated",
-#     "email",  "send_messages",
-#     "groups", "user_permissions"]
-#     return \
-#      ```json
-#        {
-#          "id": 19,
-#          "last_login": null,
-#          "is_staff": false,
-#          "username": "",
-#          "first_name": "Денис",
-#          "last_name": "Королев",
-#          "is_staff": false,
-#          "is_active": true,
-#          "date_joined": "2025-01-03T13:01:53.238635+07:00"
-#        }
-#      ```
-#    """
-#     if len(exclude_instance) == 0:
-#         exclude_instance = ["password", "is_activated",
-#                             "email",  "send_messages",
-#                             "groups", "user_permissions"]
-#     new_instance = {}
-#     for k, v in dict(obj.data).items():
-#         if k in exclude_instance:
-#             continue
-#         new_instance[f"{k}"] = v
-#     # obj.data = new_instance
-#     return new_instance
-
-
 def get_user_cookie(
-    request: type(requests), response: type(requests.models.Response), **kwargs
+  request: type(requests), response: type(requests.models.Response), **kwargs
 ) -> type(requests.models.Response):
     """
     From the request we receive an index of user. Then, to the response add the\
@@ -75,11 +39,6 @@ def get_user_cookie(
     :param response: for the web client.
     :return:
     """
-    from project.settings import (SECRET_KEY, SESSION_COOKIE_AGE,
-                                  SESSION_COOKIE_HTTPONLY,
-                                  SESSION_COOKIE_SAMESITE,
-                                  SESSION_COOKIE_SECURE)
-
     user_list = []
     index = (
         request.COOKIES.get("index")
@@ -88,22 +47,21 @@ def get_user_cookie(
     )
     # index = request.COOKIES.get("index")
     if not index:
-        import re
 
         index_list = re.findall(r"\d+", request.path)
         if len(index_list) > 0:
             index = index_list[-1]
-    if index != None:
+    if index:
         user_list = UserRegister.objects.filter(id=int(index))
     if len(user_list) > 0:
         # Check the "user_session_{index}", it is in the cacher table or not.
         user_session = cache.get(f"user_session_{index}")
-        if user_session == None:
+        if not user_session:
             hash_create_user_session(int(index), f"user_session_{index}")
-    if index != None:
-        # OLD of VERTION S
+    if not index:
+        # OLD of VERSION S
         response.set_cookie(
-            f"user_session",
+            "user_session",
             cache.get(f"user_session_{index}"),
             # scrypt.hash(
             #     cache.get(
@@ -116,7 +74,7 @@ def get_user_cookie(
             samesite=SESSION_COOKIE_SAMESITE,
         )
         response.set_cookie(
-            f"is_staff",
+            "is_staff",
             user_list[0].is_staff,
             max_age=SESSION_COOKIE_AGE,
             httponly=SESSION_COOKIE_HTTPONLY,
@@ -124,7 +82,7 @@ def get_user_cookie(
             samesite=SESSION_COOKIE_SAMESITE,
         )
         response.set_cookie(
-            f"is_active",
+            "is_active",
             user_list[0].is_active,
             max_age=SESSION_COOKIE_AGE,
             httponly=SESSION_COOKIE_HTTPONLY,

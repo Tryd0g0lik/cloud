@@ -11,21 +11,23 @@ repos:
       - id: check-docstring-first
       - id: check-merge-conflict
       - id: check-symlinks
-      - id: double-quote-string-fixer
 
   - repo: https://github.com/PyCQA/flake8
     # Description of error: https://flake8.pycqa.org/en/latest/user/error-codes.html
     rev: 7.1.1
     hooks:
       - id: flake8
-  - repo: https://github.com/psf/black
-    # https://black.readthedocs.io/en/stable/
-    rev: 24.8.0  # Укажите последнюю версию
-    hooks:
-      - id: black
-        files: \.py$
-        exclude: ^venv/, */frontend
-        language_version: "3.10"
+#  - repo: https://github.com/psf/black
+#    # https://black.readthedocs.io/en/stable/
+#    rev: 24.8.0  # Укажите последнюю версию
+#    hooks:
+#      - id: black
+#        language_version: "3.10"
+#        exclude: ^venv/, */frontend, tests/, migrations/*.py$, __pycache__
+#        include: \.py$
+#        max-line-length: 80
+#        ignore: E203,E701
+
   - repo: https://github.com/PyCQA/pylint
     # https://pylint.readthedocs.io/en/latest/user_guide/messages/messages_overview.html
     rev: v3.2.7

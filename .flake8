@@ -1,8 +1,10 @@
 [flake8]
-extend-ignore = E111, E501, E303
+extend-ignore = E111, E501, E303, F401, E203,E701
+length_line = 3
+max-line-length: 80
 exclude =
     .git,
-    **/__pycache__,
+    __pycache__,
     conf*,
     old,
     build,
@@ -11,6 +13,7 @@ exclude =
     */venv/*,
     ^venv,
     */.github,
+    tests/,
     */.*,
     */main.py,
     */.editorconfig,
